@@ -1,8 +1,18 @@
 {
   "name": "jobc-power-commands",
-  "description": "3 power commands for Claude Code: /check (parallel review + deploy), /cowork (agent teams orchestration), /super (full pipeline from planning to deploy)",
+  "description": "Claude Code용 파워 커맨드 3종: /check (5-에이전트 병렬 코드 리뷰 + 자동 수정 + 검증 + 배포), /cowork (지휘자 + Agent Teams 병렬 오케스트레이션), /super (기획→구현→리뷰→배포 전자동 파이프라인). Claude Forge, Anthropic Official plugins, PM Plugin Suite와 통합.",
   "version": "1.0.0",
   "author": {
-    "name": "jobc90"
-  }
+    "name": "jobc90",
+    "url": "https://github.com/jobc90"
+  },
+  "repository": "https://github.com/jobc90/jobc-power-commands",
+  "keywords": [
+    "claude-code",
+    "slash-commands",
+    "code-review",
+    "agent-teams",
+    "automation",
+    "pipeline"
+  ]
 }
