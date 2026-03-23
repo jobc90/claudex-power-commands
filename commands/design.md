@@ -1,3 +1,7 @@
+---
+description: "3-다이얼(Variance/Motion/Density) + 프리셋(landing/dashboard/workspace)으로 프론트엔드 디자인 품질 제어. init으로 디자인 시스템 생성/업데이트, /super와 자동 연동."
+---
+
 # /design — 프론트엔드 디자인 품질 제어
 
 3개 다이얼(Variance, Motion, Density)로 디자인 톤을 제어하고, 프리셋 또는 커스텀 조합으로 프론트엔드를 생성한다.

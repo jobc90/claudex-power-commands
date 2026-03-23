@@ -1,3 +1,7 @@
+---
+description: "아이디어 한 줄 → DISCOVER → PLAN → BUILD(/cowork) → CHECK(/check) → SHIP → DOCUMENT. --design으로 taste-skill 연동, design.md 자동 감지. --pr로 PR까지."
+---
+
 # /super — 기획 → 구현 → 리뷰 → 배포 전자동 파이프라인
 
 `/cowork`(병렬 구현) + `/check`(리뷰+배포) + `/design`(디자인 품질)을 조합한 풀 파이프라인.
