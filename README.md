@@ -291,6 +291,7 @@ Use $docs --dry-run to outline architecture documentation.
 
 ### Codex 포트 차이점
 
+- `/design`은 현재 Codex 미지원 (Claude Code 전용). Codex에서는 taste-skill을 직접 사용.
 - slash command가 아니라 skill 기반이다.
 - commit/push/PR은 기본 자동 실행이 아니라, 명시적으로 요청했을 때만 수행한다.
 - `cowork`, `super`는 병렬 에이전트가 유효한 경우에만 delegation을 사용하고, 아니면 같은 파이프라인을 단일 세션으로 축소 실행한다.
@@ -333,7 +334,7 @@ cp -R codex-skills/docs "${CODEX_HOME:-$HOME/.codex}/skills/"
 | 플러그인 | 필수 여부 | 역할 | 없으면? |
 |---------|---------|------|--------|
 | [Claude Forge](https://github.com/sangrokjung/claude-forge) | 권장 | verification-engine, /plan, /tdd, /sync-docs | 기본 빌드/테스트로 대체 |
-| [claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | 권장 | pr-review-toolkit (6 에이전트), feature-dev, code-simplifier | 에이전트 수 감소 (5→1) |
+| [claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | 권장 | pr-review-toolkit (4 리뷰 에이전트), feature-dev, code-simplifier | /check 리뷰 에이전트 감소 |
 | [pm-skills](https://github.com/phuryn/pm-skills) | 선택 | write-prd, write-stories, pre-mortem, test-scenarios, release-notes | PM 단계 생략, 바로 구현 |
 | [taste-skill](https://github.com/Leonxlnx/taste-skill) | /design 권장 | taste-skill, soft-skill, minimalist-skill, brutalist-skill, redesign-skill, output-skill | 공통 금지 패턴만 적용, 프리셋 상세 규칙 축소 |
 
@@ -346,11 +347,11 @@ jobc-power-commands/
 ├── .claude-plugin/
 │   └── plugin.json          # 플러그인 매니페스트
 ├── commands/
-│   ├── check.md             # /check (42줄)
-│   ├── cowork.md            # /cowork (52줄)
-│   ├── design.md            # /design (330줄)
-│   ├── docs.md              # /docs (202줄)
-│   └── super.md             # /super (188줄)
+│   ├── check.md             # /check (46줄)
+│   ├── cowork.md            # /cowork (56줄)
+│   ├── design.md            # /design (334줄)
+│   ├── docs.md              # /docs (206줄)
+│   └── super.md             # /super (192줄)
 ├── codex-skills/
 │   ├── check/
 │   │   ├── SKILL.md            # Codex 스킬 정의
