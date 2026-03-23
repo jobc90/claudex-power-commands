@@ -80,10 +80,10 @@ Use $docs ...
 
 ### 5단계 실행
 
-| Phase | 역할 | 활용 도구 |
-|-------|------|---------|
+| Phase | 역할 | 활용 커맨드/도구 |
+|-------|------|----------------|
 | **1. 정찰** | 코드베이스 구조 파악 | Explore 에이전트 + code-architect |
-| **2. 계획** | 작업을 독립 단위로 분할 | PM 스킬 (write-prd, write-stories, test-scenarios) |
+| **2. 계획** | 작업을 독립 단위로 분할 | PM 커맨드 (/write-prd, /write-stories, /test-scenarios) |
 | **3. 분배** | Wave별 에이전트 동시 호출 | Agent 도구 병렬 실행 |
 | **4. 취합** | 충돌 확인 + 병합 | git diff + Edit |
 | **5. 검증** | 빌드 + 린트 + 테스트 | 빌드 시스템 자동 감지 |
@@ -113,10 +113,10 @@ Wave 3 (순차): import 정리, 미사용 코드 제거
 
 ### 6단계 파이프라인
 
-| 단계 | 역할 | 활용 스킬 |
-|------|------|---------|
-| **DISCOVER** | 요구사항 구조화 | write-prd, write-stories, pre-mortem, strategy |
-| **PLAN** | 구현 계획 + 작업 분할 | Explore, code-architect, prioritize-features, test-scenarios |
+| 단계 | 역할 | 활용 커맨드/도구 |
+|------|------|----------------|
+| **DISCOVER** | 요구사항 구조화 | /write-prd, /write-stories, /pre-mortem, /strategy |
+| **PLAN** | 구현 계획 + 작업 분할 | Explore, code-architect, /prioritize-features, /test-scenarios |
 | **BUILD** | 병렬 구현 (/cowork 패턴) | Agent Teams, Wave 분배 |
 | **CHECK** | 병렬 리뷰 + 검증 (/check 패턴) | 5 에이전트 리뷰, 빌드/린트/테스트 |
 | **SHIP** | 커밋 + 푸시 + PR | git, gh CLI |
@@ -140,18 +140,18 @@ Wave 3 (순차): import 정리, 미사용 코드 제거
 
 ### 10가지 문서 유형 자동 감지
 
-| 유형 | 트리거 | 활용 스킬 |
-|------|--------|----------|
-| PRD | "기획", "요구사항" | create-prd, write-stories |
+| 유형 | 트리거 | 활용 커맨드 |
+|------|--------|-----------|
+| PRD | "기획", "요구사항" | /write-prd, /write-stories |
 | 기술 문서 | "아키텍처", "설계" | Explore, code-architect |
 | README | "시작하기", "설치" | Explore + 코드 분석 |
-| 릴리즈 노트 | "배포", "changelog" | release-notes + git log |
-| 회의록 | "회의", "미팅" | summarize-meeting |
-| 인터뷰 요약 | "인터뷰", "고객 조사" | summarize-interview |
-| 전략 문서 | "전략", "GTM" | product-strategy |
+| 릴리즈 노트 | "배포", "changelog" | /sprint + git log |
+| 회의록 | "회의", "미팅" | /meeting-notes |
+| 인터뷰 요약 | "인터뷰", "고객 조사" | /interview |
+| 전략 문서 | "전략", "GTM" | /strategy |
 | 운영 문서 | "runbook", "배포 가이드" | Explore + 코드 분석 |
-| 프로젝트 문서화 | "전체 문서화" | 전체 스킬 조합 |
-| 교정/개선 | "교정", "리뷰" | grammar-check |
+| 프로젝트 문서화 | "전체 문서화" | 전체 커맨드 조합 |
+| 교정/개선 | "교정", "리뷰" | /proofread |
 
 ### 6단계 파이프라인
 
@@ -234,7 +234,7 @@ rm ~/.claude/commands/{check,cowork,super,docs}.md
 rm ~/.claude/rules/plugins-catalog.md
 
 # Codex
-rm -rf "${CODEX_HOME:-$HOME/.codex}/skills/{check,cowork,super,docs}"
+rm -rf "${CODEX_HOME:-$HOME/.codex}"/skills/{check,cowork,super,docs}
 ```
 
 ### 업데이트

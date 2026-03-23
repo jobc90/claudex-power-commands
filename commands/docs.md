@@ -23,18 +23,18 @@
 
 ### 판별 테이블
 
-| 유형 | 트리거 키워드/조건 | 핵심 스킬 | 산출물 |
-|------|-------------------|-----------|--------|
-| **PRD** | "기획", "PRD", "요구사항", "기능 정의", 신규 기능 | `create-prd`, `write-stories`, `test-scenarios` | PRD-{name}.md |
-| **기술 문서** | "아키텍처", "API", "설계", "기술", 코드 변경 분석 | Explore + `code-architect` | docs/{name}.md |
+| 유형 | 트리거 키워드/조건 | 활용 커맨드/도구 | 산출물 |
+|------|-------------------|-----------------|--------|
+| **PRD** | "기획", "PRD", "요구사항", "기능 정의", 신규 기능 | `/write-prd`, `/write-stories`, `/test-scenarios` | PRD-{name}.md |
+| **기술 문서** | "아키텍처", "API", "설계", "기술", 코드 변경 분석 | Explore + code-architect | docs/{name}.md |
 | **README** | "README", "시작하기", "설치", "온보딩" | Explore + 코드 분석 | README.md |
-| **릴리즈 노트** | "릴리즈", "배포", "변경사항", "changelog" | `release-notes` + git log | RELEASE-{version}.md |
-| **회의록** | "회의", "미팅", "회의록", 트랜스크립트 입력 | `summarize-meeting` | Meeting-{date}-{topic}.md |
-| **인터뷰 요약** | "인터뷰", "사용자 조사", "고객 인터뷰" | `summarize-interview` | Interview-{date}-{subject}.md |
-| **전략 문서** | "전략", "비전", "로드맵", "GTM" | `product-strategy`, `gtm-strategy` | Strategy-{name}.md |
+| **릴리즈 노트** | "릴리즈", "배포", "변경사항", "changelog" | `/sprint` (release-notes) + git log | RELEASE-{version}.md |
+| **회의록** | "회의", "미팅", "회의록", 트랜스크립트 입력 | `/meeting-notes` (summarize-meeting) | Meeting-{date}-{topic}.md |
+| **인터뷰 요약** | "인터뷰", "사용자 조사", "고객 인터뷰" | `/interview` (summarize-interview) | Interview-{date}-{subject}.md |
+| **전략 문서** | "전략", "비전", "로드맵", "GTM" | `/strategy` (product-strategy, gtm-strategy) | Strategy-{name}.md |
 | **운영 문서** | "운영", "runbook", "배포 가이드", "모니터링" | Explore + 코드 분석 | docs/RUNBOOK.md |
-| **프로젝트 문서화** | "문서화", "정리", "현황 파악" | Explore + `code-architect` + 전체 스캔 | docs/ 디렉토리 일괄 |
-| **교정/개선** | "교정", "리뷰", "개선", 기존 .md 파일 지정 | `grammar-check` | 원본 파일 수정 |
+| **프로젝트 문서화** | "문서화", "정리", "현황 파악" | Explore + code-architect + 전체 스캔 | docs/ 디렉토리 일괄 |
+| **교정/개선** | "교정", "리뷰", "개선", 기존 .md 파일 지정 | `/proofread` (grammar-check) | 원본 파일 수정 |
 
 `--type`으로 강제 지정 가능. 자동 판별 시 결과를 사용자에게 1줄로 보고 후 진행.
 
@@ -96,17 +96,17 @@
 
 ### PM 스킬 기반 문서
 
-해당 PM 스킬을 **Skill 도구로 호출**하여 작성:
+해당 PM 커맨드를 **Skill 도구로 호출**하여 작성:
 
-| 유형 | 호출 스킬 |
-|------|----------|
-| PRD | `write-prd` → `create-prd` 스킬 적용 |
-| 유저 스토리 | `write-stories` → `user-stories` 스킬 적용 |
-| 릴리즈 노트 | `sprint` → `release-notes` 스킬 적용 |
-| 회의록 | `meeting-notes` → `summarize-meeting` 스킬 적용 |
-| 인터뷰 요약 | `interview` → `summarize-interview` 스킬 적용 |
-| 전략 | `strategy` → `product-strategy` 스킬 적용 |
-| 테스트 시나리오 | `test-scenarios` → `test-scenarios` 스킬 적용 |
+| 유형 | 호출 커맨드 → 스킬 |
+|------|-------------------|
+| PRD | `/write-prd` → create-prd 스킬 |
+| 유저 스토리 | `/write-stories` → user-stories 스킬 |
+| 릴리즈 노트 | `/sprint` → release-notes 스킬 |
+| 회의록 | `/meeting-notes` → summarize-meeting 스킬 |
+| 인터뷰 요약 | `/interview` → summarize-interview 스킬 |
+| 전략 | `/strategy` → product-strategy 스킬 |
+| 테스트 시나리오 | `/test-scenarios` → test-scenarios 스킬 |
 
 ### 코드 기반 문서 (기술 문서, README, 운영, 프로젝트 문서화)
 

@@ -22,13 +22,13 @@ DISCOVER → PLAN → BUILD → CHECK → SHIP → DOCUMENT
 
 **판단 기준 → PM 스킬 자동 선택:**
 
-| 조건 | 스킬 | 산출물 |
-|------|------|--------|
-| 신규 기능, 3+ 파일 예상 | `write-prd` | PRD 8섹션 (문제→목표→세그먼트→솔루션→릴리즈) |
-| 기존 기능 개선, 1-2 파일 | `write-stories` | INVEST 기준 유저 스토리 |
-| 리스크 높은 작업 | `pre-mortem` 병행 | Tiger/Paper Tiger/Elephant 분류 |
-| 전략적 판단 필요 | `strategy` | Product Strategy Canvas 9섹션 |
-| 경쟁 분석 필요 | `competitive-analysis` | 경쟁사 강약점 + 차별화 기회 |
+| 조건 | 커맨드 | 산출물 |
+|------|--------|--------|
+| 신규 기능, 3+ 파일 예상 | `/write-prd` | PRD 8섹션 (문제→목표→세그먼트→솔루션→릴리즈) |
+| 기존 기능 개선, 1-2 파일 | `/write-stories` | INVEST 기준 유저 스토리 |
+| 리스크 높은 작업 | `/pre-mortem` 병행 | Tiger/Paper Tiger/Elephant 분류 |
+| 전략적 판단 필요 | `/strategy` | Product Strategy Canvas 9섹션 |
+| 경쟁 분석 필요 | `/competitive-analysis` | 경쟁사 강약점 + 차별화 기회 |
 
 산출물을 `prompt_plan.md`에 저장. **사용자 확인 없이** 다음 단계로 진행.
 
@@ -42,8 +42,8 @@ DISCOVER → PLAN → BUILD → CHECK → SHIP → DOCUMENT
 
 **분할:**
 3. PRD/스토리를 구현 단위로 쪼갠다:
-   - `prioritize-features` → impact/effort/risk 기반 우선순위
-   - `test-scenarios` → 각 기능별 QA 시나리오 (happy/edge/error)
+   - `/prioritize-features` → impact/effort/risk 기반 우선순위
+   - `/test-scenarios` → 각 기능별 QA 시나리오 (happy/edge/error)
 4. Wave 구조로 배치:
    - **Wave 1** (순차): 공유 타입, 인터페이스, 유틸리티
    - **Wave 2** (병렬): 데이터 레이어 / UI 컴포넌트 / 테스트
