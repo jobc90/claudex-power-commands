@@ -1,6 +1,6 @@
 {
   "name": "jobc-power-commands",
-  "description": "Claude Code용 파워 커맨드 3종: /check (5-에이전트 병렬 코드 리뷰 + 자동 수정 + 검증 + 배포), /cowork (지휘자 + Agent Teams 병렬 오케스트레이션), /super (기획→구현→리뷰→배포 전자동 파이프라인). Claude Forge, Anthropic Official plugins, PM Plugin Suite와 통합.",
+  "description": "Claude Code용 파워 커맨드 5종: /check (5-에이전트 병렬 코드 리뷰), /cowork (Agent Teams 병렬 오케스트레이션), /super (기획→구현→리뷰→배포 파이프라인), /docs (체계적 문서화), /design (3-다이얼 프론트엔드 디자인 품질 제어). Claude Forge, Anthropic Official plugins, PM Suite, taste-skill과 통합.",
   "version": "1.0.0",
   "author": {
     "name": "jobc90",
@@ -13,6 +13,8 @@
     "code-review",
     "agent-teams",
     "automation",
-    "pipeline"
+    "pipeline",
+    "frontend-design",
+    "taste-skill"
   ]
 }

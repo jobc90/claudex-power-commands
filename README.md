@@ -1,8 +1,8 @@
 # jobc-power-commands
 
-> [Claude Code](https://claude.ai/code)용 파워 커맨드 4종 플러그인
+> [Claude Code](https://claude.ai/code)용 파워 커맨드 5종 플러그인
 
-코드 리뷰, 팀 오케스트레이션, 대규모 자동화, 체계적 문서화를 슬래시 커맨드 하나로 실행합니다.
+코드 리뷰, 팀 오케스트레이션, 대규모 자동화, 체계적 문서화, 프론트엔드 디자인을 슬래시 커맨드 하나로 실행합니다.
 
 ---
 
@@ -13,6 +13,7 @@
 /cowork — 큰 작업 → 에이전트 팀 분배 → 병렬 구현 → 취합 → 검증 (15분)
 /super  — 아이디어 → 기획 → 구현 → 리뷰 → 배포 → 문서화 (30분+)
 /docs   — 문서 유형 자동 판별 → 리서치 → 구조화 → 작성 → 검수 (10분)
+/design — 3-다이얼(V/M/D) + 프리셋으로 프론트엔드 디자인 품질 제어
 ```
 
 ### Codex 버전
@@ -39,6 +40,7 @@ Use $docs ...
 | 파일 5개 이상 동시 수정 | `/cowork` | `/cowork 결제 환불 기능 추가` |
 | 새 기능을 처음부터 끝까지 | `/super` | `/super 로그인에 2FA 추가` |
 | 문서 작성/갱신/정리 | `/docs` | `/docs 프로젝트 전체 문서화` |
+| 프론트엔드 UI 만들기 | `/design` | `/design --soft SaaS 랜딩페이지` |
 
 ---
 
@@ -171,6 +173,40 @@ DETECT → RESEARCH → STRUCTURE → DRAFT → REVIEW → DELIVER
 
 ---
 
+## /design — 프론트엔드 디자인 품질 제어
+
+3개 다이얼로 디자인 톤을 제어합니다. [taste-skill](https://github.com/Leonxlnx/taste-skill) 생태계를 통합 진입점 하나로 활용합니다.
+
+### 3-다이얼 시스템
+
+| 다이얼 | 1-3 | 4-7 | 8-10 |
+|--------|-----|-----|------|
+| **VARIANCE** (레이아웃) | 정돈된 그리드 | 오프셋, 겹침 | 비대칭, 넓은 여백 |
+| **MOTION** (애니메이션) | hover 정도 | 페이드인, 스크롤링 | 마그네틱, 스프링 물리 |
+| **DENSITY** (채움도) | 럭셔리, 여유 | 일반 앱 수준 | 대시보드, 빽빽함 |
+
+### 프리셋
+
+| 프리셋 | V | M | D | 용도 |
+|--------|---|---|---|------|
+| (기본) | 8 | 6 | 4 | 범용 프론트엔드 |
+| `--soft` | 7 | 8 | 3 | 랜딩, 포트폴리오, SaaS |
+| `--minimal` | 4 | 3 | 5 | 워크스페이스, 에디토리얼 |
+| `--brutal` | 6 | 2 | 8 | 대시보드, 데이터 헤비 |
+| `--redesign` | (분석) | (분석) | (분석) | 기존 사이트 업그레이드 |
+
+### 사용법
+
+```bash
+/design --soft SaaS 랜딩페이지
+/design --brutal 실시간 모니터링 대시보드
+/design --v 2 --m 3 --d 9 관리자 대시보드
+/design --redesign 이 프로젝트 디자인 업그레이드
+/design --soft --output-guard 랜딩페이지 (코드 완전 출력)
+```
+
+---
+
 ## 설치
 
 ```bash
@@ -184,7 +220,7 @@ cp jobc-power-commands/commands/*.md ~/.claude/commands/
 cp jobc-power-commands/rules/*.md ~/.claude/rules/
 
 # 4. 확인 — 새 세션에서
-#    /check, /cowork, /super, /docs 가 슬래시 커맨드로 보이면 성공
+#    /check, /cowork, /super, /docs, /design 이 슬래시 커맨드로 보이면 성공
 ```
 
 ### Codex 설치
@@ -230,7 +266,7 @@ Use $docs --dry-run to outline architecture documentation.
 
 ```bash
 # Claude Code
-rm ~/.claude/commands/{check,cowork,super,docs}.md
+rm ~/.claude/commands/{check,cowork,super,docs,design}.md
 rm ~/.claude/rules/plugins-catalog.md
 
 # Codex
@@ -264,6 +300,7 @@ cp -R codex-skills/docs "${CODEX_HOME:-$HOME/.codex}/skills/"
 | [Claude Forge](https://github.com/sangrokjung/claude-forge) | 권장 | verification-engine, /plan, /tdd, /sync-docs | 기본 빌드/테스트로 대체 |
 | [claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | 권장 | pr-review-toolkit (6 에이전트), feature-dev, code-simplifier | 에이전트 수 감소 (5→1) |
 | [pm-skills](https://github.com/phuryn/pm-skills) | 선택 | write-prd, write-stories, pre-mortem, test-scenarios, release-notes | PM 단계 생략, 바로 구현 |
+| [taste-skill](https://github.com/Leonxlnx/taste-skill) | /design 권장 | taste-skill, soft-skill, minimalist-skill, brutalist-skill, redesign-skill, output-skill | 공통 금지 패턴만 적용, 프리셋 상세 규칙 축소 |
 
 ---
 
@@ -276,6 +313,7 @@ jobc-power-commands/
 ├── commands/
 │   ├── check.md             # /check (42줄)
 │   ├── cowork.md            # /cowork (52줄)
+│   ├── design.md            # /design (145줄)
 │   ├── docs.md              # /docs (202줄)
 │   └── super.md             # /super (108줄)
 ├── codex-skills/
