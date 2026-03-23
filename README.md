@@ -223,22 +223,34 @@ Use $docs --dry-run to outline architecture documentation.
 - slash command가 아니라 skill 기반이다.
 - commit/push/PR은 기본 자동 실행이 아니라, 명시적으로 요청했을 때만 수행한다.
 - `cowork`, `super`는 병렬 에이전트가 유효한 경우에만 delegation을 사용하고, 아니면 같은 파이프라인을 단일 세션으로 축소 실행한다.
-- 검증 없는 완료 선언을 막기 위해 `verification-before-completion` 스타일 규칙을 기본 반영했다.
+- 검증 없는 완료 선언을 막기 위해 "검증 증거 없이 완료 선언 금지" 규칙을 기본 반영했다.
 - `docs`는 문서 작업에서 shell 사용을 최소화하고, 실제 설치된 Codex 스킬 이름(`create-prd`, `user-stories`, `release-notes` 등)에 맞춰 라우팅한다.
 
 ### 삭제
 
 ```bash
+# Claude Code
 rm ~/.claude/commands/{check,cowork,super,docs}.md
 rm ~/.claude/rules/plugins-catalog.md
+
+# Codex
+rm -rf "${CODEX_HOME:-$HOME/.codex}/skills/{check,cowork,super,docs}"
 ```
 
 ### 업데이트
 
 ```bash
 cd jobc-power-commands && git pull
+
+# Claude Code
 cp commands/*.md ~/.claude/commands/
 cp rules/*.md ~/.claude/rules/
+
+# Codex
+cp -R codex-skills/check "${CODEX_HOME:-$HOME/.codex}/skills/"
+cp -R codex-skills/cowork "${CODEX_HOME:-$HOME/.codex}/skills/"
+cp -R codex-skills/super "${CODEX_HOME:-$HOME/.codex}/skills/"
+cp -R codex-skills/docs "${CODEX_HOME:-$HOME/.codex}/skills/"
 ```
 
 ---
