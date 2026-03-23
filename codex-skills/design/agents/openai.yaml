@@ -1,0 +1,6 @@
+interface:
+  display_name: "Design"
+  short_description: "Control frontend design with presets, dials, and design docs"
+  default_prompt: "Use $design to choose the frontend visual direction, presets, and design-system rules for this project."
+  policy:
+    allow_implicit_invocation: true

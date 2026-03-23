@@ -1,6 +1,6 @@
 interface:
   display_name: "Cowork"
-  short_description: "Plan and parallelize large code changes safely"
-  default_prompt: "Use $cowork to break this task into safe work slices and coordinate parallel implementation."
-policy:
-  allow_implicit_invocation: true
+  short_description: "Coordinate parallel code changes with safe ownership"
+  default_prompt: "Use $cowork to break this task into safe ownership slices and coordinate the parallel implementation."
+  policy:
+    allow_implicit_invocation: true

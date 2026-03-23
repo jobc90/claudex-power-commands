@@ -30,6 +30,7 @@ Use $check ...
 Use $cowork ...
 Use $super ...
 Use $docs ...
+Use $design ...
 ```
 
 ### 언제 뭘 쓸까?
@@ -127,6 +128,8 @@ Wave 3 (순차): import 정리, 미사용 코드 제거
 ### design.md 자동 감지
 
 프로젝트에 디자인 시스템 파일(`design.md`, `designsystem.md`, `*DESIGN*.md` 등)이 있으면 `--design` 플래그 없이도 디자인 규칙이 자동 적용됩니다. `--design <프리셋>`으로 명시 지정하면 자동 감지보다 우선합니다.
+
+Codex 포트 기준 `--design` 프리셋은 `landing`, `dashboard`, `workspace`, `portfolio`, `admin`, `soft`, `minimal`, `brutal`, `redesign` 를 사용합니다. `--design`만 쓰면 디자인 모드만 켜고, 실제 프리셋은 감지된 디자인 시스템 파일이나 현재 제품 유형으로 결정합니다.
 
 ### 사용법
 
@@ -272,9 +275,10 @@ cp -R jobc-power-commands/codex-skills/check "${CODEX_HOME:-$HOME/.codex}/skills
 cp -R jobc-power-commands/codex-skills/cowork "${CODEX_HOME:-$HOME/.codex}/skills/"
 cp -R jobc-power-commands/codex-skills/super "${CODEX_HOME:-$HOME/.codex}/skills/"
 cp -R jobc-power-commands/codex-skills/docs "${CODEX_HOME:-$HOME/.codex}/skills/"
+cp -R jobc-power-commands/codex-skills/design "${CODEX_HOME:-$HOME/.codex}/skills/"
 
 # 4. 확인 — 새 Codex 세션에서
-#    $check, $cowork, $super, $docs 를 명시하거나 관련 작업을 요청
+#    $check, $cowork, $super, $docs, $design 를 명시하거나 관련 작업을 요청
 ```
 
 ### Codex 사용 예시
@@ -284,19 +288,22 @@ Use $check on the current diff.
 Use $check --pr after verification passes.
 Use $cowork --agents 4 for this refactor.
 Use $super --skip-discover because the PRD already exists.
+Use $super --design dashboard for the admin UI.
 Use $docs to create a README for this project.
 Use $docs --type prd for the payment module feature.
 Use $docs --dry-run to outline architecture documentation.
+Use $design init for this frontend project.
 ```
 
 ### Codex 포트 차이점
 
-- `/design`은 현재 Codex 미지원 (Claude Code 전용). Codex에서는 taste-skill을 직접 사용.
 - slash command가 아니라 skill 기반이다.
 - commit/push/PR은 기본 자동 실행이 아니라, 명시적으로 요청했을 때만 수행한다.
 - `cowork`, `super`는 병렬 에이전트가 유효한 경우에만 delegation을 사용하고, 아니면 같은 파이프라인을 단일 세션으로 축소 실행한다.
+- `$super` 단독 호출은 병렬 위임 허가가 아니다. 병렬 실행은 사용자가 명시적으로 요청하거나 `$cowork`를 호출했을 때만 사용한다.
 - 검증 없는 완료 선언을 막기 위해 "검증 증거 없이 완료 선언 금지" 규칙을 기본 반영했다.
 - `docs`는 문서 작업에서 shell 사용을 최소화하고, 실제 설치된 Codex 스킬 이름(`create-prd`, `user-stories`, `release-notes` 등)에 맞춰 라우팅한다.
+- `design`은 taste-skill의 핵심 개념(프리셋, 3-다이얼, design.md 감지)을 Codex용 단일 스킬로 내재화했다.
 
 ### 삭제
 
@@ -306,7 +313,7 @@ rm ~/.claude/commands/{check,cowork,super,docs,design}.md
 rm ~/.claude/rules/plugins-catalog.md
 
 # Codex
-rm -rf "${CODEX_HOME:-$HOME/.codex}"/skills/{check,cowork,super,docs}
+rm -rf "${CODEX_HOME:-$HOME/.codex}"/skills/{check,cowork,super,docs,design}
 ```
 
 ### 업데이트
@@ -323,6 +330,7 @@ cp -R codex-skills/check "${CODEX_HOME:-$HOME/.codex}/skills/"
 cp -R codex-skills/cowork "${CODEX_HOME:-$HOME/.codex}/skills/"
 cp -R codex-skills/super "${CODEX_HOME:-$HOME/.codex}/skills/"
 cp -R codex-skills/docs "${CODEX_HOME:-$HOME/.codex}/skills/"
+cp -R codex-skills/design "${CODEX_HOME:-$HOME/.codex}/skills/"
 ```
 
 ---
@@ -357,6 +365,9 @@ jobc-power-commands/
 │   │   ├── SKILL.md            # Codex 스킬 정의
 │   │   └── agents/openai.yaml  # Codex 에이전트 설정
 │   ├── cowork/
+│   │   ├── SKILL.md
+│   │   └── agents/openai.yaml
+│   ├── design/
 │   │   ├── SKILL.md
 │   │   └── agents/openai.yaml
 │   ├── docs/

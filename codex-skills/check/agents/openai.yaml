@@ -1,6 +1,6 @@
 interface:
   display_name: "Check"
-  short_description: "Review, fix, verify, and prep git handoff"
-  default_prompt: "Use $check to review the current diff, apply safe fixes, verify them, and prepare the next git step."
-policy:
-  allow_implicit_invocation: true
+  short_description: "Review the diff, fix risks, verify, and prep git handoff"
+  default_prompt: "Use $check to review the current diff, apply safe fixes, verify the result, and prepare the next git step."
+  policy:
+    allow_implicit_invocation: true
