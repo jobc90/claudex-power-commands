@@ -126,8 +126,7 @@ Wave 3 (순차): import 정리, 미사용 코드 제거
 
 ### design.md 자동 감지
 
-프로젝트에 `design.md`가 있으면 `--design` 플래그 없이도 디자인 규칙이 자동 적용됩니다.
-`--design <프리셋>`으로 명시 지정하면 자동 감지보다 우선합니다.
+프로젝트에 디자인 시스템 파일(`design.md`, `designsystem.md`, `*DESIGN*.md` 등)이 있으면 `--design` 플래그 없이도 디자인 규칙이 자동 적용됩니다. `--design <프리셋>`으로 명시 지정하면 자동 감지보다 우선합니다.
 
 ### 사용법
 
@@ -191,14 +190,16 @@ DETECT → RESEARCH → STRUCTURE → DRAFT → REVIEW → DELIVER
 
 3개 다이얼로 디자인 톤을 제어합니다. [taste-skill](https://github.com/Leonxlnx/taste-skill) 생태계를 통합 진입점 하나로 활용합니다.
 
-### /design init — design.md 자동 생성
+### /design init — 디자인 시스템 생성/업데이트
 
 ```bash
 /design init
-# → 기존 코드가 있으면: 스캔 → 감사 → 목표 질문 → design.md 생성 (리디자인)
-# → 새 프로젝트면: 용도 질문 → design.md 생성
-# → 이후 /super가 design.md를 자동 감지하여 디자인 규칙 적용
+# → 디자인 시스템 파일 있으면: 업데이트 모드 ("더 화려하게", "프리셋 변경" 등)
+# → 파일 없음 + 코드 있으면: 리디자인 모드 (스캔 → 감사 → 목표)
+# → 파일 없음 + 코드 없음: 새 프로젝트 모드 (용도 질문 → 생성)
 ```
+
+`design.md`, `designsystem.md`, `BENEEDS_DESIGN_SYSTEM.md` 등 커스텀 이름도 자동 감지합니다.
 
 ### 3-다이얼 시스템
 
@@ -347,9 +348,9 @@ jobc-power-commands/
 ├── commands/
 │   ├── check.md             # /check (42줄)
 │   ├── cowork.md            # /cowork (52줄)
-│   ├── design.md            # /design (288줄)
+│   ├── design.md            # /design (330줄)
 │   ├── docs.md              # /docs (202줄)
-│   └── super.md             # /super (180줄)
+│   └── super.md             # /super (188줄)
 ├── codex-skills/
 │   ├── check/
 │   │   ├── SKILL.md            # Codex 스킬 정의

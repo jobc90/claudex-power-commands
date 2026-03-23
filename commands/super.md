@@ -21,16 +21,24 @@ CRITICAL 보안 이슈에서만 중단. 그 외에는 끝까지.
 DISCOVER → PLAN → BUILD → CHECK → SHIP → DOCUMENT
 ```
 
-### design.md 자동 감지
+### 디자인 시스템 파일 자동 감지
 
-`--design` 플래그를 명시하지 않아도, 프로젝트에 `design.md` 또는 `DESIGN.md`가 존재하면 자동으로 디자인 모드를 활성화한다.
+`--design` 플래그를 명시하지 않아도, 프로젝트에 디자인 시스템 파일이 존재하면 자동으로 디자인 모드를 활성화한다.
 
-**감지 순서:**
-1. `--design <프리셋>` 명시 → 해당 프리셋 사용
-2. `--design` 플래그 없음 + `design.md` 존재 → design.md 안의 `preset:` 및 다이얼 값 읽기
-3. `--design` 플래그 없음 + `design.md` 없음 → 디자인 모드 비활성화
+**탐색 패턴 (순서대로):**
+1. `design.md`, `DESIGN.md`
+2. `designsystem.md`, `DESIGNSYSTEM.md`, `design-system.md`, `DESIGN-SYSTEM.md`
+3. `docs/design.md`, `docs/DESIGN.md`, `docs/design-system.md`
+4. `*DESIGN*.md`, `*design_system*.md` (Glob 패턴 — 프로젝트별 커스텀 이름)
 
-이로써 `/design init`으로 design.md를 한 번 만들면, 이후 `/super`만으로 디자인 규칙이 자동 적용된다.
+예: `BENEEDS_DESIGN_SYSTEM.md`, `MyApp_Design.md` 등 모두 감지.
+
+**감지 우선순위:**
+1. `--design <프리셋>` 명시 → 해당 프리셋 사용 (파일보다 우선)
+2. `--design` 플래그 없음 + 디자인 시스템 파일 존재 → 파일 안의 `preset:` 및 다이얼 값 읽기
+3. `--design` 플래그 없음 + 파일 없음 → 디자인 모드 비활성화
+
+이로써 `/design init`으로 디자인 시스템 파일을 한 번 만들면, 이후 `/super`만으로 디자인 규칙이 자동 적용된다.
 
 ---
 
@@ -57,7 +65,7 @@ DISCOVER → PLAN → BUILD → CHECK → SHIP → DOCUMENT
 **정찰:**
 1. Explore 에이전트 → 프로젝트 아키텍처, 디렉토리, 의존성 파악
 2. `code-architect` (feature-dev) → 기존 코드 패턴, 컨벤션, 핵심 파일 분석
-3. **design.md 또는 DESIGN.md 탐색** → 존재하면 디자인 모드 자동 활성화, 프리셋/다이얼 값 읽기
+3. **디자인 시스템 파일 탐색** (design.md, DESIGN.md, designsystem.md, *DESIGN*.md 등) → 존재하면 디자인 모드 자동 활성화, 프리셋/다이얼 값 읽기
 
 **분할:**
 4. PRD/스토리를 구현 단위로 쪼갠다:
@@ -97,7 +105,7 @@ DISCOVER → PLAN → BUILD → CHECK → SHIP → DOCUMENT
 **2. 에이전트 지시서에 포함할 디자인 컨텍스트:**
 ```
 디자인 규칙: {프리셋명} 모드 활성화.
-참조 파일: design.md (프로젝트 루트 또는 docs/)
+참조 파일: {감지된 디자인 시스템 파일 경로}
 다이얼: VARIANCE={V}, MOTION={M}, DENSITY={D}
 필수 준수:
 - design.md에 정의된 컬러, 타이포, 컴포넌트 규칙 따를 것
@@ -128,7 +136,7 @@ DISCOVER → PLAN → BUILD → CHECK → SHIP → DOCUMENT
 | 체크 항목 | 확인 내용 |
 |-----------|----------|
 | AI Tells | Inter 폰트, 순수 #000000, 네온 글로우, 3-column 균등 카드, 제네릭 이름 |
-| design.md 준수 | 컬러 팔레트, 타이포 스케일, 컴포넌트 규칙이 design.md와 일치하는지 |
+| 디자인 시스템 준수 | 컬러 팔레트, 타이포 스케일, 컴포넌트 규칙이 디자인 시스템 파일과 일치하는지 |
 | 다이얼 일관성 | VARIANCE/MOTION/DENSITY 값에 맞는 레이아웃/애니메이션/밀도인지 |
 | 반응형 | 768px 미만 단일 컬럼 붕괴, 가로 스크롤 없음 |
 | 인터랙티브 상태 | Loading/Empty/Error/Tactile 4종 존재 여부 |
