@@ -120,6 +120,20 @@ Use $cowork ...
 Use $super ...
 Use $docs ...
 Use $design ...
+Use $harness ...
+Use $harness-docs ...
+```
+
+### Codex-only Added Skills
+
+The Codex port also includes these 2 skills:
+
+- `harness`: autonomous app-building with a `.harness/` file handoff, spec generation, implementation, and Playwright QA rounds
+- `harness-docs`: autonomous documentation generation with a `.harness-docs/` file handoff, research, drafting, and source-backed review rounds
+
+```text
+Use $harness to autonomously build a substantial application with planner, builder, and QA rounds.
+Use $harness-docs to research a codebase, draft documentation, and fact-check it before finalizing.
 ```
 
 ---
@@ -368,9 +382,11 @@ cp -R claudex-power-commands/codex-skills/cowork "${CODEX_HOME:-$HOME/.codex}/sk
 cp -R claudex-power-commands/codex-skills/super "${CODEX_HOME:-$HOME/.codex}/skills/"
 cp -R claudex-power-commands/codex-skills/docs "${CODEX_HOME:-$HOME/.codex}/skills/"
 cp -R claudex-power-commands/codex-skills/design "${CODEX_HOME:-$HOME/.codex}/skills/"
+cp -R claudex-power-commands/codex-skills/harness "${CODEX_HOME:-$HOME/.codex}/skills/"
+cp -R claudex-power-commands/codex-skills/harness-docs "${CODEX_HOME:-$HOME/.codex}/skills/"
 
 # 4. Verify — in a new Codex session
-#    Explicitly invoke $check, $cowork, $super, $docs, $design or request related tasks
+#    Explicitly invoke $check, $cowork, $super, $docs, $design, $harness, $harness-docs or request related tasks
 ```
 
 ### Codex Usage Examples
@@ -385,6 +401,8 @@ Use $docs to create a README for this project.
 Use $docs --type prd for the payment module feature.
 Use $docs --dry-run to outline architecture documentation.
 Use $design init for this frontend project.
+Use $harness to build a browser-based DAW with planner, builder, and QA rounds.
+Use $harness-docs to document this repository's architecture with research, writing, and review rounds.
 ```
 
 ### Codex Port Differences
@@ -397,6 +415,8 @@ Use $design init for this frontend project.
 - Includes a built-in "no completion claims without verification evidence" rule to prevent unverified done-claims.
 - `docs` minimizes shell usage during documentation tasks and routes to actual installed Codex skill names (`create-prd`, `user-stories`, `release-notes`, etc.).
 - `design` internalizes taste-skill's core concepts (presets, 3-dial system, design.md detection) into a single Codex skill.
+- `harness` ports the Planner → Builder → QA autonomous app-build loop into a Codex skill using `.harness/` artifacts and `spawn_agent`.
+- `harness-docs` ports the Researcher → Writer → Reviewer autonomous documentation loop into a Codex skill using `.harness-docs/` artifacts.
 
 ### Uninstallation
 
@@ -409,7 +429,7 @@ rm ~/.claude/commands/{check,cowork,super,docs,design}.md
 rm ~/.claude/rules/{code-quality,git-conventions,plugins-catalog,security-checklist,verification}.md
 
 # Codex
-rm -rf "${CODEX_HOME:-$HOME/.codex}"/skills/{check,cowork,super,docs,design}
+rm -rf "${CODEX_HOME:-$HOME/.codex}"/skills/{check,cowork,super,docs,design,harness,harness-docs}
 ```
 
 ### Updating
@@ -429,6 +449,8 @@ cp -R codex-skills/cowork "${CODEX_HOME:-$HOME/.codex}/skills/"
 cp -R codex-skills/super "${CODEX_HOME:-$HOME/.codex}/skills/"
 cp -R codex-skills/docs "${CODEX_HOME:-$HOME/.codex}/skills/"
 cp -R codex-skills/design "${CODEX_HOME:-$HOME/.codex}/skills/"
+cp -R codex-skills/harness "${CODEX_HOME:-$HOME/.codex}/skills/"
+cp -R codex-skills/harness-docs "${CODEX_HOME:-$HOME/.codex}/skills/"
 ```
 
 ---
@@ -472,6 +494,14 @@ claudex-power-commands/
 │   ├── docs/
 │   │   ├── SKILL.md
 │   │   └── agents/openai.yaml
+│   ├── harness/
+│   │   ├── SKILL.md
+│   │   ├── agents/openai.yaml
+│   │   └── references/
+│   ├── harness-docs/
+│   │   ├── SKILL.md
+│   │   ├── agents/openai.yaml
+│   │   └── references/
 │   └── super/
 │       ├── SKILL.md
 │       └── agents/openai.yaml

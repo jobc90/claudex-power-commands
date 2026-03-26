@@ -1,0 +1,6 @@
+interface:
+  display_name: "Harness"
+  short_description: "Autonomous multi-agent app build harness"
+  default_prompt: "Use $harness to plan, build, QA, and summarize an application through a file-based multi-agent loop."
+  policy:
+    allow_implicit_invocation: true
