@@ -1,7 +1,7 @@
 {
   "name": "claudex-power-commands",
-  "description": "5 power commands for Claude Code and Codex: /check (5-angle parallel code review), /cowork (Agent Teams parallel orchestration), /super (idea-to-deployment pipeline), /docs (systematic documentation), /design (3-dial frontend design). Built-in verification, code quality, security, and git rules. Integrates with Anthropic Official plugins, PM Suite, and taste-skill.",
-  "version": "2.0.0",
+  "description": "6 power commands for Claude Code and Codex: /check (5-angle parallel code review), /cowork (Agent Teams parallel orchestration), /super (idea-to-deployment pipeline), /docs (systematic documentation), /design (3-dial frontend design), /claude-dashboard (statusline setup). Built-in verification, code quality, security, and git rules. Integrates with Anthropic Official plugins, PM Suite, and taste-skill.",
+  "version": "2.1.0",
   "author": {
     "name": "jobc90",
     "url": "https://github.com/jobc90"
