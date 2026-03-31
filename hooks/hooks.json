@@ -1,0 +1,16 @@
+{
+  "description": "claudex-power-commands: check recommended plugin dependencies on session start",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check-deps.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

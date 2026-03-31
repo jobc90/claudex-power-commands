@@ -18,13 +18,5 @@
     "documentation",
     "frontend-design",
     "automation"
-  ],
-  "hooks": {
-    "SessionStart": [
-      {
-        "type": "command",
-        "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check-deps.sh"
-      }
-    ]
-  }
+  ]
 }
