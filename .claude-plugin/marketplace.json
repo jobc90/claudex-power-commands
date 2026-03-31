@@ -1,0 +1,29 @@
+{
+  "name": "claudex-power-commands",
+  "owner": {
+    "name": "jobc90",
+    "url": "https://github.com/jobc90"
+  },
+  "metadata": {
+    "description": "7 harness commands for Claude Code and Codex: multi-agent build pipeline, documentation, code review, parallel build, QA testing, frontend design, and dashboard.",
+    "version": "3.0.0"
+  },
+  "plugins": [
+    {
+      "name": "claudex-power-commands",
+      "source": "./",
+      "description": "7 harness commands with 22 specialized agent prompts: /harness, /harness-docs, /harness-review, /harness-team, /harness-qa, /design, /claude-dashboard",
+      "version": "3.0.0",
+      "category": "automation",
+      "tags": [
+        "harness",
+        "multi-agent",
+        "code-review",
+        "parallel-build",
+        "qa-testing",
+        "documentation",
+        "frontend-design"
+      ]
+    }
+  ]
+}
