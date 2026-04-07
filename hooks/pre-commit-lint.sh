@@ -76,7 +76,7 @@ for f in scout-prompt.md planner-prompt.md builder-prompt.md refiner-prompt.md \
   fi
 done
 
-for f in harness.md harness-docs.md harness-review.md harness-team.md harness-qa.md harness-lint.md design.md claude-dashboard.md; do
+for f in harness.md harness-docs.md harness-review.md harness-team.md harness-qa.md design.md claude-dashboard.md; do
   if [ ! -f "commands/$f" ]; then
     echo "  MISSING: commands/$f"
     ((ERRORS++)) || true

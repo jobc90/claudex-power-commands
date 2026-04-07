@@ -24,7 +24,6 @@
 | `/harness-review` | Scanner -> Analyzer -> Fixer -> Verifier -> Reporter | 코드 리뷰 + git 핸드오프 |
 | `/harness-team` | Scout -> Architect -> Workers(N) -> Integrator -> QA | 병렬 팀 빌드 |
 | `/harness-qa` | Scout -> Scenario Writer -> Test Executor -> Analyst -> Reporter | 기능 QA 테스트 |
-| `/harness-lint` | Mechanical checks + Linter agent | 교차참조/미러 동기화/구조 검증 |
 | `/design` | 설정 도구 | 디자인 시스템 3-dial 설정 |
 | `/claude-dashboard` | 설정 도구 | statusline 설정 |
 
@@ -37,9 +36,8 @@
 | `/harness-review` | `scanner`, `analyzer`, `fixer`, `verifier`, `reporter` |
 | `/harness-team` | `architect`, `worker`, `integrator` + `scout`, `qa`, `diagnostician` 재사용 |
 | `/harness-qa` | `scenario-writer`, `test-executor`, `analyst`, `qa-reporter` + `scout` 재사용 |
-| `/harness-lint` | `linter` |
 
-총 25개 프롬프트가 `harness/` 아래에 들어 있습니다 (23 에이전트 + INDEX + linter).
+총 23개 에이전트 프롬프트 + INDEX가 `harness/` 아래에 들어 있습니다.
 
 ---
 
@@ -145,7 +143,6 @@ claudex-power-commands/
 │   ├── harness-review.md
 │   ├── harness-team.md
 │   ├── harness-qa.md
-│   ├── harness-lint.md
 │   ├── design.md
 │   └── claude-dashboard.md
 ├── harness/
@@ -185,9 +182,24 @@ claudex-power-commands/
 ├── dashboard/
 ├── hooks/
 ├── rules/
+├── dev/                          # Plugin development tools (not for end users)
+│   └── harness-lint.md
 ├── README.md
 └── README.en.md
 ```
+
+---
+
+## Dev Tools (플러그인 개발자 전용)
+
+`dev/` 디렉토리는 이 플러그인 자체를 개발/유지보수할 때 사용하는 도구입니다. 일반 사용자는 사용할 필요 없습니다.
+
+| 도구 | 용도 |
+|------|------|
+| `dev/harness-lint.md` | 프롬프트 교차참조, Codex 미러 동기화, 파이프라인 구조 검증 |
+| `harness/linter-prompt.md` | Lint 에이전트 프롬프트 |
+| `harness/INDEX.md` | 23 에이전트 교차참조 맵 |
+| `hooks/pre-commit-lint.sh` | 커밋 시 자동 미러 동기화 체크 |
 
 ---
 
