@@ -67,7 +67,7 @@ Go through each changed file and check:
 - [ ] State management follows existing patterns
 
 #### Error Handling Hardening
-Read `~/.claude/harness/references/error-handling-checklist.md` for the full checklist. Key items:
+Read `references/error-handling-checklist.md` for the full checklist. Key items:
 - [ ] API calls have proper try/catch (matching project patterns)
 - [ ] Loading/empty/error states handled
 - [ ] Network failure gracefully handled
@@ -79,7 +79,7 @@ Read `~/.claude/harness/references/error-handling-checklist.md` for the full che
 - [ ] TypeScript types are consistent with existing type definitions
 
 #### Security Quick Scan
-Read `~/.claude/harness/references/security-checklist.md` for the full checklist. Key items:
+Read `references/security-checklist.md` for the full checklist. Key items:
 - [ ] No hardcoded secrets, tokens, or API keys
 - [ ] No injection vectors (SQL, XSS, command)
 - [ ] User input validated at boundaries
@@ -160,7 +160,7 @@ For Scale L builds, the Builder prioritizes functionality (P0-P2) over design po
 
 ## Confidence Scoring
 
-Rate every issue you find on a 0-100 confidence scale BEFORE deciding to fix. Read `~/.claude/harness/references/confidence-calibration.md` for the full scoring table with examples.
+Rate every issue you find on a 0-100 confidence scale BEFORE deciding to fix. Read `references/confidence-calibration.md` for the full scoring table with examples.
 
 **Quick reference**:
 - **90-100**: Fix immediately (console.log, hardcoded secret, missing try/catch)

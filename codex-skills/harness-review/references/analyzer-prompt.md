@@ -159,7 +159,7 @@ Write `.harness/review-analysis.md`:
 
 ## Confidence Calibration
 
-Read `~/.claude/harness/references/confidence-calibration.md` for the full scoring table with examples. Key thresholds:
+Read `references/confidence-calibration.md` for the full scoring table with examples. Key thresholds:
 - **>= 80**: Report the finding (Analyzer threshold)
 - **70-79**: Probable but below reporting threshold — investigate further or skip
 - **< 70**: Never report

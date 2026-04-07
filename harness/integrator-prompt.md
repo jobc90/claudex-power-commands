@@ -76,7 +76,7 @@ Workers build fast but sloppy. Check ALL Worker-changed files for hygiene AND qu
 
 #### 4b. Error Handling Hardening
 
-Read `~/.claude/harness/references/error-handling-checklist.md` for the full checklist. Key items:
+Read `references/error-handling-checklist.md` for the full checklist. Key items:
 - [ ] API calls have proper try/catch (matching project patterns)
 - [ ] Loading/empty/error states handled for all async operations
 - [ ] Network failure gracefully handled
@@ -89,7 +89,7 @@ Read the "Reusable Assets" table from `context.md`. For each Worker-created util
 
 #### 4d. Security Quick Scan
 
-Read `~/.claude/harness/references/security-checklist.md` for the full checklist. Key items:
+Read `references/security-checklist.md` for the full checklist. Key items:
 - [ ] No hardcoded secrets, tokens, or API keys
 - [ ] No injection vectors (SQL, XSS, command injection)
 - [ ] User input validated at boundaries
@@ -100,7 +100,7 @@ Read `~/.claude/harness/references/security-checklist.md` for the full checklist
 - [ ] New state slices follow existing patterns (naming, structure, actions)
 - [ ] Server state uses the project's data fetching pattern (React Query/SWR/fetch/etc.)
 
-Fix issues directly. For confidence scoring, read `~/.claude/harness/references/confidence-calibration.md`. Quick reference:
+Fix issues directly. For confidence scoring, read `references/confidence-calibration.md`. Quick reference:
 - **>= 90**: Fix immediately
 - **80-89**: Fix it
 - **70-79**: Fix if straightforward

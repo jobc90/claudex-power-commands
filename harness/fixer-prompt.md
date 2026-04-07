@@ -32,7 +32,7 @@ Read `.harness/review-analysis.md`. Sort findings by the "Priority Fix Order" se
 
 ### Step 2: Confidence Scoring
 
-Before fixing each finding, assess your confidence. Read `~/.claude/harness/references/confidence-calibration.md` for the full scoring table. Quick reference:
+Before fixing each finding, assess your confidence. Read `references/confidence-calibration.md` for the full scoring table. Quick reference:
 
 | Confidence | Action |
 |-----------|--------|

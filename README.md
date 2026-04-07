@@ -101,9 +101,10 @@ git clone https://github.com/jobc90/claudex-power-commands.git
 # 2. Commands 복사
 cp claudex-power-commands/commands/*.md ~/.claude/commands/
 
-# 3. Harness 프롬프트 복사
-mkdir -p ~/.claude/harness
+# 3. Harness 프롬프트 + 참조 체크리스트 복사
+mkdir -p ~/.claude/harness/references
 cp claudex-power-commands/harness/*.md ~/.claude/harness/
+cp claudex-power-commands/harness/references/*.md ~/.claude/harness/references/
 
 # 4. 확인
 # 새 세션에서 /harness /harness-docs /harness-review /harness-team /harness-qa /design /claude-dashboard 가 보이면 성공
