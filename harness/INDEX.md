@@ -200,6 +200,18 @@ Each row maps a Claude-side prompt to its Codex copy.
 
 ---
 
+## Shared Reference Checklists
+
+Located in `harness/references/`. Agents load these on demand for progressive disclosure (token savings).
+
+| Reference | Used By | Purpose |
+|-----------|---------|---------|
+| `references/security-checklist.md` | Analyzer, Refiner, Integrator, Builder | Secrets, injection, auth, input validation |
+| `references/error-handling-checklist.md` | Refiner, Integrator, Builder | try/catch, loading/empty/error states, data persistence |
+| `references/confidence-calibration.md` | Analyzer, Fixer, Refiner, Integrator | 0-100 scoring table with examples and action thresholds |
+
+---
+
 ## Maintenance Rules
 
 1. **When adding a new agent**: Add a row to the Agent Catalog, update Artifact Flow, add Codex Mirror entry if applicable.

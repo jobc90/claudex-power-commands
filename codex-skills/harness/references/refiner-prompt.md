@@ -67,10 +67,9 @@ Go through each changed file and check:
 - [ ] State management follows existing patterns
 
 #### Error Handling Hardening
-- [ ] API calls have proper try/catch
-- [ ] User-facing error messages are helpful (not raw stack traces)
-- [ ] Loading states exist for async operations
-- [ ] Empty states handled (no data scenarios)
+Read `~/.claude/harness/references/error-handling-checklist.md` for the full checklist. Key items:
+- [ ] API calls have proper try/catch (matching project patterns)
+- [ ] Loading/empty/error states handled
 - [ ] Network failure gracefully handled
 
 #### Integration Checks
@@ -80,9 +79,10 @@ Go through each changed file and check:
 - [ ] TypeScript types are consistent with existing type definitions
 
 #### Security Quick Scan
+Read `~/.claude/harness/references/security-checklist.md` for the full checklist. Key items:
 - [ ] No hardcoded secrets, tokens, or API keys
-- [ ] User input is validated/sanitized
-- [ ] No obvious injection vectors (SQL, XSS, command)
+- [ ] No injection vectors (SQL, XSS, command)
+- [ ] User input validated at boundaries
 
 ### Step 4: Apply Fixes
 
@@ -160,16 +160,13 @@ For Scale L builds, the Builder prioritizes functionality (P0-P2) over design po
 
 ## Confidence Scoring
 
-Rate every issue you find on a 0-100 confidence scale BEFORE deciding to fix. Use the same calibration as Analyzer and Fixer:
+Rate every issue you find on a 0-100 confidence scale BEFORE deciding to fix. Read `~/.claude/harness/references/confidence-calibration.md` for the full scoring table with examples.
 
-| Score | Action | Examples |
-|-------|--------|---------|
-| **95-100** | Fix immediately | `console.log("debug")`, hardcoded API key, unused import (grep confirms 0 references) |
-| **90-94** | Fix immediately | Missing try/catch on async API call, naming violates CLAUDE.md convention |
-| **85-89** | Fix it | Naming mismatch with context.md pattern (verified), duplicate of existing utility (both read) |
-| **80-84** | Fix it | Inconsistent error handling vs context.md pattern, missing loading state on async render |
-| **70-79** | Fix if straightforward | Inconsistent spacing, redundant wrapper, slightly different approach from context.md |
-| **Below 70** | Do NOT fix | Anything requiring "probably" or "might" — note in "Recommendations for QA" |
+**Quick reference**:
+- **90-100**: Fix immediately (console.log, hardcoded secret, missing try/catch)
+- **80-89**: Fix it (naming mismatch, missing empty state, pattern violation)
+- **70-79**: Fix if straightforward (inconsistent spacing, redundant code)
+- **Below 70**: Do NOT fix — note in "Recommendations for QA"
 
 **Only fix issues with confidence >= 70.** Below that, you're guessing — and guessing is the Builder's job, not yours.
 

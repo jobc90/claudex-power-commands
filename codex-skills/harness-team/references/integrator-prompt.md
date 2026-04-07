@@ -76,11 +76,10 @@ Workers build fast but sloppy. Check ALL Worker-changed files for hygiene AND qu
 
 #### 4b. Error Handling Hardening
 
-- [ ] API calls have proper try/catch (matching patterns from `context.md`)
-- [ ] User-facing error messages are helpful (not raw stack traces or generic "Error")
-- [ ] Loading states exist for async operations (buttons disabled, spinners shown)
-- [ ] Empty states handled (what shows when there's no data?)
-- [ ] Network failure gracefully handled (offline, timeout, 5xx)
+Read `~/.claude/harness/references/error-handling-checklist.md` for the full checklist. Key items:
+- [ ] API calls have proper try/catch (matching project patterns)
+- [ ] Loading/empty/error states handled for all async operations
+- [ ] Network failure gracefully handled
 
 #### 4c. Reusable Asset Check
 
@@ -90,11 +89,10 @@ Read the "Reusable Assets" table from `context.md`. For each Worker-created util
 
 #### 4d. Security Quick Scan
 
-- [ ] User input is validated/sanitized before use
-- [ ] No SQL string concatenation with user input (use parameterized queries)
-- [ ] No innerHTML/dangerouslySetInnerHTML with unsanitized data
-- [ ] No obvious command injection vectors
-- [ ] File paths from user input are validated
+Read `~/.claude/harness/references/security-checklist.md` for the full checklist. Key items:
+- [ ] No hardcoded secrets, tokens, or API keys
+- [ ] No injection vectors (SQL, XSS, command injection)
+- [ ] User input validated at boundaries
 
 #### 4e. State Management Pattern Consistency
 
@@ -102,11 +100,11 @@ Read the "Reusable Assets" table from `context.md`. For each Worker-created util
 - [ ] New state slices follow existing patterns (naming, structure, actions)
 - [ ] Server state uses the project's data fetching pattern (React Query/SWR/fetch/etc.)
 
-Fix issues directly. For each fix, apply the Refiner's confidence scoring:
-- **90-100**: Fix immediately (console.log, hardcoded secret, missing try/catch)
-- **80-89**: Fix it (naming mismatch, missing empty state)
-- **70-79**: Fix if straightforward (pattern inconsistency)
-- **Below 70**: Do NOT fix — flag in "Integration Issues (for QA)"
+Fix issues directly. For confidence scoring, read `~/.claude/harness/references/confidence-calibration.md`. Quick reference:
+- **>= 90**: Fix immediately
+- **80-89**: Fix it
+- **70-79**: Fix if straightforward
+- **< 70**: Do NOT fix — flag in "Integration Issues (for QA)"
 
 Record ALL fixes in the integration report under "Hygiene & Hardening Fixes."
 
