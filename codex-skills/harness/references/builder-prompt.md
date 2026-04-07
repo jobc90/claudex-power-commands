@@ -21,8 +21,12 @@ A Builder who ignores context.md deserves every QA failure they get.
 
 - **Codebase context**: `.harness/build-context.md` — existing patterns, reusable assets, constraints. Read BEFORE coding.
 - **Product spec**: `.harness/build-spec.md` — your blueprint. Read it second.
-- **Refiner report** (if round 2+): `.harness/build-refiner-report.md` — check "Not Fixed (Deferred to Builder)" items.
-- **QA feedback** (if round 2+): `.harness/build-round-{N}-feedback.md` — fix EVERY issue listed.
+- **Environment snapshot** (every round): `.harness/snapshot-round-{N}.md` — exact project state before this round.
+- **Diagnosis report** (round 2+): `.harness/diagnosis-round-{N-1}.md` — root cause analysis from Diagnostician. PRIMARY input for fix rounds.
+- **QA evidence traces** (round 2+): `.harness/traces/round-{N-1}-qa-evidence.md` — raw diagnostic data (console errors, network responses).
+- **Build history** (round 2+): `.harness/build-history.md` — cumulative record of all rounds' decisions and outcomes.
+- **Refiner report** (round 2+): `.harness/build-refiner-report.md` — check "Not Fixed (Deferred to Builder)" items.
+- **QA feedback** (round 2+): `.harness/build-round-{N-1}-feedback.md` — previous round's scores and feature-level testing results.
 - **Progress log**: `.harness/build-progress.md` — update as you work.
 
 ## Execution Process
@@ -52,17 +56,61 @@ A Builder who ignores context.md deserves every QA failure they get.
 9. **Self-test before handoff**: Open the running app yourself. Navigate through the core user flows. Click buttons, fill forms, verify data persists. Fix any obvious issues you find BEFORE handing off to QA. This self-test is mandatory — the QA agent will catch what you miss, but you should catch the obvious issues first.
 10. **Update `.harness/build-progress.md`**.
 
-### Round 2+ (Fix Round)
+### Scale-Specific Execution Priority (CRITICAL)
 
-1. **Read the Refiner report** (`.harness/build-refiner-report.md`) — check the "Not Fixed (Deferred to Builder)" section. These are issues the Refiner identified as requiring feature-level changes that only you can make.
-2. **Read the QA feedback** (`.harness/build-round-{N}-feedback.md`) carefully — every bug, every failed criterion.
-3. **Strategic decision**:
-   - Scores trending up? → Refine current approach, fix specific bugs.
-   - Major area fundamentally broken? → Consider rearchitecting that area.
-4. **Address EVERY specific issue** from both the Refiner's deferred items AND the QA feedback. Do not skip any.
-5. **Re-verify** your fixes work by testing them yourself.
-6. **Ensure dev server is running**.
-7. **Update `.harness/build-progress.md`** with what you fixed.
+**Scale S/M**: Follow the steps above as-is. All steps fit within scope.
+
+**Scale L — Workload Management**:
+
+Scale L builds cover 6+ files, multiple modules, and potentially the full application. Under this scope, trying to perfect everything in one pass leads to failure. Follow this priority cascade:
+
+| Priority | Focus | What to do |
+|----------|-------|------------|
+| **P0** | Functionality | All Must-Have features working end-to-end with data persistence |
+| **P1** | Integration | All features connected — navigation, state, API, database wired correctly |
+| **P2** | Error handling | Core error paths handled (API failures, empty states, loading states) |
+| **P3** | Design basics | Color palette, typography, layout structure applied consistently |
+| **P4** | Design polish | Hover states, transitions, responsive breakpoints, visual micro-interactions |
+| **P5** | AI features | Agent integrations, tool use, fallback behavior |
+
+**Rule**: Do NOT start P3-P5 until P0-P2 are solid. The Refiner will handle design consistency alignment, and QA will catch the rest. A fully functional app with basic styling > a beautiful app that crashes on data submit.
+
+**In progress.md**, report your priority coverage:
+```markdown
+## Priority Coverage (Scale L)
+- P0 Functionality: DONE (12/12 Must-Have features)
+- P1 Integration: DONE (all routes connected)
+- P2 Error handling: PARTIAL (API errors handled, empty states TODO)
+- P3 Design basics: DONE (palette + typography applied)
+- P4 Design polish: SKIPPED (deferred to Refiner)
+- P5 AI features: DONE (2/2 agents implemented)
+```
+
+### Round 2+ (Fix Round) — Diagnostic Context Enhanced
+
+The Diagnostician agent has analyzed QA failures and produced a root cause diagnosis. Your PRIMARY input is now the diagnosis report, not the raw QA feedback. Fix ROOT CAUSES, not symptoms.
+
+1. **Read environment snapshot** (`.harness/snapshot-round-{N}.md`) — understand the exact current state (git diff, build/test status, dev server) before touching anything.
+2. **Read the Diagnosis Report** (`.harness/diagnosis-round-{N-1}.md`) — this is your PRIMARY input. It contains:
+   - Root cause analysis with `file:line` citations
+   - Regression analysis (if scores dropped from previous round)
+   - Recommended fix priority order
+   - Cumulative patterns across rounds
+3. **Read the Cumulative History** (`.harness/build-history.md`) — understand what was tried in ALL previous rounds, what worked, what regressed. Do NOT repeat failed approaches.
+4. **Read QA evidence traces** (`.harness/traces/round-{N-1}-qa-evidence.md`) — if the diagnosis references specific evidence (console errors, network responses), verify it yourself by reading the trace file.
+5. **Read the Refiner report** (`.harness/build-refiner-report.md`) — check "Not Fixed (Deferred to Builder)" section.
+6. **Strategic decision based on diagnosis**:
+   - Root cause clearly identified with `file:line`? → Fix it directly at the cited location.
+   - Regression detected (REVERT classification)? → Revert the specific harmful change FIRST, before making new fixes.
+   - Regression detected (FIX-FORWARD)? → Fix the new bug introduced by the previous round's change.
+   - Regression detected (RETHINK)? → The previous approach was fundamentally wrong. Try a different strategy.
+   - Cumulative pattern detected? → Address the underlying architectural issue, not just individual symptoms.
+7. **Address EVERY root cause** from the diagnosis report in priority order. Do not skip any.
+8. **Re-verify** your fixes work by testing them yourself.
+9. **Ensure dev server is running**.
+10. **Update `.harness/build-progress.md`** with what you fixed and which root causes you addressed.
+
+**CRITICAL**: If the diagnosis report is not available (e.g., Scale S with 1 round), fall back to reading QA feedback directly as before.
 
 ## Implementation Standards
 

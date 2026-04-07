@@ -65,12 +65,26 @@ Write the user's request and agent count to `.harness/team-prompt.md`.
 
 Read the scout prompt template: `~/.claude/harness/scout-prompt.md`
 
+### Request Type Detection (CRITICAL)
+
+Before launching the Scout, classify the request type:
+
+| Type | Signal | Scout Instruction |
+|------|--------|-------------------|
+| **FIX** | "수정", "fix", "bug", "안됨", "작동하지 않음", "비활성화", "차단" | Include Deep Dive Protocol |
+| **MODIFY** | "변경", "modify", "refactor", "이관", "전환" | Include Deep Dive Protocol |
+| **BUILD** | "추가", "구현", "만들어", "생성", "add", "implement", "create" | Standard scan only |
+
+For FIX/MODIFY requests, append this instruction to the Scout prompt:
+- "This is a FIX/MODIFICATION request. After the standard codebase scan, you MUST execute the **Deep Dive Protocol** described in the scout prompt. Trace the specific feature's data flow end-to-end, verify each flag/guard/condition with file:line evidence, and map behavior per user type/role. The Architect will reject unverified claims."
+
 Launch a **general-purpose Agent** with subagent_type `Explore`:
 - **prompt**: The scout prompt template + context:
   - "Project directory: `{cwd}`"
   - "User's request: `{$ARGUMENTS}`"
   - "Scale: L (team builds are always large-scale)"
   - "Write output to `.harness/team-context.md`"
+  - If FIX/MODIFY: Deep Dive instruction (see above)
 - **description**: "harness-team scout"
 
 ---
@@ -173,6 +187,7 @@ Launch a **general-purpose Agent**:
   - "QA_MODE: FULL or STANDARD based on whether UI exists"
   - "Round number: {R}"
   - "Write QA report to `.harness/team-round-{R}-feedback.md`"
+  - "Write evidence traces to `.harness/traces/round-{R}-qa-evidence.md` for FAIL/PARTIAL results."
   - If app has UI: "App URL: `{URL from integration-report.md}`"
 - **description**: "harness-team QA round {R}"
 
@@ -182,17 +197,74 @@ After QA completes:
 1. Read `.harness/team-round-{R}-feedback.md`
 2. Extract scores
 3. Report: round, scores, pass/fail, key issues
-4. **Decision**:
-   - ALL criteria >= 7/10 → **PASS** → Phase 5
-   - ANY < 7/10 → **FAIL** → round R+1
-   - R == 2 → exit regardless → Phase 5
+4. **Decision** (evaluate in this order):
+   - R == 2 (max rounds) → go to 4g (History), then Phase 5 regardless of scores
+   - ALL criteria >= 7/10 → **PASS** → go to 4g (History), then Phase 5
+   - ANY < 7/10 AND R < 2 → **FAIL** → continue to 4f (Diagnose), then 4g (History), then round R+1
 
-**Round 2 re-dispatch logic**:
-1. Read QA report's "Feature-by-Feature Testing" and "Bugs Found" sections
-2. Map each bug to the Worker who owns the affected file(s) (from Architect's plan file ownership map)
-3. Re-dispatch ONLY Workers whose files have bugs. Workers with all-PASS files are NOT re-dispatched.
-4. Include the relevant QA findings in each re-dispatched Worker's prompt.
-5. If a bug spans files owned by multiple Workers, assign it to the Integrator instead.
+#### 4f. Diagnose (Before Round 2 ONLY)
+
+If round R failed and R < max rounds, run the Diagnostician to analyze failures before re-dispatching Workers.
+
+Read the diagnostician prompt template: `~/.claude/harness/diagnostician-prompt.md`
+
+Launch a **general-purpose Agent**:
+- **prompt**: The diagnostician prompt template + context:
+  - "QA feedback: `.harness/team-round-{R}-feedback.md`"
+  - "QA evidence traces: `.harness/traces/round-{R}-qa-evidence.md`"
+  - "Architect plan: `.harness/team-plan.md`"
+  - "Codebase context: `.harness/team-context.md`"
+  - "Round: {R}"
+  - "Write diagnosis to `.harness/team-diagnosis-round-{R}.md`"
+  - "IMPORTANT: Map each root cause to the Worker who owns the affected files (use file ownership from team-plan.md). This helps the orchestrator re-dispatch only the relevant Workers."
+- **description**: "harness-team diagnostician round {R}"
+
+After completion, use the diagnosis to inform Round 2 re-dispatch logic:
+
+**Round 2 re-dispatch logic (diagnosis-enhanced)**:
+1. Read `.harness/team-diagnosis-round-{R}.md` for root cause → file mapping
+2. Map each root cause to the Worker who owns the affected file(s) (from Architect's plan file ownership map)
+3. Re-dispatch ONLY Workers whose files have root causes. Workers with all-PASS files are NOT re-dispatched.
+4. Include the relevant root cause analysis (not just symptoms) in each re-dispatched Worker's prompt:
+   - "Read the diagnosis at `.harness/team-diagnosis-round-{R}.md` — fix the ROOT CAUSES identified for your files, not just the symptoms."
+5. If a root cause spans files owned by multiple Workers, assign it to the Integrator instead.
+
+#### 4g. Accumulate History (Every Round)
+
+Append to `.harness/team-history.md`:
+
+```markdown
+## Round {R}
+- **Scores**: [criterion: score pairs]
+- **Workers dispatched**: [which workers ran this round]
+- **Root causes identified**: [from diagnosis if available]
+- **Decision**: PASS → Phase 5 / Continue to Round {R+1}
+```
+
+---
+
+## Phase 4-post: Artifact Validation
+
+```bash
+MISSING=0
+# Core artifacts
+for f in team-prompt.md team-context.md team-plan.md team-integration-report.md; do
+  [ ! -f ".harness/$f" ] && echo "MISSING: .harness/$f" && MISSING=$((MISSING+1))
+done
+# Worker progress files
+for i in $(seq 0 {N}); do
+  [ ! -f ".harness/team-worker-${i}-progress.md" ] && echo "MISSING: .harness/team-worker-${i}-progress.md" && MISSING=$((MISSING+1))
+done
+# QA per round
+for R in $(seq 1 {completed_rounds}); do
+  [ ! -f ".harness/team-round-${R}-feedback.md" ] && echo "MISSING: .harness/team-round-${R}-feedback.md" && MISSING=$((MISSING+1))
+done
+# History
+[ ! -f ".harness/team-history.md" ] && echo "MISSING: .harness/team-history.md" && MISSING=$((MISSING+1))
+echo "Artifacts: $MISSING missing"
+```
+
+Include artifact status in the Summary.
 
 ---
 

@@ -24,6 +24,7 @@
 | `/harness-review` | Scanner -> Analyzer -> Fixer -> Verifier -> Reporter | 코드 리뷰 + git 핸드오프 |
 | `/harness-team` | Scout -> Architect -> Workers(N) -> Integrator -> QA | 병렬 팀 빌드 |
 | `/harness-qa` | Scout -> Scenario Writer -> Test Executor -> Analyst -> Reporter | 기능 QA 테스트 |
+| `/harness-lint` | Mechanical checks + Linter agent | 교차참조/미러 동기화/구조 검증 |
 | `/design` | 설정 도구 | 디자인 시스템 3-dial 설정 |
 | `/claude-dashboard` | 설정 도구 | statusline 설정 |
 
@@ -31,13 +32,14 @@
 
 | 소속 | 에이전트 |
 |---|---|
-| `/harness` | `scout`, `planner`, `builder`, `refiner`, `qa` |
+| `/harness` | `scout`, `planner`, `builder`, `refiner`, `qa`, `diagnostician` |
 | `/harness-docs` | `researcher`, `outliner`, `writer`, `reviewer`, `validator` |
 | `/harness-review` | `scanner`, `analyzer`, `fixer`, `verifier`, `reporter` |
-| `/harness-team` | `architect`, `worker`, `integrator` + `scout`, `qa` 재사용 |
+| `/harness-team` | `architect`, `worker`, `integrator` + `scout`, `qa`, `diagnostician` 재사용 |
 | `/harness-qa` | `scenario-writer`, `test-executor`, `analyst`, `qa-reporter` + `scout` 재사용 |
+| `/harness-lint` | `linter` |
 
-총 22개 프롬프트가 `harness/` 아래에 들어 있습니다.
+총 25개 프롬프트가 `harness/` 아래에 들어 있습니다 (23 에이전트 + INDEX + linter).
 
 ---
 
@@ -143,14 +145,18 @@ claudex-power-commands/
 │   ├── harness-review.md
 │   ├── harness-team.md
 │   ├── harness-qa.md
+│   ├── harness-lint.md
 │   ├── design.md
 │   └── claude-dashboard.md
 ├── harness/
+│   ├── INDEX.md                  # Agent cross-reference map
 │   ├── scout-prompt.md
 │   ├── planner-prompt.md
 │   ├── builder-prompt.md
 │   ├── refiner-prompt.md
 │   ├── qa-prompt.md
+│   ├── diagnostician-prompt.md
+│   ├── linter-prompt.md
 │   ├── researcher-prompt.md
 │   ├── outliner-prompt.md
 │   ├── writer-prompt.md

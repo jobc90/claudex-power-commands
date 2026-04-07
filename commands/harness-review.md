@@ -130,7 +130,21 @@ Launch a **general-purpose Agent**:
 
 After completion:
 - Read `.harness/review-report.md`
+- Run artifact validation:
+  ```bash
+  MISSING=0
+  for f in review-context.md review-analysis.md; do
+    [ ! -f ".harness/$f" ] && echo "MISSING: .harness/$f" && MISSING=$((MISSING+1))
+  done
+  # Skip fix/verify/report checks in --dry-run mode
+  if [ "{mode}" != "--dry-run" ]; then
+    for f in review-fix-report.md review-verify-report.md review-report.md; do
+      [ ! -f ".harness/$f" ] && echo "MISSING: .harness/$f" && MISSING=$((MISSING+1))
+    done
+  fi
+  ```
 - Present the user-facing summary from the report
+- Include artifact status: "Artifacts: [X] missing" or "Artifacts: OK"
 
 ---
 

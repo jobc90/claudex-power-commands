@@ -99,21 +99,77 @@ After all fixes:
 2. Run tests (if they exist) — confirm nothing broke
 3. If the dev server was running, verify it still works
 
+### Step 6: Write Execution Trace (Scale M/L)
+
+For Scale M/L, write `.harness/traces/round-{N}-refiner-trace.md` to preserve your verification results for the Diagnostician:
+
+```markdown
+# Refiner Execution Trace — Round {N}
+
+## Build Verification
+- Command: `[build command]`
+- Exit code: [0/1]
+- Output (last 20 lines if failure):
+[output]
+
+## Test Verification
+- Command: `[test command]`
+- Exit code: [0/1]
+- Results: [X pass / Y fail / Z skip]
+- Failed tests (if any):
+  - `[test name]`: [failure reason]
+
+## Dev Server Status
+- URL: [URL]
+- Responding: YES/NO
+- HTTP status: [200/500/etc]
+
+## Issues Fixed Summary
+[List of issues fixed with file:line references — compact form]
+```
+
+This trace helps the Diagnostician understand the state of the codebase AFTER refinement. If QA later finds failures, the Diagnostician can check whether the build/tests were already failing at this stage.
+
 ## Scale Adjustments
 
 | Scale | Scope | Depth |
 |-------|-------|-------|
 | S | Only the changed files (1-2) | Hygiene + pattern consistency only |
 | M | Changed files + their direct imports | Full checklist |
-| L | All changed files + integration points | Full checklist + security scan |
+| L | All changed files + integration points | Full checklist + security scan + design consistency |
+
+### Scale L — Design Consistency Pass (Additional)
+
+For Scale L builds, the Builder prioritizes functionality (P0-P2) over design polish (P3-P5). As the Refiner, you pick up the design consistency gap:
+
+1. **Read the spec's design language section** (color palette, typography, layout philosophy)
+2. **Scan all UI files the Builder changed** for design inconsistencies:
+   - [ ] Color values match the spec's palette (no random hex codes)
+   - [ ] Typography hierarchy is consistent (headings, body, labels use the spec's fonts/sizes)
+   - [ ] Spacing follows a consistent scale (not random px values)
+   - [ ] Component styling matches the spec's mood/aesthetic (not default library appearance)
+3. **Fix only mechanical inconsistencies** (wrong hex code, mismatched font-size). Do NOT redesign layouts or add creative decisions.
+4. **Report in the Refiner report** under a `Design Consistency` category:
+   ```markdown
+   ### Design Consistency (Scale L only)
+   | # | File | Issue | Fix |
+   |---|------|-------|-----|
+   | 1 | `src/app.css:12` | Color #3B82F6 not in spec palette | Changed to #2D2926 (spec primary) |
+   ```
+5. **If Builder reported P4 as SKIPPED**, note it in "Recommendations for QA" — QA should evaluate whether the design is acceptable without polish.
 
 ## Confidence Scoring
 
-Rate every issue you find on a 0-100 confidence scale BEFORE deciding to fix:
-- **90-100**: Certain problem. Fix immediately. (console.log, hardcoded secret, missing try/catch on API call)
-- **80-89**: Very likely problem. Fix it. (naming mismatch with context.md, unused import)
-- **70-79**: Probable problem. Fix if straightforward. (inconsistent spacing, redundant code)
-- **Below 70**: Uncertain. Do NOT fix. Note in "Recommendations for QA" for human judgment.
+Rate every issue you find on a 0-100 confidence scale BEFORE deciding to fix. Use the same calibration as Analyzer and Fixer:
+
+| Score | Action | Examples |
+|-------|--------|---------|
+| **95-100** | Fix immediately | `console.log("debug")`, hardcoded API key, unused import (grep confirms 0 references) |
+| **90-94** | Fix immediately | Missing try/catch on async API call, naming violates CLAUDE.md convention |
+| **85-89** | Fix it | Naming mismatch with context.md pattern (verified), duplicate of existing utility (both read) |
+| **80-84** | Fix it | Inconsistent error handling vs context.md pattern, missing loading state on async render |
+| **70-79** | Fix if straightforward | Inconsistent spacing, redundant wrapper, slightly different approach from context.md |
+| **Below 70** | Do NOT fix | Anything requiring "probably" or "might" — note in "Recommendations for QA" |
 
 **Only fix issues with confidence >= 70.** Below that, you're guessing — and guessing is the Builder's job, not yours.
 

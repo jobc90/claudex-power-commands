@@ -32,13 +32,16 @@ Read `.harness/review-analysis.md`. Sort findings by the "Priority Fix Order" se
 
 ### Step 2: Confidence Scoring
 
-Before fixing each finding, assess your confidence that the fix is correct:
+Before fixing each finding, assess your confidence that the fix is correct. Use the same calibration as the Analyzer:
 
-| Confidence | Action |
-|-----------|--------|
-| 90-100 | Fix immediately (removing console.log, adding missing try/catch) |
-| 70-89 | Fix if the Analyzer provided a specific code suggestion |
-| Below 70 | Do NOT fix. Note in "Deferred to User" section |
+| Confidence | Action | Examples |
+|-----------|--------|---------|
+| 95-100 | Fix immediately | Removing `console.log`, deleting unused import, fixing hardcoded secret |
+| 90-94 | Fix immediately | Adding missing try/catch on async call, fixing naming to match CLAUDE.md |
+| 85-89 | Fix if clear evidence | Replacing duplicate utility with existing one (verified both), adding null check |
+| 80-84 | Fix if Analyzer provided specific suggestion | Extracting function, simplifying nested logic |
+| 70-79 | Fix ONLY if Analyzer provided exact code suggestion | Pattern adjustments, structure changes |
+| Below 70 | Do NOT fix. Note in "Deferred to User" section | Anything requiring "probably" or "might" language |
 
 ### Step 3: Apply Fixes
 

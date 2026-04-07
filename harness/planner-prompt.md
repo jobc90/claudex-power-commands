@@ -77,6 +77,56 @@ Your spec MUST follow this structure for LITE mode:
 5. **No AI features section** unless the task specifically involves AI.
 6. **Keep technical notes brief.** Only note decisions that aren't obvious from the code.
 
+### LITE Mode Verification Gate (CRITICAL — Fix/Modification Requests)
+
+When the task is a fix or modification (not a greenfield feature), every claim in the spec MUST be backed by evidence from `build-context.md`. Do NOT write assumptions — write verified facts.
+
+**Before writing "Files to Change":**
+1. Check that `build-context.md` contains a **Feature Deep Dive** section. If it does, use its verified findings as your primary source.
+2. For EACH file you list under "Files to Change", confirm in `build-context.md` that the Scout actually read that file and described its current state.
+3. If `build-context.md` does NOT contain verified evidence for a file you want to list, mark it as `[NEEDS VERIFICATION]` and explain what assumption you're making.
+
+**Spec format for fix/modification tasks:**
+
+Under "Scope", add a "Current State (Verified)" section:
+
+```markdown
+## Current State (Verified)
+[Summarize what the Scout confirmed — cite build-context.md findings]
+- [Fact 1]: VERIFIED (file:line from build-context.md)
+- [Fact 2]: VERIFIED (file:line)
+- [Fact 3]: NOT FOUND — [what was expected but missing]
+```
+
+Under each "Files to Change" entry, add verification status:
+
+```markdown
+### Files to Change
+1. `path/to/file.tsx` — [change description]
+   - Current state: [what's there now — VERIFIED from build-context.md]
+   - Change needed: [what to modify]
+2. `path/to/other.ts` — [change description] [NEEDS VERIFICATION]
+   - Assumption: [what you're assuming without direct evidence]
+```
+
+**What to do with `[NEEDS VERIFICATION]` items:**
+
+1. **Count them.** If more than 30% of "Files to Change" entries are `[NEEDS VERIFICATION]`, the Scout's context is insufficient. Add a warning at the top of the spec:
+   ```markdown
+   ⚠️ INCOMPLETE CONTEXT: [N] out of [M] files lack verified evidence from Scout.
+   Builder MUST read and verify these files before implementing changes.
+   ```
+2. **Builder obligation.** For each `[NEEDS VERIFICATION]` file, the Builder MUST:
+   - Read the file before making changes
+   - Confirm or correct the Planner's assumption in `build-progress.md`
+   - If the assumption was wrong, adjust implementation accordingly
+3. **User visibility.** When presenting the spec summary to the user, explicitly call out unverified items:
+   ```
+   ⚠️ [N]개 파일은 Scout 검증 미완 — Builder가 구현 전 직접 확인합니다.
+   ```
+
+**Why this matters:** Without this gate, the Planner produces specs that look precise but contain unverified assumptions. The user then has to ask "did you actually check X?" — which is a failure of the pipeline.
+
 ---
 
 ## FULL Mode Spec Structure (Scale L)

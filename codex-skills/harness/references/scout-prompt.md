@@ -152,12 +152,69 @@ Write `.harness/build-context.md`:
 - Health check: [can `install` and `build` succeed? Run them if Scale M/L. Note any failures.]
 ```
 
+## Deep Dive Protocol — Fix/Modification Requests (CRITICAL)
+
+When the user's request is a **fix, modification, or behavior change** (not a greenfield build), the standard module scan is INSUFFICIENT. After the broad scan, you MUST perform a targeted deep dive on the specific feature being fixed.
+
+### Why This Exists
+
+Without deep verification, the Planner writes specs based on assumptions — "the flag probably isn't used" — and the user has to manually ask "did you actually check that?" This wastes rounds and erodes trust.
+
+### Deep Dive Steps
+
+1. **Identify the feature's data flow.** Trace from backend API → frontend context/state → UI component. Read EVERY file in this chain.
+2. **Verify each flag/guard/condition.** If a flag like `canOrder` exists, confirm:
+   - Where it's SET (backend: which file, which line, which conditions)
+   - Where it's STORED (context/state: which file, which line)
+   - Where it's CONSUMED (UI: which files read it, or "NOT CONSUMED — no file reads this flag")
+   - Where it SHOULD be consumed but ISN'T (the actual gap)
+3. **Verify API-level enforcement.** If the fix involves blocking behavior, check whether the relevant API endpoints have guards. Read the actual controller/route files.
+4. **Map every user type/role scenario.** If the request involves role-based behavior, enumerate each role and trace what happens for each. Don't assume — read the branching logic.
+5. **Record verified vs unverified claims.** Every finding must be tagged:
+   - `VERIFIED: [claim] (file:line)` — you read the file and confirmed
+   - `NOT FOUND: [expected thing]` — you searched and it doesn't exist
+   - `UNVERIFIED: [claim]` — you couldn't confirm (explain why)
+
+### Deep Dive Output Section
+
+Add this section to `.harness/build-context.md` when the request is a fix/modification:
+
+```markdown
+## Feature Deep Dive: [Feature Name]
+
+### Data Flow
+[Backend] → [Context/State] → [UI Component]
+- SET: `file:line` — [what sets the value, under what conditions]
+- STORED: `file:line` — [where the value lives in frontend state]
+- CONSUMED: `file:line` — [where it's read] or "NOT CONSUMED"
+
+### Current Behavior per Role/Scenario
+| Scenario | Expected | Actual | Evidence |
+|----------|----------|--------|----------|
+| [role/case 1] | [expected behavior] | [actual behavior] | `file:line` |
+| [role/case 2] | ... | ... | ... |
+
+### Gaps Found
+1. [Gap]: [description] — VERIFIED (`file:line`)
+2. [Gap]: [description] — VERIFIED (`file:line`)
+
+### API Enforcement Status
+| Endpoint | Guard Exists? | Evidence |
+|----------|--------------|----------|
+| [endpoint 1] | YES/NO | `file:line` or "searched, not found" |
+```
+
+### When NOT to Deep Dive
+
+- Greenfield builds (new app from scratch) — standard module scan is sufficient
+- Config changes, dependency updates — no feature flow to trace
+
 ## Scouting Rules
 
 1. **Read actual files, don't guess.** Every claim must cite a file path and line number. "Probably uses Zustand" → REJECTED. "`src/store/orderSlice.ts:1` imports from `zustand`" → ACCEPTED.
-2. **Breadth first, then depth.** Map the structure before reading individual files.
+2. **Breadth first, then depth.** Map the structure before reading individual files. For fix requests, THEN do the Deep Dive.
 3. **Focus on what Builder needs.** Patterns to follow, assets to reuse, constraints to respect.
-4. **Be efficient.** Scale S: 2-5 files. Scale M: 5-15 files. Scale L: 20-40 files. Don't read everything.
+4. **Be efficient.** Scale S: 2-5 files. Scale M: 5-15 files. Scale L: 20-40 files. Don't read everything — but for fix requests, read EVERY file in the affected feature's data flow.
 5. **Flag surprises ruthlessly.** Unconventional patterns, dead code, inconsistencies, outdated dependencies — these are landmines. Call them out bluntly.
 6. **Don't design.** You describe what IS. The Planner decides what SHOULD BE.
 7. **Don't skip tests.** If tests exist, note the framework, pattern, and location. The Builder needs this.

@@ -101,6 +101,13 @@ Spawn a fresh scout subagent:
 - focus based on the selected test mode (see scout prompt for mode-specific focus)
 - pass the test mode explicitly
 - write `.harness_codex/qa-context.md`
+- ALWAYS append QA-specific supplementary instructions to the scout prompt:
+  1. Route & Navigation Map (all routes with access requirements)
+  2. User Type & Permission Matrix (every role, what they can/cannot do, how type is determined)
+  3. Authentication & Session Handling (login mechanism, session storage, expiry behavior)
+  4. State Transitions & Side Effects (create/update/delete operations, irreversible actions)
+  5. Error & Edge Case Surfaces (error codes, empty states, pagination, validation rules)
+- These QA-specific findings go in a `## QA Discovery` section of qa-context.md
 
 After it finishes, briefly report the discovered route count, user types, key features, and mode.
 

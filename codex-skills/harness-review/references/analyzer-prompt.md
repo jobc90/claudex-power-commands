@@ -44,7 +44,7 @@ For EACH changed file, apply all 5 angles. Use `git diff <file>` to see exact ch
 | Error handling | Are errors handled consistently with existing patterns? |
 | Imports | Unused imports? Wrong import style? |
 
-**Confidence threshold**: Only report issues with confidence >= 80.
+**Confidence threshold**: Only report issues with confidence >= 80. See **Confidence Calibration Guide** below for scoring examples.
 
 ### Angle 2: Simplification (from code-simplifier patterns)
 
@@ -154,8 +154,24 @@ Write `.harness/review-analysis.md`:
 
 1. **Every angle, every file.** Don't skip an angle because the file "doesn't seem relevant." Auth logic can have type issues. UI components can have security issues.
 2. **Evidence is mandatory.** "This function is too complex" → REJECTED. "Function `processOrder` at `src/orders.ts:42` is 78 lines with 6 levels of nesting (exceeds 50-line/4-level limits from CLAUDE.md)" → ACCEPTED.
-3. **Confidence filtering.** Only report findings with confidence >= 80. Below that, you're guessing.
+3. **Confidence filtering.** Only report findings with confidence >= 80. Below that, you're guessing. Use the Calibration Guide.
 4. **Severity is objective.** CRITICAL = data loss, security breach, system crash. HIGH = incorrect behavior, significant UX degradation. MEDIUM = code quality, maintainability. LOW = style, minor improvement.
+
+## Confidence Calibration Guide
+
+All harness agents (Analyzer, Fixer, Refiner) use the same confidence scale. Use these concrete examples to calibrate your scoring:
+
+| Score | Meaning | Examples |
+|-------|---------|---------|
+| **95-100** | Undeniable — can be verified mechanically | Hardcoded API key in source code; `console.log("debug")` left in production path; unused import (no references found); SQL string concatenation with user input |
+| **90-94** | Near-certain — strong structural evidence | Missing try/catch on async API call (verified no error boundary exists); function exceeds 50 lines (counted); naming violates documented convention in CLAUDE.md |
+| **85-89** | High confidence — clear pattern violation | Return value ignored from function that returns error status; duplicate utility exists in codebase (verified by reading both); missing null check where upstream can return null (traced data flow) |
+| **80-84** | Confident — evidence supports but edge cases possible | Error message exposes internal details (could be intentional for dev mode); nested ternary could be simplified (readability is subjective); function could be extracted (judgment call on boundary) |
+| **70-79** | Probable — more likely correct than not | Code structure suggests a race condition (not proven); redundant code might serve a purpose not visible in diff; type assertion might be intentional workaround |
+| **60-69** | Uncertain — could go either way | Design pattern choice might be suboptimal (alternative unclear); performance concern without profiling data; naming is unusual but might be domain-specific |
+| **Below 60** | Speculative — insufficient evidence | "This feels wrong"; "Probably should use X instead"; assumption about intent without reading surrounding code |
+
+**Key principle**: If you need to use "probably", "might", or "seems like" to describe the issue, your confidence is below 80. Investigate further or don't report.
 5. **Security findings are never LOW.** If it's a real security issue, it's at minimum MEDIUM.
 6. **Don't suggest what you can't specify.** "Refactor this" → BANNED. "Extract lines 42-67 into a `validatePayment(order)` function" → REQUIRED.
 

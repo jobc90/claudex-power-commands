@@ -78,6 +78,19 @@ git init 2>/dev/null || true
 
 Load `references/scout-prompt.md`.
 
+### Request Type Detection (CRITICAL)
+
+Before launching the Scout, classify the request type:
+
+| Type | Signal | Scout Instruction |
+|------|--------|-------------------|
+| **FIX** | "수정", "fix", "bug", "안됨", "작동하지 않음", "비활성화", "차단" | Include Deep Dive Protocol |
+| **MODIFY** | "변경", "modify", "refactor", "이관", "전환" | Include Deep Dive Protocol |
+| **BUILD** | "추가", "구현", "만들어", "생성", "add", "implement", "create" | Standard scan only |
+
+For FIX/MODIFY requests, append this instruction to the Scout prompt:
+- "This is a FIX/MODIFICATION request. After the standard module scan, you MUST execute the **Deep Dive Protocol** described in the scout prompt. Trace the specific feature's data flow end-to-end, verify each flag/guard/condition with file:line evidence, and map behavior per user type/role. The Planner will reject unverified claims."
+
 Use a fresh explore-style subagent:
 
 - keep `fork_context` false
@@ -87,6 +100,7 @@ Use a fresh explore-style subagent:
   - `S`: scan only the 2-5 directly relevant files
   - `M`: scan the relevant modules, roughly 5-15 files
   - `L`: comprehensive scan, roughly 20-40 files
+- if FIX/MODIFY: include the Deep Dive instruction above
 
 After Scout completes, briefly report that codebase context was collected. No approval gate here.
 
@@ -96,10 +110,15 @@ Load `references/planner-prompt.md`.
 
 ### Scale `S`
 
-Do not spawn a Planner agent. Write `.harness_codex/build-spec.md` directly using `.harness_codex/build-context.md` with:
+Do not spawn a Planner agent. Write `.harness_codex/build-spec.md` directly using `.harness_codex/build-context.md`.
+
+**CRITICAL**: Before writing the spec, READ `.harness_codex/build-context.md` thoroughly. For FIX/MODIFY requests, the "Feature Deep Dive" section contains verified findings — use ONLY those findings to determine files to change. Do NOT list files based on your own inference.
+
+Include:
 
 - task summary
-- files to change
+- current state (verified) — for FIX/MODIFY: summarize Scout's Deep Dive findings with file:line citations
+- files to change — MUST match Scout's verified findings
 - existing patterns to follow
 - success criteria
 - risks
@@ -138,19 +157,30 @@ After it finishes, summarize the spec and ask:
 
 Stop and wait for approval.
 
-## Phase 4. Build-Refine-QA Loop
+## Phase 4. Build-Refine-QA Loop (Meta-Harness Enhanced)
 
 Load:
 
 - `references/builder-prompt.md`
 - `references/refiner-prompt.md`
 - `references/qa-prompt.md`
+- `references/diagnostician-prompt.md`
 
 Run at most:
 
 - `S`: 1 round
 - `M`: 2 rounds
 - `L`: 3 rounds
+
+### 4-pre. Environment Snapshot (Every Round)
+
+Before each Build round, capture the project state to `.harness_codex/snapshot-round-{N}.md`:
+- `git diff --stat` and `git diff --name-only`
+- Build command exit code + last 20 lines if failure
+- Test command exit code + summary
+- Dev server status
+
+Pass this path to the Builder.
 
 ### 4a. Build
 
@@ -160,10 +190,11 @@ Builder instructions must include:
 
 - codebase context: `.harness_codex/build-context.md`
 - product spec: `.harness_codex/build-spec.md`
+- environment snapshot: `.harness_codex/snapshot-round-{N}.md`
 - scale: `{S|M|L}`
 - round handling:
   - round 1: implement the requested changes from the spec
-  - round 2+: read `.harness_codex/build-round-{N-1}-feedback.md` and `.harness_codex/build-refiner-report.md`, then fix every reported issue
+  - round 2+: read diagnosis at `.harness_codex/diagnosis-round-{N-1}.md` (PRIMARY input), cumulative history at `.harness_codex/build-history.md`, and evidence traces at `.harness_codex/traces/round-{N-1}-qa-evidence.md`. Fix ROOT CAUSES, not symptoms.
 - write progress to `.harness_codex/build-progress.md`
 - for scale `M` and `L`, start the dev server in background and record the URL in `.harness_codex/build-progress.md`
 
@@ -205,6 +236,7 @@ QA instructions must include:
 - refiner report path: `.harness_codex/build-refiner-report.md`
 - scale and round number
 - output path: `.harness_codex/build-round-{N}-feedback.md`
+- for scale M/L: write evidence traces to `.harness_codex/traces/round-{N}-qa-evidence.md`
 - mode:
   - `S`: code review plus build/test verification only
   - `M`: Playwright if UI exists, otherwise code review plus build/test
@@ -217,15 +249,36 @@ After QA finishes:
 
 1. Read `.harness_codex/build-round-{N}-feedback.md`.
 2. Extract the criterion scores.
-3. Report briefly:
-   - round number
-   - scores
-   - pass/fail
-   - key issues
-4. Decide:
-   - all scores `>= 7` -> pass and exit
-   - any score `< 7` and another round remains -> continue
-   - final allowed round reached -> stop even if failures remain
+3. Report briefly: round number, scores, pass/fail, key issues
+4. Decide (evaluate in this order):
+   - final allowed round reached -> go to 4g (History), then stop regardless of scores
+   - all scores `>= 7` -> pass, go to 4g (History), then Phase 5
+   - any score `< 7` AND rounds remain -> go to 4f (Diagnose), then 4g (History), then continue
+
+### 4f. Diagnose (Scale M/L, before next round ONLY)
+
+Skip for Scale S or if this was the final round.
+
+Load `references/diagnostician-prompt.md`.
+
+Spawn a fresh diagnostician subagent:
+
+- QA feedback: `.harness_codex/build-round-{N}-feedback.md`
+- QA evidence traces: `.harness_codex/traces/round-{N}-qa-evidence.md`
+- environment snapshot: `.harness_codex/snapshot-round-{N}.md`
+- codebase context: `.harness_codex/build-context.md`
+- round number: {N}
+- if round 2+: previous diagnosis and build history paths
+- output: `.harness_codex/diagnosis-round-{N}.md`
+
+Report briefly: root cause count, regression count, top priority fix.
+
+### 4g. Accumulate History (Every Round)
+
+Append to `.harness_codex/build-history.md`:
+
+- Scores, verdict, changes made, QA issues, root causes, what worked/regressed
+- NEVER overwrite — only append. Create on round 1 with a header.
 
 ## Phase 5. Summary
 

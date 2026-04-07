@@ -1,0 +1,208 @@
+# Harness Agent Index
+
+> 23개 에이전트 프롬프트, 5개 파이프라인, 7개 커맨드의 교차참조 맵.
+> Lint(`/harness-lint`)가 이 파일을 기준으로 일관성을 검증합니다.
+> 프롬프트 추가/수정 시 이 Index도 함께 업데이트하세요.
+
+## Agent Catalog (23 prompts)
+
+### /harness Pipeline — Scout → Planner → Builder → Refiner → QA → Diagnostician
+
+| # | Agent | Prompt File | Reads | Writes |
+|---|-------|------------|-------|--------|
+| 1 | Scout | `scout-prompt.md` | CLAUDE.md, package.json, codebase files | `build-context.md` |
+| 2 | Planner | `planner-prompt.md` | `build-context.md`, `build-prompt.md` | `build-spec.md` |
+| 3 | Builder | `builder-prompt.md` | `build-context.md`, `build-spec.md`, `snapshot-round-{N}.md`, `diagnosis-round-{N-1}.md`¹, `build-history.md`¹, `traces/round-{N-1}-qa-evidence.md`¹, `build-refiner-report.md`¹, `build-round-{N-1}-feedback.md`¹ | `build-progress.md`, code changes |
+| 4 | Refiner | `refiner-prompt.md` | `build-context.md`, `build-spec.md`, `build-progress.md`, `build-round-{N-1}-feedback.md`¹ | `build-refiner-report.md`, `traces/round-{N}-refiner-trace.md`² |
+| 5 | QA | `qa-prompt.md` | `build-spec.md`, `build-refiner-report.md` | `build-round-{N}-feedback.md`, `traces/round-{N}-qa-evidence.md`² |
+| 6 | Diagnostician | `diagnostician-prompt.md` | `build-round-{N}-feedback.md`, `traces/round-{N}-qa-evidence.md`, `snapshot-round-{N}.md`, `build-progress.md`, `build-context.md`, `diagnosis-round-{N-1}.md`¹, `build-history.md`¹ | `diagnosis-round-{N}.md` |
+
+¹ Round 2+ only  ² Scale M/L only
+
+### /harness-review Pipeline — Scanner → Analyzer → Fixer → Verifier → Reporter
+
+| # | Agent | Prompt File | Reads | Writes |
+|---|-------|------------|-------|--------|
+| 7 | Scanner | `scanner-prompt.md` | git diff, codebase files | `review-context.md` |
+| 8 | Analyzer | `analyzer-prompt.md` | `review-context.md` | `review-analysis.md` |
+| 9 | Fixer | `fixer-prompt.md` | `review-analysis.md`, `review-context.md` | `review-fix-report.md`, code fixes |
+| 10 | Verifier | `verifier-prompt.md` | `review-fix-report.md`, `review-analysis.md`, `review-context.md` | `review-verify-report.md` |
+| 11 | Reporter | `reporter-prompt.md` | `review-context.md`, `review-analysis.md`, `review-fix-report.md`, `review-verify-report.md` | `review-report.md`, git actions |
+
+### /harness-docs Pipeline — Researcher → Outliner → Writer → Reviewer + Validator
+
+| # | Agent | Prompt File | Reads | Writes |
+|---|-------|------------|-------|--------|
+| 12 | Researcher | `researcher-prompt.md` | codebase files, CLAUDE.md | `docs-research.md` |
+| 13 | Outliner | `outliner-prompt.md` | `docs-research.md` | `docs-outline.md` |
+| 14 | Writer | `writer-prompt.md` | `docs-research.md`, `docs-outline.md`, source code | `docs-draft.md` |
+| 15 | Reviewer | `reviewer-prompt.md` | `docs-draft.md`, `docs-research.md`, `docs-outline.md` | `docs-round-{N}-review.md` |
+| 16 | Validator | `validator-prompt.md` | `docs-draft.md`, `docs-research.md` | `docs-round-{N}-validation.md` |
+
+### /harness-team Pipeline — Scout → Architect → Workers(N) → Integrator → QA → Diagnostician
+
+| # | Agent | Prompt File | Reads | Writes |
+|---|-------|------------|-------|--------|
+| 1 | Scout (shared) | `scout-prompt.md` | codebase files | `team-context.md` |
+| 17 | Architect | `architect-prompt.md` | `team-context.md` | `team-plan.md` |
+| 18 | Worker | `worker-prompt.md` | `team-plan.md`, `team-context.md` | `team-worker-{i}-progress.md` |
+| 19 | Integrator | `integrator-prompt.md` | `team-plan.md`, `team-worker-{0..N}-progress.md`, `team-context.md` | `team-integration-report.md` *(includes full Refiner-equivalent hygiene + hardening)* |
+| 5 | QA (shared) | `qa-prompt.md` | `team-plan.md`, `team-integration-report.md` | `team-round-{R}-feedback.md`, `traces/round-{R}-qa-evidence.md` |
+| 6 | Diagnostician (shared) | `diagnostician-prompt.md` | `team-round-{R}-feedback.md`, `traces/`, `team-context.md`, `team-plan.md` | `team-diagnosis-round-{R}.md` |
+
+### /harness-qa Pipeline — Scout → Scenario Writer → Test Executor → Analyst → Reporter
+
+| # | Agent | Prompt File | Reads | Writes |
+|---|-------|------------|-------|--------|
+| 1 | Scout (shared) | `scout-prompt.md` | codebase files | `qa-context.md` |
+| 20 | Scenario Writer | `scenario-writer-prompt.md` | `qa-context.md` | `qa-scenarios.md` (or `qa-test-plan.md` for pre-launch) |
+| 21 | Test Executor | `test-executor-prompt.md` | `qa-scenarios.md` | `qa-results.md` |
+| 22 | Analyst | `analyst-prompt.md` | `qa-results.md`, `qa-scenarios.md`, `qa-context.md` | `qa-analysis.md` |
+| 23 | QA Reporter | `qa-reporter-prompt.md` | `qa-analysis.md`, `qa-results.md`, `qa-scenarios.md`, `qa-context.md` | `qa-report.md` |
+
+---
+
+## Shared Agents
+
+| Agent | Prompt | Used By |
+|-------|--------|---------|
+| Scout | `scout-prompt.md` | `/harness`, `/harness-team`, `/harness-qa` |
+| QA | `qa-prompt.md` | `/harness`, `/harness-team` |
+| Diagnostician | `diagnostician-prompt.md` | `/harness`, `/harness-team` |
+
+**Note**: Shared agents use the same prompt file but receive different file paths from each orchestrator. The Diagnostician prompt is intentionally generic — it reads file paths from its task description, not from hardcoded values.
+
+---
+
+## Artifact Flow Map
+
+All artifacts are written to `.harness/` (Claude) or `.harness_codex/` (Codex).
+
+### /harness Artifact Flow
+
+```
+build-prompt.md (user request)
+     ↓
+[Scout] → build-context.md
+     ↓
+[Planner] → build-spec.md
+     ↓
+  ┌─── Round N ────────────────────────────────────────────┐
+  │ snapshot-round-{N}.md (orchestrator captures)          │
+  │     ↓                                                  │
+  │ [Builder] → build-progress.md + code changes           │
+  │     ↓                                                  │
+  │ [Refiner] → build-refiner-report.md                    │
+  │           → traces/round-{N}-refiner-trace.md (M/L)    │
+  │     ↓                                                  │
+  │ [QA] → build-round-{N}-feedback.md                     │
+  │      → traces/round-{N}-qa-evidence.md (M/L)           │
+  │     ↓                                                  │
+  │ [Diagnostician] → diagnosis-round-{N}.md (M/L, if ≠ max)│
+  │     ↓                                                  │
+  │ build-history.md (orchestrator appends)                 │
+  └────────────────────────────────────────────────────────┘
+```
+
+### /harness-team Artifact Flow
+
+```
+team-prompt.md (user request)
+     ↓
+[Scout] → team-context.md
+     ↓
+[Architect] → team-plan.md
+     ↓
+  ┌─── Round R ────────────────────────────────────────────┐
+  │ [Worker 0] → team-worker-0-progress.md (Wave 1)       │
+  │ [Worker 1..N] → team-worker-{i}-progress.md (Wave 2)  │
+  │     ↓                                                  │
+  │ [Integrator] → team-integration-report.md (Wave 3)     │
+  │     ↓                                                  │
+  │ [QA] → team-round-{R}-feedback.md                      │
+  │      → traces/round-{R}-qa-evidence.md                 │
+  │     ↓                                                  │
+  │ [Diagnostician] → team-diagnosis-round-{R}.md (if R<2) │
+  │     ↓                                                  │
+  │ team-history.md (orchestrator appends)                  │
+  └────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Codex Mirror Map
+
+Each row maps a Claude-side prompt to its Codex copy.
+
+### /harness mirrors
+
+| Original (`harness/`) | Mirror (`codex-skills/harness/references/`) |
+|----------------------|---------------------------------------------|
+| `scout-prompt.md` | `scout-prompt.md` |
+| `planner-prompt.md` | `planner-prompt.md` |
+| `builder-prompt.md` | `builder-prompt.md` |
+| `refiner-prompt.md` | `refiner-prompt.md` |
+| `qa-prompt.md` | `qa-prompt.md` |
+| `diagnostician-prompt.md` | `diagnostician-prompt.md` |
+
+### /harness-review mirrors
+
+| Original (`harness/`) | Mirror (`codex-skills/harness-review/references/`) |
+|----------------------|---------------------------------------------------|
+| `scanner-prompt.md` | `scanner-prompt.md` |
+| `analyzer-prompt.md` | `analyzer-prompt.md` |
+| `fixer-prompt.md` | `fixer-prompt.md` |
+| `verifier-prompt.md` | `verifier-prompt.md` |
+| `reporter-prompt.md` | `reporter-prompt.md` |
+
+### /harness-docs mirrors
+
+| Original (`harness/`) | Mirror (`codex-skills/harness-docs/references/`) |
+|----------------------|-------------------------------------------------|
+| `researcher-prompt.md` | `researcher-prompt.md` |
+| `outliner-prompt.md` | `outliner-prompt.md` |
+| `writer-prompt.md` | `writer-prompt.md` |
+| `reviewer-prompt.md` | `reviewer-prompt.md` |
+| `validator-prompt.md` | `validator-prompt.md` |
+
+### /harness-team mirrors
+
+| Original (`harness/`) | Mirror (`codex-skills/harness-team/references/`) |
+|----------------------|-------------------------------------------------|
+| `scout-prompt.md` | `scout-prompt.md` |
+| `architect-prompt.md` | `architect-prompt.md` |
+| `worker-prompt.md` | `worker-prompt.md` |
+| `integrator-prompt.md` | `integrator-prompt.md` |
+| `qa-prompt.md` | `qa-prompt.md` |
+| `diagnostician-prompt.md` | `diagnostician-prompt.md` |
+
+### /harness-qa mirrors
+
+| Original (`harness/`) | Mirror (`codex-skills/harness-qa/references/`) |
+|----------------------|-----------------------------------------------|
+| `scout-prompt.md` | `scout-prompt.md` |
+| `scenario-writer-prompt.md` | `scenario-writer-prompt.md` |
+| `test-executor-prompt.md` | `test-executor-prompt.md` |
+| `analyst-prompt.md` | `analyst-prompt.md` |
+| `qa-reporter-prompt.md` | `qa-reporter-prompt.md` |
+
+---
+
+## Pipeline Configuration
+
+| Pipeline | Command | Max Rounds | Diagnostician | Evidence Traces |
+|----------|---------|-----------|--------------|----------------|
+| `/harness` | `commands/harness.md` | S=1, M=2, L=3 | M/L (before round 2+, not final) | M/L |
+| `/harness-review` | `commands/harness-review.md` | 1 (no loop) | No | No |
+| `/harness-docs` | `commands/harness-docs.md` | S=1, M=2, L=3 | No | No |
+| `/harness-team` | `commands/harness-team.md` | 2 | Before round 2 | Yes |
+| `/harness-qa` | `commands/harness-qa.md` | 2 | No | No |
+
+---
+
+## Maintenance Rules
+
+1. **When adding a new agent**: Add a row to the Agent Catalog, update Artifact Flow, add Codex Mirror entry if applicable.
+2. **When modifying file paths**: Update all agents that read/write the changed path in this Index.
+3. **When adding a Codex port**: Add mirror entries and ensure `cp` sync is documented.
+4. **Run `/harness-lint`** after any structural change to verify consistency.

@@ -343,3 +343,67 @@ Use these as anchors. A 7 means "works with minor issues." A 5 means "multiple c
    - GOOD: "The sidebar uses a different shade of blue (#2563EB) than the header (#1D4ED8), breaking the color consistency defined in the spec. The nav items have no hover state, making it unclear which items are clickable."
 
 8. **Don't grade on a curve.** Score against the spec and criteria, not against "what's reasonable for AI-generated code." The spec defines the target. Meet it or fail.
+
+## Evidence Preservation Protocol (CRITICAL)
+
+When reporting a FAIL or PARTIAL result, you MUST preserve raw diagnostic evidence for the Diagnostician agent. Summaries like "button didn't work" are useless for root cause analysis. The Diagnostician needs the full diagnostic chain.
+
+### 1. Write Evidence Traces
+
+For Scale M/L, write `.harness/traces/round-{N}-qa-evidence.md` alongside your main report. This file contains raw evidence the Diagnostician will use:
+
+```markdown
+# QA Evidence Traces — Round {N}
+
+## Failure Evidence
+
+### [Feature/Bug name] — FAIL
+**Action sequence**:
+1. Navigated to [URL]
+2. Clicked [element selector or description]
+3. Filled [form field] with [value]
+4. Clicked [submit button]
+
+**Console errors** (captured during test):
+```
+[exact console error messages, copy-paste from browser console]
+```
+
+**Network failures** (if any):
+- `POST /api/orders` → 403 `{"error": "TERMS_NOT_ACCEPTED"}`
+- `GET /api/user/profile` → 200 (OK)
+
+**DOM state at failure**:
+- Expected: [what should appear]
+- Actual: [what appeared instead — or nothing]
+- Screenshot: [description of what the screenshot shows]
+
+**Playwright trace excerpt**:
+```
+page.click('#submit-btn') → triggered
+page.waitForResponse('/api/orders') → 403
+page.locator('.error-message') → not found (no error shown to user)
+```
+```
+
+### 2. Diagnostic Chain per Failure
+
+For each FAIL, include a brief diagnostic chain in the evidence file:
+- **Trigger**: What user action started the failure
+- **App response**: What the app did (or didn't do)
+- **Error signal**: What error was observed (console, network, visual)
+- **Likely code path**: Based on codebase context, which files are involved
+
+### 3. Scale Adjustments
+
+| Scale | Evidence Traces | Diagnostic Chain |
+|-------|----------------|-----------------|
+| S | Not required (1 round, no Diagnostician) | Include "Technical hint" in main report only |
+| M | Required for FAIL/PARTIAL results | Required for CRITICAL and HIGH bugs |
+| L | Required for ALL test results (including PASS) | Required for all FAIL/PARTIAL results |
+
+### 4. What NOT to Preserve
+
+- Raw HTML dumps (too large, not useful)
+- Full network HAR files (summarize relevant requests instead)
+- Successful test steps with no interesting behavior (for Scale M)

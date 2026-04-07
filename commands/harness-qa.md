@@ -116,7 +116,50 @@ Launch a **general-purpose Agent** with subagent_type `Explore`:
   - "**Test mode**: `{selected mode}`"
   - "Write output to `.harness/qa-context.md`"
   - Mode-specific focus instructions (see below)
+  - QA-specific supplementary instructions (see below)
 - **description**: "harness-qa scout"
+
+### QA-Specific Supplementary Instructions (ALWAYS append to Scout prompt)
+
+The standard scout prompt is designed for development context. For QA, the Scout needs additional focus areas that the Scenario Writer depends on. ALWAYS append these instructions:
+
+```
+## QA-Specific Discovery Requirements
+
+In addition to the standard scouting protocol, you MUST discover and document these QA-critical items:
+
+### 1. Route & Navigation Map
+- List ALL navigable routes with their access requirements (public, authenticated, role-specific)
+- Identify route guards/middleware that control access
+- Note any redirect chains (e.g., unauthenticated → login → original page)
+
+### 2. User Type & Permission Matrix
+- Enumerate EVERY user type/role the system supports (admin, staff, customer, anonymous, etc.)
+- For each type, list what they CAN and CANNOT do (verified from guards/middleware/conditions in code)
+- Note how user type is determined (JWT claim, database field, session attribute)
+- Flag any role-based UI differences (e.g., admin sees "Delete" button, user doesn't)
+
+### 3. Authentication & Session Handling
+- Login mechanism (email/password, OAuth, SSO, Keycloak, etc.)
+- Session storage (cookie, localStorage, JWT)
+- Session expiry behavior (redirect to login? silent refresh?)
+- Multi-tab/multi-device behavior if discoverable
+
+### 4. State Transitions & Side Effects
+- List operations that change server state (create, update, delete)
+- Note operations with side effects (email sent, webhook fired, cache invalidated)
+- Identify irreversible operations (hard delete, payment charge)
+
+### 5. Error & Edge Case Surfaces
+- Known error codes/messages the app returns
+- Empty state handling (what happens when there's no data?)
+- Pagination behavior (does it exist? infinite scroll? page-based?)
+- File upload limits, input validation rules
+
+Write these findings in a dedicated section of qa-context.md:
+## QA Discovery
+[structured findings per section above]
+```
 
 ### Mode-Specific Scout Focus
 
@@ -291,6 +334,19 @@ After completion:
 Full report: `.harness/qa-report.md`
 ```
 
+- Run artifact validation:
+  ```bash
+  MISSING=0
+  for f in qa-prompt.md qa-context.md qa-scenarios.md qa-results.md qa-analysis.md qa-report.md; do
+    [ ! -f ".harness/$f" ] && echo "MISSING: .harness/$f" && MISSING=$((MISSING+1))
+  done
+  # pre-launch mode uses qa-test-plan.md instead of results/analysis/report
+  if [ "{mode}" = "pre-launch" ]; then
+    [ ! -f ".harness/qa-test-plan.md" ] && echo "MISSING: .harness/qa-test-plan.md" && MISSING=$((MISSING+1))
+  fi
+  echo "Artifacts: $MISSING missing"
+  ```
+- Include artifact status in the report
 - Ask: **"QA 리포트를 확인해주세요. 수정 후 재테스트가 필요하면 `/harness-qa` 를 다시 실행해주세요."**
 
 ---

@@ -61,10 +61,24 @@ Write the user's request and worker count to `.harness_codex/team-prompt.md`.
 
 Load `references/scout-prompt.md`.
 
+### Request Type Detection (CRITICAL)
+
+Before launching the Scout, classify the request type:
+
+| Type | Signal | Scout Instruction |
+|------|--------|-------------------|
+| **FIX** | "수정", "fix", "bug", "안됨", "작동하지 않음", "비활성화", "차단" | Include Deep Dive Protocol |
+| **MODIFY** | "변경", "modify", "refactor", "이관", "전환" | Include Deep Dive Protocol |
+| **BUILD** | "추가", "구현", "만들어", "생성", "add", "implement", "create" | Standard scan only |
+
+For FIX/MODIFY requests, append this instruction to the Scout prompt:
+- "This is a FIX/MODIFICATION request. After the standard codebase scan, you MUST execute the **Deep Dive Protocol** described in the scout prompt. Trace the specific feature's data flow end-to-end, verify each flag/guard/condition with file:line evidence, and map behavior per user type/role. The Architect will reject unverified claims."
+
 Spawn a fresh scout subagent:
 
 - scale guidance: treat team builds as large-scale
 - output: `.harness_codex/team-context.md`
+- if FIX/MODIFY: include the Deep Dive instruction above
 
 ## Phase 3. Architect
 
@@ -152,6 +166,7 @@ Spawn a fresh QA subagent:
 - integration report: `.harness_codex/team-integration-report.md`
 - round number
 - output: `.harness_codex/team-round-{R}-feedback.md`
+- evidence traces: `.harness_codex/traces/round-{R}-qa-evidence.md`
 - if UI exists, include the app URL from the integration report
 
 ### 4e. Evaluate
@@ -160,17 +175,29 @@ After QA finishes:
 
 1. Read `.harness_codex/team-round-{R}-feedback.md`.
 2. Extract the scores.
-3. Report:
-   - round number
-   - scores
-   - pass/fail
-   - key issues
-4. Decide:
-   - all criteria `>= 7` -> pass
-   - any criterion `< 7` and `R < 2` -> run another round
-   - otherwise stop
+3. Report: round number, scores, pass/fail, key issues
+4. Decide (evaluate in this order):
+   - `R == 2` (max rounds) -> go to 4g, then Phase 5 regardless of scores
+   - all criteria `>= 7` -> pass, go to 4g, then Phase 5
+   - any criterion `< 7` AND `R < 2` -> go to 4f (Diagnose), then 4g (History), then round 2
 
-For round 2, re-dispatch only the workers whose owned files are implicated by QA findings. Cross-owner bugs go to the Integrator.
+### 4f. Diagnose (Before Round 2 ONLY)
+
+Load `references/diagnostician-prompt.md`.
+
+Spawn a fresh diagnostician subagent:
+- QA feedback: `.harness_codex/team-round-{R}-feedback.md`
+- QA evidence: `.harness_codex/traces/round-{R}-qa-evidence.md`
+- team plan: `.harness_codex/team-plan.md`
+- codebase context: `.harness_codex/team-context.md`
+- output: `.harness_codex/team-diagnosis-round-{R}.md`
+- "Map each root cause to the Worker who owns the affected files."
+
+Use the diagnosis for round 2 re-dispatch: only re-dispatch Workers whose files have root causes identified. Include diagnosis path in each Worker's prompt. Cross-owner root causes go to the Integrator.
+
+### 4g. Accumulate History (Every Round)
+
+Append to `.harness_codex/team-history.md`: scores, workers dispatched, root causes, decision. Never overwrite.
 
 ## Phase 5. Summary
 

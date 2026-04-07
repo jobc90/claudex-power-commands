@@ -60,19 +60,55 @@ Execute the Wave 3 tasks from the Architect's plan:
 4. **Type coherence**: Verify all shared types are used consistently
 5. **Dead import cleanup**: Remove imports that are no longer needed
 
-### Step 4: Code Hygiene (Refiner-equivalent)
+### Step 4: Code Hygiene + Hardening (Full Refiner-equivalent)
 
-Workers build fast but sloppy. Check ALL Worker-changed files for:
+Workers build fast but sloppy. Check ALL Worker-changed files for hygiene AND quality hardening. This step replaces a separate Refiner agent — you MUST be thorough.
+
+#### 4a. Basic Hygiene
 
 - [ ] Remove `console.log` / `console.debug` (keep `console.error`/`console.warn` if intentional)
 - [ ] Remove TODO/FIXME/HACK comments left by Workers
 - [ ] Remove commented-out code blocks
 - [ ] Remove unused imports
+- [ ] Remove dead variables/functions introduced by Workers
 - [ ] Verify naming matches conventions from `context.md`
-- [ ] Verify error handling follows patterns from `context.md`
 - [ ] No hardcoded secrets, tokens, or API keys
 
-Fix these issues directly. Record in the integration report under "Hygiene Fixes."
+#### 4b. Error Handling Hardening
+
+- [ ] API calls have proper try/catch (matching patterns from `context.md`)
+- [ ] User-facing error messages are helpful (not raw stack traces or generic "Error")
+- [ ] Loading states exist for async operations (buttons disabled, spinners shown)
+- [ ] Empty states handled (what shows when there's no data?)
+- [ ] Network failure gracefully handled (offline, timeout, 5xx)
+
+#### 4c. Reusable Asset Check
+
+Read the "Reusable Assets" table from `context.md`. For each Worker-created utility, hook, or component:
+- [ ] Does an equivalent already exist in the project? → Replace Worker's version with existing asset
+- [ ] Did multiple Workers create similar utilities? → Already caught in Step 5 (Duplicate Detection)
+
+#### 4d. Security Quick Scan
+
+- [ ] User input is validated/sanitized before use
+- [ ] No SQL string concatenation with user input (use parameterized queries)
+- [ ] No innerHTML/dangerouslySetInnerHTML with unsanitized data
+- [ ] No obvious command injection vectors
+- [ ] File paths from user input are validated
+
+#### 4e. State Management Pattern Consistency
+
+- [ ] State management follows the approach documented in `context.md` (Zustand/Redux/Context/etc.)
+- [ ] New state slices follow existing patterns (naming, structure, actions)
+- [ ] Server state uses the project's data fetching pattern (React Query/SWR/fetch/etc.)
+
+Fix issues directly. For each fix, apply the Refiner's confidence scoring:
+- **90-100**: Fix immediately (console.log, hardcoded secret, missing try/catch)
+- **80-89**: Fix it (naming mismatch, missing empty state)
+- **70-79**: Fix if straightforward (pattern inconsistency)
+- **Below 70**: Do NOT fix — flag in "Integration Issues (for QA)"
+
+Record ALL fixes in the integration report under "Hygiene & Hardening Fixes."
 
 ### Step 5: Duplicate Detection
 
@@ -137,12 +173,19 @@ Write `.harness/team-integration-report.md`:
 | 4 | Type coherence | DONE — 1 type conflict resolved |
 | 5 | Dead import cleanup | DONE — 4 unused imports removed |
 
-## Hygiene Fixes
+## Hygiene & Hardening Fixes
 
-| # | File | Issue | Fix |
-|---|------|-------|-----|
-| 1 | `src/foo.ts:42` | console.log left by Worker 1 | Removed |
-| 2 | `src/bar.tsx:15` | camelCase file, project uses kebab-case | Renamed |
+| # | File | Category | Issue | Confidence | Fix |
+|---|------|----------|-------|-----------|-----|
+| 1 | `src/foo.ts:42` | Hygiene | console.log left by Worker 1 | 95 | Removed |
+| 2 | `src/bar.tsx:15` | Hygiene | camelCase file, project uses kebab-case | 90 | Renamed |
+| 3 | `src/api.ts:28` | Error Handling | Missing try/catch on fetch call | 92 | Added try/catch matching context.md pattern |
+| 4 | `src/list.tsx:55` | Empty State | No empty state when data is [] | 85 | Added empty state component |
+| 5 | `src/utils/format.ts` | Reuse | Duplicates existing `shared/format.ts` | 88 | Replaced with existing asset |
+| 6 | `src/form.tsx:12` | Security | innerHTML with user input | 95 | Changed to textContent |
+
+### Deferred to QA (confidence < 70)
+- [issue]: [confidence] [why uncertain]
 
 ## Duplicates Found
 

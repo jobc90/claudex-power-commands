@@ -259,6 +259,30 @@ After BOTH reviewer and validator complete:
 
 ---
 
+## Phase 5-post: Artifact Validation
+
+Before generating the Summary, run a quick artifact check:
+
+```bash
+MISSING=0
+# Core artifacts
+for f in docs-request.md docs-research.md docs-outline.md docs-draft.md; do
+  [ ! -f ".harness/$f" ] && echo "MISSING: .harness/$f" && MISSING=$((MISSING+1))
+done
+# Scale M/L review artifacts
+if [ "{scale}" != "S" ]; then
+  for N in $(seq 1 {completed_rounds}); do
+    [ ! -f ".harness/docs-round-${N}-review.md" ] && echo "WARN: .harness/docs-round-${N}-review.md"
+    [ ! -f ".harness/docs-round-${N}-validation.md" ] && echo "WARN: .harness/docs-round-${N}-validation.md"
+  done
+fi
+echo "Artifacts: $MISSING missing"
+```
+
+Include artifact status in the Summary.
+
+---
+
 ## Phase 6: Summary
 
 ### Scale S — Compact Report
