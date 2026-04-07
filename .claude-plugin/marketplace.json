@@ -5,15 +5,15 @@
     "url": "https://github.com/jobc90"
   },
   "metadata": {
-    "description": "7 harness commands for Claude Code and Codex: multi-agent build pipeline, documentation, code review, parallel build, QA testing, frontend design, and dashboard.",
-    "version": "3.0.0"
+    "description": "8 harness commands for Claude Code and Codex: multi-agent build pipeline, documentation, code review, parallel build, QA testing, lint, frontend design, and dashboard.",
+    "version": "3.1.0"
   },
   "plugins": [
     {
       "name": "claudex",
       "source": "./",
-      "description": "7 harness commands with 22 specialized agent prompts: /harness, /harness-docs, /harness-review, /harness-team, /harness-qa, /design, /claude-dashboard",
-      "version": "3.0.0",
+      "description": "8 harness commands with 25 specialized agent prompts: /harness, /harness-docs, /harness-review, /harness-team, /harness-qa, /harness-lint, /design, /claude-dashboard. Includes Diagnostician agent, Meta-Harness-inspired evidence traces, and pre-commit lint hook.",
+      "version": "3.1.0",
       "category": "automation",
       "tags": [
         "harness",
