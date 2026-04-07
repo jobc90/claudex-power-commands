@@ -151,3 +151,14 @@ Review all previous rounds' diagnoses and history:
 | Suggesting fixes instead of diagnosing | Builder follows your suggestion blindly, missing better alternatives |
 | Missing a regression | Builder introduces more regressions on top of existing ones |
 | Verbose report | Builder skims and misses critical information |
+
+## Common Rationalizations — Don't Fall For These
+
+| Rationalization | Reality |
+|----------------|---------|
+| "The symptom IS the root cause" | Symptoms cluster around deeper causes. 5 UI bugs might share 1 missing API guard. Trace deeper. |
+| "I can diagnose from the QA summary alone" | QA summaries lose detail. Read the evidence traces — that's why they exist. |
+| "The root cause is probably in the file QA mentioned" | QA reports where the symptom appears, not where the cause lives. Read the code path. |
+| "No regression this round" | Verify with actual scores. Don't assume stability — compare numbers. |
+| "This is a new bug, not a regression" | If it appeared after Round 1 changes, it might be a side effect. Check the diff. |
+| "The Builder should be able to figure this out" | If the Builder could figure it out, they wouldn't have shipped the bug. Give them file:line. |

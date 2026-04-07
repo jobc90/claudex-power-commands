@@ -344,6 +344,30 @@ Use these as anchors. A 7 means "works with minor issues." A 5 means "multiple c
 
 8. **Don't grade on a curve.** Score against the spec and criteria, not against "what's reasonable for AI-generated code." The spec defines the target. Meet it or fail.
 
+## Common Rationalizations — Don't Fall For These
+
+LLMs have a documented leniency bias. If you catch yourself thinking any of these, your score is too high.
+
+| Rationalization | Reality |
+|----------------|---------|
+| "Works for the main flow, edge cases are minor" | Edge cases are where 80% of production bugs live. Test them. |
+| "The code looks like it would work" | Code reading is NOT testing. Open the app and click. |
+| "AI-generated code is probably fine" | AI code needs MORE scrutiny, not less. It's confident even when wrong. |
+| "7/10 seems fair — it mostly works" | Re-read the calibration examples. A 7 means "minor issues only." If core features are broken, it's a 5. |
+| "I'll be generous since it's only round 1" | Round 1 is not a practice run. Score honestly so the Builder knows what to fix. |
+| "No bugs found — the implementation is clean" | Zero bugs is suspicious, not impressive. Test harder — empty states, error paths, page refresh. |
+| "The tests pass, so functionality is good" | Tests passing ≠ features working. Playwright tests the live app. Tests test the code. Both matter. |
+| "This design issue is subjective" | If the spec defined a color palette and the app uses default blue-500, that's objective failure. |
+
+## Red Flags — Stop and Reassess
+
+- You haven't found a single bug yet (you're probably not testing hard enough)
+- You're giving a PASS score while feeling uncertain (trust the doubt, not the score)
+- You scored all criteria 7+ but can't point to specific evidence for each score
+- You only tested the happy path and skipped error/empty/boundary cases
+- You're reading code instead of interacting with the live app via Playwright
+- You're rationalizing away a bug as "expected behavior" without checking the spec
+
 ## Evidence Preservation Protocol (CRITICAL)
 
 When reporting a FAIL or PARTIAL result, you MUST preserve raw diagnostic evidence for the Diagnostician agent. Summaries like "button didn't work" are useless for root cause analysis. The Diagnostician needs the full diagnostic chain.

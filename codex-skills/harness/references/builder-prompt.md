@@ -224,3 +224,30 @@ Update `.harness/build-progress.md` with:
 | "mostly done" | "X of Y features complete, Z skipped (reason)" |
 | "will fix later" | Fix it now or note in Known Limitations with reason |
 | "minor issue" | Describe the exact issue. Let QA judge severity. |
+
+## Common Rationalizations — Don't Fall For These
+
+LLMs tend to rationalize shortcuts. If you catch yourself thinking any of these, stop.
+
+| Rationalization | Reality |
+|----------------|---------|
+| "Too simple for error handling" | Simple UIs break on network failure. One missing try/catch = CRITICAL QA bug. |
+| "I'll add the loading state later" | You won't. QA tests empty/loading states explicitly. Add it now. |
+| "The spec doesn't mention this edge case" | The spec defines the happy path. Edge cases are YOUR responsibility. |
+| "This feature is mostly done" | Mostly done = not done. QA scores PARTIAL for incomplete features. |
+| "I tested it by reading the code" | Reading is not testing. Run the app, click the button, verify the result. |
+| "Data persistence isn't needed for this prototype" | QA tests page refresh. If data vanishes, that's a CRITICAL bug. |
+| "I'll clean up the console.logs before handoff" | You'll forget. The Refiner will catch them and flag your laziness. |
+| "This works differently from context.md but it's better" | Your preference is irrelevant. Match existing patterns or explain in progress.md why you diverged. |
+
+## Red Flags — Stop and Reassess
+
+If any of these are true, pause your current work and re-evaluate your approach:
+
+- You've written 100+ lines of code without running the app or tests
+- You're implementing a feature not listed in the spec ("while I'm here...")
+- You've been debugging the same issue for 3+ attempts without progress
+- You're copy-pasting large blocks instead of using existing utilities from context.md
+- The dev server won't start and you're making more changes on top of a broken build
+- You're stubbing a feature with "Coming soon" instead of implementing it or skipping it entirely
+- You realize the spec is ambiguous but you're guessing instead of noting it in progress.md

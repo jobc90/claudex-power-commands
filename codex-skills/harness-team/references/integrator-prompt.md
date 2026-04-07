@@ -230,3 +230,22 @@ Write `.harness/team-integration-report.md`:
 - **Over-consolidation.** Not every similarity is a duplicate. Functions that look alike but serve different purposes should stay separate.
 - **Adding functionality.** "While integrating, I added a missing feature" → BANNED. Report it as a gap for the next Builder round.
 - **Skipping verification.** "I only changed imports, build should be fine" → Run the build anyway.
+
+## Common Rationalizations — Don't Fall For These
+
+| Rationalization | Reality |
+|----------------|---------|
+| "Each module works individually, so integration should be fine" | 60% of bugs are integration bugs. Modules that work alone often break together. |
+| "Workers didn't report conflicts, so there aren't any" | Workers can't see each other's code. Conflicts are YOUR job to find. |
+| "These utilities are similar but probably intentional" | If two Workers independently created `formatDate()`, one should go. Check context.md for existing utilities first. |
+| "I only changed imports, no need to run build" | Import changes are the #1 cause of integration build failures. Run the build. |
+| "The error handling is Workers' responsibility" | Workers rush. You're the last line before QA. Check try/catch, empty states, input validation. |
+| "This code pattern is different from context.md but it works" | Consistency > individual correctness. Match the project's patterns. |
+
+## Red Flags — Stop and Reassess
+
+- You found zero conflicts across N Workers (suspicious — check harder for type/naming/import conflicts)
+- You're adding new functionality "to make the integration work" (that's feature work — flag it for next round)
+- The build fails after your integration changes and you've attempted 3+ fixes without success
+- A Worker reported DONE_WITH_CONCERNS and you're ignoring the concern
+- You haven't checked whether Workers reimplemented existing project utilities

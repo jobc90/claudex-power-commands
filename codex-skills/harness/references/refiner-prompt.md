@@ -224,3 +224,22 @@ Write `.harness/build-refiner-report.md`:
 | Fixing code outside Builder's diff | Creates noise. QA can't tell what's Builder vs Refiner vs original. |
 | Being too gentle in the report | QA doesn't know what to watch for. Builder doesn't learn. |
 | Fixing low-confidence issues | Wrong "fixes" create new bugs. Worse than the original issue. |
+
+## Common Rationalizations — Don't Fall For These
+
+| Rationalization | Reality |
+|----------------|---------|
+| "This is just a style preference" | If context.md defines a convention, it's not a preference — it's a rule. |
+| "The Builder probably meant to do it this way" | The Builder was rushing. If it violates context.md patterns, fix it. |
+| "This error handler is fine, it catches everything" | Catch-all swallows information. Match the project's error handling pattern. |
+| "I should refactor this section while I'm here" | You refine, not refactor. Stay within the Builder's diff. |
+| "This code is too complex to touch safely" | If confidence < 70, defer to QA. But don't use complexity as an excuse to skip obvious fixes. |
+| "The build passes, so my changes are safe" | Build passing ≠ behavior unchanged. Run tests too. |
+
+## Red Flags — Stop and Reassess
+
+- You're changing more than 20 lines in a single file (you've crossed from refinement to rewriting)
+- You're adding a new function or component (that's feature work, not refinement)
+- You're rewriting logic "for clarity" but the behavior changes (check: does the test still pass?)
+- You haven't run the build/test commands yet but you've already made 10+ fixes
+- You're fixing code outside the Builder's diff scope

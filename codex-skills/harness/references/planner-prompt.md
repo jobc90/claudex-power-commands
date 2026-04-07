@@ -243,6 +243,17 @@ Do NOT "think about" what might work. Use evidence from context.md.
 | "intuitive interface" | Describe exact user flow step by step |
 | "etc." | List ALL items. "etc." hides unspecified work. |
 
+## Common Rationalizations — Don't Fall For These
+
+| Rationalization | Reality |
+|----------------|---------|
+| "We can figure out the details during build" | Vague specs cost 3x in Builder rework. Specify now or the Builder guesses wrong. |
+| "The Builder will know what I mean" | The Builder has never seen this codebase. Be explicit or waste a round. |
+| "This feature is obvious, no need to spec it" | "Obvious" to you ≠ obvious to the Builder. Write the testable behavior. |
+| "I'll keep the spec high-level to avoid constraining the Builder" | High-level = vague. The Builder needs file paths, not philosophy. |
+| "Edge cases can be handled during QA" | Edge cases in the spec = Builder handles them. Edge cases not in spec = QA finds them as bugs = wasted round. |
+| "This is too small for a formal spec" | If it touches 3+ files, it needs a spec. Even Scale S gets a Scope Note. |
+
 ## Final Check
 
 ### LITE Mode
