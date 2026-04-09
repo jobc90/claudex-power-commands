@@ -2,14 +2,16 @@
 
 **English** | [한국어](README.md)
 
-> A 7-command harness suite for Claude Code, mirrored as 7 skills for Codex
+> A 6-command harness suite for Claude Code, mirrored as 6 skills for Codex
+>
+> **v4.0.0**: `/harness-team` merged into `/harness` as TEAM mode
 
 The source of truth is the harness-based command suite first organized on the Claude side, then ported to Codex with the same shape.
 
-- Claude source of truth: 7 files in `commands/`
-- Codex ports: 7 matching skills in `codex-skills/`
-- Shared harness prompt bundle: 23 agent prompts in `harness/`
-- Reference checklists: 4 files in `harness/references/`
+- Claude source of truth: 6 files in `commands/`
+- Codex ports: 6 matching skills in `codex-skills/`
+- Shared harness prompt bundle: 25 agent prompts in `harness/`
+- Reference checklists: 5 files in `harness/references/`
 
 ### v3.2.0 — Managed Agents-Inspired Session Protocol
 
@@ -31,10 +33,9 @@ Inspired by Anthropic's [Managed Agents](https://www.anthropic.com/engineering/m
 
 | Command | Pipeline | Purpose |
 |---|---|---|
-| `/harness` | Scout -> Planner -> Builder -> Refiner -> QA | Single-builder implementation (S/M/L) |
+| `/harness` | SINGLE: Scout -> Planner -> Builder -> Refiner -> QA / TEAM: Scout -> Architect -> Workers(N) -> Integrator -> QA | Adaptive builder (SINGLE/TEAM auto-selection, S/M/L) |
 | `/harness-docs` | Researcher -> Outliner -> Writer -> Reviewer + Validator | Documentation generation (S/M/L) |
 | `/harness-review` | Scanner -> Analyzer -> Fixer -> Verifier -> Reporter | Code review + git handoff |
-| `/harness-team` | Scout -> Architect -> Workers(N) -> Integrator -> QA | Parallel team build |
 | `/harness-qa` | Scout -> Scenario Writer -> Test Executor -> Analyst -> Reporter | Functional QA testing |
 | `/design` | Setup tool | 3-dial design-system control |
 | `/claude-dashboard` | Setup tool | Statusline setup |
@@ -43,13 +44,13 @@ Inspired by Anthropic's [Managed Agents](https://www.anthropic.com/engineering/m
 
 | Group | Agents |
 |---|---|
-| `/harness` | `scout`, `planner`, `builder`, `refiner`, `qa`, `diagnostician` |
+| `/harness` (SINGLE) | `scout`, `planner`, `builder`, `refiner`, `qa`, `diagnostician`, `sentinel`, `auditor` |
+| `/harness` (TEAM) | `scout`, `architect`, `worker`, `integrator`, `sentinel`, `qa`, `diagnostician`, `auditor` |
 | `/harness-docs` | `researcher`, `outliner`, `writer`, `reviewer`, `validator` |
 | `/harness-review` | `scanner`, `analyzer`, `fixer`, `verifier`, `reporter` |
-| `/harness-team` | `architect`, `worker`, `integrator` plus reused `scout` and `qa` |
 | `/harness-qa` | `scenario-writer`, `test-executor`, `analyst`, `qa-reporter` plus reused `scout` |
 
-There are 23 prompt templates under `harness/`, plus 4 reference checklists in `harness/references/`.
+There are 25 prompt templates under `harness/`, plus 5 reference checklists in `harness/references/`.
 
 ---
 
@@ -61,7 +62,6 @@ In Codex, use skills with the same names instead of slash commands:
 Use $harness ...
 Use $harness-docs ...
 Use $harness-review ...
-Use $harness-team ...
 Use $harness-qa ...
 Use $design ...
 Use $claude-dashboard ...
@@ -72,7 +72,6 @@ The current Codex port mirrors the Claude structure one-for-one:
 - `codex-skills/harness`
 - `codex-skills/harness-docs`
 - `codex-skills/harness-review`
-- `codex-skills/harness-team`
 - `codex-skills/harness-qa`
 - `codex-skills/design`
 - `codex-skills/claude-dashboard`
@@ -83,10 +82,10 @@ The previous Codex skills `check`, `cowork`, `docs`, and `super` were removed in
 
 ```text
 Use $harness to implement this app.
+Use $harness --team --agents 4 for this multi-module feature.
 Use $harness-docs to document this repository.
 Use $harness-review --dry-run on the current diff.
 Use $harness-review --pr after verification passes.
-Use $harness-team --agents 4 for this multi-module feature.
 Use $harness-qa --quick on the staging URL.
 Use $design init for this frontend project.
 Use $claude-dashboard to configure the statusline.
@@ -94,10 +93,10 @@ Use $claude-dashboard to configure the statusline.
 
 ### Codex Port Principles
 
-- Keep the same 7 names as the Claude commands.
+- Keep the same 6 names as the Claude commands.
 - Keep the same harness pipelines and agent roles.
 - Bundle the needed prompt templates under `codex-skills/*/references/`.
-- Use `design` as the shared design controller for `$harness` and `$harness-team`.
+- Use `design` as the shared design controller for `$harness`.
 - Do not depend on an upper-layer router skill such as `super`.
 
 ---
@@ -119,7 +118,7 @@ cp claudex-power-commands/harness/*.md ~/.claude/harness/
 cp claudex-power-commands/harness/references/*.md ~/.claude/harness/references/
 
 # 4. Verify
-# In a new session, /harness /harness-docs /harness-review /harness-team /harness-qa /design /claude-dashboard should appear
+# In a new session, /harness /harness-docs /harness-review /harness-qa /design /claude-dashboard should appear
 ```
 
 ### Codex
@@ -131,17 +130,16 @@ git clone https://github.com/jobc90/claudex-power-commands.git
 # 2. Create the skill directory
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
 
-# 3. Copy the 7 skills
+# 3. Copy the 6 skills
 cp -R claudex-power-commands/codex-skills/harness "${CODEX_HOME:-$HOME/.codex}/skills/"
 cp -R claudex-power-commands/codex-skills/harness-docs "${CODEX_HOME:-$HOME/.codex}/skills/"
 cp -R claudex-power-commands/codex-skills/harness-review "${CODEX_HOME:-$HOME/.codex}/skills/"
-cp -R claudex-power-commands/codex-skills/harness-team "${CODEX_HOME:-$HOME/.codex}/skills/"
 cp -R claudex-power-commands/codex-skills/harness-qa "${CODEX_HOME:-$HOME/.codex}/skills/"
 cp -R claudex-power-commands/codex-skills/design "${CODEX_HOME:-$HOME/.codex}/skills/"
 cp -R claudex-power-commands/codex-skills/claude-dashboard "${CODEX_HOME:-$HOME/.codex}/skills/"
 
 # 4. Verify
-# In a new Codex session, invoke $harness $harness-docs $harness-review $harness-team $harness-qa $design $claude-dashboard
+# In a new Codex session, invoke $harness $harness-docs $harness-review $harness-qa $design $claude-dashboard
 ```
 
 ---
@@ -154,13 +152,13 @@ claudex-power-commands/
 │   ├── harness.md
 │   ├── harness-docs.md
 │   ├── harness-review.md
-│   ├── harness-team.md
 │   ├── harness-qa.md
 │   ├── design.md
 │   └── claude-dashboard.md
 ├── harness/
 │   ├── references/
 │   │   ├── session-protocol.md   # Session state, event log, model routing, execution audit
+│   │   ├── team-build-protocol.md # TEAM mode wave execution, worker isolation, integration
 │   │   ├── security-checklist.md
 │   │   ├── error-handling-checklist.md
 │   │   └── confidence-calibration.md
@@ -190,7 +188,6 @@ claudex-power-commands/
 │   ├── harness/
 │   ├── harness-docs/
 │   ├── harness-review/
-│   ├── harness-team/
 │   ├── harness-qa/
 │   ├── design/
 │   └── claude-dashboard/
@@ -205,7 +202,7 @@ claudex-power-commands/
 
 ## Notes
 
-- `commands/` and `codex-skills/` now share the same 7-command set.
+- `commands/` and `codex-skills/` now share the same 6-command set.
 - Each Codex skill includes its own bundled `references/` prompt templates.
 - `claude-dashboard` is still a Claude Code setup skill even when invoked from Codex because it edits `~/.claude/settings.json`.
 

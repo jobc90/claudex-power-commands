@@ -1,12 +1,13 @@
 # Harness Agent Index
 
-> 25개 에이전트 프롬프트, 5개 파이프라인, 7개 커맨드의 교차참조 맵.
+> 25개 에이전트 프롬프트, 4개 파이프라인, 6개 커맨드의 교차참조 맵.
+> **v4.0.0**: `/harness-team` merged into `/harness` as TEAM mode.
 > Lint(`/harness-lint`)가 이 파일을 기준으로 일관성을 검증합니다.
 > 프롬프트 추가/수정 시 이 Index도 함께 업데이트하세요.
 
 ## Agent Catalog (25 prompts)
 
-### /harness Pipeline — Scout → Planner → Builder → Refiner → QA → Diagnostician → Auditor
+### /harness Pipeline — SINGLE Mode: Scout → Planner → Builder → Refiner → QA → Diagnostician → Auditor
 
 | # | Agent | Prompt File | Reads | Writes |
 |---|-------|------------|-------|--------|
@@ -19,6 +20,19 @@
 | 25 | Auditor | `auditor-prompt.md` | `build-progress.md`, `build-refiner-report.md`, `build-round-{1..N}-feedback.md`, `traces/round-{1..N}-execution-log.md`, `sentinel-report-round-{1..N}.md`³, `build-spec.md`, `build-history.md` | `auditor-report.md` |
 
 ¹ Round 2+ only  ² Scale M/L only  ³ If sentinel was active
+
+### /harness Pipeline — TEAM Mode Agents: Scout → Architect → Workers(N) → [Sentinel] → Integrator → QA → Diagnostician → [Auditor]
+
+| # | Agent | Prompt File | Reads | Writes |
+|---|-------|------------|-------|--------|
+| 1 | Scout (shared) | `scout-prompt.md` | codebase files | `team-context.md` |
+| 17 | Architect | `architect-prompt.md` | `team-context.md` | `team-plan.md` |
+| 18 | Worker | `worker-prompt.md` | `team-plan.md`, `team-context.md` | `team-worker-{i}-progress.md` |
+| 24 | Sentinel (per-Worker) | `sentinel-prompt.md` | Worker branch diff, `team-plan.md`, `references/agent-containment.md`, `security-triage.md` | `sentinel-worker-{i}-round-{R}.md` |
+| 19 | Integrator | `integrator-prompt.md` | `team-plan.md`, `team-worker-{0..N}-progress.md`, `team-context.md` | `team-integration-report.md` *(includes full Refiner-equivalent hygiene + hardening)* |
+| 5 | QA (shared) | `qa-prompt.md` | `team-plan.md`, `team-integration-report.md` | `team-round-{R}-feedback.md`, `traces/round-{R}-qa-evidence.md` |
+| 6 | Diagnostician (shared) | `diagnostician-prompt.md` | `team-round-{R}-feedback.md`, `traces/`, `team-context.md`, `team-plan.md` | `team-diagnosis-round-{R}.md` |
+| 25 | Auditor (shared) | `auditor-prompt.md` | `team-plan.md`, `team-worker-{0..N}-progress.md`, `team-integration-report.md`, `team-round-{1..R}-feedback.md`, `sentinel-worker-{i}-round-{R}.md`³, `team-history.md` | `auditor-report.md` |
 
 ### /harness-review Pipeline — Scanner → Analyzer → Fixer → Verifier → Reporter
 
@@ -40,19 +54,6 @@
 | 15 | Reviewer | `reviewer-prompt.md` | `docs-draft.md`, `docs-research.md`, `docs-outline.md` | `docs-round-{N}-review.md` |
 | 16 | Validator | `validator-prompt.md` | `docs-draft.md`, `docs-research.md` | `docs-round-{N}-validation.md` |
 
-### /harness-team Pipeline — Scout → Architect → Workers(N) → [Sentinel] → Integrator → QA → Diagnostician → [Auditor]
-
-| # | Agent | Prompt File | Reads | Writes |
-|---|-------|------------|-------|--------|
-| 1 | Scout (shared) | `scout-prompt.md` | codebase files | `team-context.md` |
-| 17 | Architect | `architect-prompt.md` | `team-context.md` | `team-plan.md` |
-| 18 | Worker | `worker-prompt.md` | `team-plan.md`, `team-context.md` | `team-worker-{i}-progress.md` |
-| 24 | Sentinel (per-Worker) | `sentinel-prompt.md` | Worker branch diff, `team-plan.md`, `references/agent-containment.md`, `security-triage.md` | `sentinel-worker-{i}-round-{R}.md` |
-| 19 | Integrator | `integrator-prompt.md` | `team-plan.md`, `team-worker-{0..N}-progress.md`, `team-context.md` | `team-integration-report.md` *(includes full Refiner-equivalent hygiene + hardening)* |
-| 5 | QA (shared) | `qa-prompt.md` | `team-plan.md`, `team-integration-report.md` | `team-round-{R}-feedback.md`, `traces/round-{R}-qa-evidence.md` |
-| 6 | Diagnostician (shared) | `diagnostician-prompt.md` | `team-round-{R}-feedback.md`, `traces/`, `team-context.md`, `team-plan.md` | `team-diagnosis-round-{R}.md` |
-| 25 | Auditor (shared) | `auditor-prompt.md` | `team-plan.md`, `team-worker-{0..N}-progress.md`, `team-integration-report.md`, `team-round-{1..R}-feedback.md`, `sentinel-worker-{i}-round-{R}.md`³, `team-history.md` | `auditor-report.md` |
-
 ### /harness-qa Pipeline — Scout → Scenario Writer → Test Executor → Analyst → Reporter
 
 | # | Agent | Prompt File | Reads | Writes |
@@ -69,11 +70,11 @@
 
 | Agent | Prompt | Used By |
 |-------|--------|---------|
-| Scout | `scout-prompt.md` | `/harness`, `/harness-team`, `/harness-qa` |
-| Sentinel | `sentinel-prompt.md` | `/harness`, `/harness-team` |
-| QA | `qa-prompt.md` | `/harness`, `/harness-team` |
-| Diagnostician | `diagnostician-prompt.md` | `/harness`, `/harness-team` |
-| Auditor | `auditor-prompt.md` | `/harness`, `/harness-team` |
+| Scout | `scout-prompt.md` | `/harness` (SINGLE + TEAM), `/harness-qa` |
+| Sentinel | `sentinel-prompt.md` | `/harness` (SINGLE + TEAM) |
+| QA | `qa-prompt.md` | `/harness` (SINGLE + TEAM) |
+| Diagnostician | `diagnostician-prompt.md` | `/harness` (SINGLE + TEAM) |
+| Auditor | `auditor-prompt.md` | `/harness` (SINGLE + TEAM) |
 
 **Note**: Shared agents use the same prompt file but receive different file paths from each orchestrator. The Diagnostician prompt is intentionally generic — it reads file paths from its task description, not from hardcoded values.
 
@@ -83,7 +84,7 @@
 
 All artifacts are written to `.harness/` (Claude) or `.harness_codex/` (Codex).
 
-### /harness Artifact Flow
+### /harness Artifact Flow (SINGLE Mode)
 
 ```
 build-prompt.md (user request)
@@ -111,7 +112,7 @@ build-prompt.md (user request)
 [Auditor] → auditor-report.md (conditional: auditor_active)
 ```
 
-### /harness-team Artifact Flow
+### /harness Artifact Flow (TEAM Mode)
 
 ```
 team-prompt.md (user request)
@@ -146,7 +147,7 @@ team-prompt.md (user request)
 
 Each row maps a Claude-side prompt to its Codex copy.
 
-### /harness mirrors
+### /harness mirrors (SINGLE + TEAM mode)
 
 | Original (`harness/`) | Mirror (`codex-skills/harness/references/`) |
 |----------------------|---------------------------------------------|
@@ -157,6 +158,9 @@ Each row maps a Claude-side prompt to its Codex copy.
 | `refiner-prompt.md` | `refiner-prompt.md` |
 | `qa-prompt.md` | `qa-prompt.md` |
 | `diagnostician-prompt.md` | `diagnostician-prompt.md` |
+| `architect-prompt.md` | `architect-prompt.md` |
+| `worker-prompt.md` | `worker-prompt.md` |
+| `integrator-prompt.md` | `integrator-prompt.md` |
 
 ### /harness-review mirrors
 
@@ -178,18 +182,6 @@ Each row maps a Claude-side prompt to its Codex copy.
 | `reviewer-prompt.md` | `reviewer-prompt.md` |
 | `validator-prompt.md` | `validator-prompt.md` |
 
-### /harness-team mirrors
-
-| Original (`harness/`) | Mirror (`codex-skills/harness-team/references/`) |
-|----------------------|-------------------------------------------------|
-| `scout-prompt.md` | `scout-prompt.md` |
-| `architect-prompt.md` | `architect-prompt.md` |
-| `worker-prompt.md` | `worker-prompt.md` |
-| `sentinel-prompt.md` | `sentinel-prompt.md` |
-| `integrator-prompt.md` | `integrator-prompt.md` |
-| `qa-prompt.md` | `qa-prompt.md` |
-| `diagnostician-prompt.md` | `diagnostician-prompt.md` |
-
 ### /harness-qa mirrors
 
 | Original (`harness/`) | Mirror (`codex-skills/harness-qa/references/`) |
@@ -206,10 +198,10 @@ Each row maps a Claude-side prompt to its Codex copy.
 
 | Pipeline | Command | Max Rounds | Diagnostician | Evidence Traces |
 |----------|---------|-----------|--------------|----------------|
-| `/harness` | `commands/harness.md` | S=1, M=2, L=3 | M/L (before round 2+, not final) | M/L |
+| `/harness` (SINGLE) | `commands/harness.md` | S=1, M=2, L=3 | M/L (before round 2+, not final) | M/L |
+| `/harness` (TEAM) | `commands/harness.md` | 2 | Before round 2 | Yes |
 | `/harness-review` | `commands/harness-review.md` | 1 (no loop) | No | No |
 | `/harness-docs` | `commands/harness-docs.md` | S=1, M=2, L=3 | No | No |
-| `/harness-team` | `commands/harness-team.md` | 2 | Before round 2 | Yes |
 | `/harness-qa` | `commands/harness-qa.md` | 2 | No | No |
 
 ---

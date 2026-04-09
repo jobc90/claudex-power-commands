@@ -49,9 +49,9 @@ for f in researcher-prompt.md outliner-prompt.md writer-prompt.md reviewer-promp
   [ -f "harness/$f" ] && check_mirror "harness/$f" "codex-skills/harness-docs/references/$f"
 done
 
-# harness-team pipeline
-for f in scout-prompt.md architect-prompt.md worker-prompt.md integrator-prompt.md qa-prompt.md diagnostician-prompt.md; do
-  [ -f "harness/$f" ] && check_mirror "harness/$f" "codex-skills/harness-team/references/$f"
+# harness TEAM mode prompts (merged from harness-team into harness mirrors)
+for f in architect-prompt.md worker-prompt.md integrator-prompt.md; do
+  [ -f "harness/$f" ] && check_mirror "harness/$f" "codex-skills/harness/references/$f"
 done
 
 # harness-qa pipeline
@@ -76,7 +76,7 @@ for f in scout-prompt.md planner-prompt.md builder-prompt.md refiner-prompt.md \
   fi
 done
 
-for f in harness.md harness-docs.md harness-review.md harness-team.md harness-qa.md design.md claude-dashboard.md; do
+for f in harness.md harness-docs.md harness-review.md harness-qa.md design.md claude-dashboard.md; do
   if [ ! -f "commands/$f" ]; then
     echo "  MISSING: commands/$f"
     ((ERRORS++)) || true

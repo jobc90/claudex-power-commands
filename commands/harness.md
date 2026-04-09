@@ -1,11 +1,17 @@
 ---
-description: "Autonomous 5-agent builder pipeline (Scout → Planner → Builder → Refiner → QA) for single-builder implementation tasks (S/M/L scale)."
+description: "Adaptive multi-agent builder pipeline (SINGLE: Scout → Planner → Builder → Sentinel → Refiner → QA | TEAM: Scout → Planner/Architect → Workers(N) → Sentinel → Integrator → QA) with Security Triage, Diagnostician, and Auditor. Supports S/M/L scale with auto SINGLE/TEAM mode selection."
 ---
 
 # Harness: Autonomous Builder (v3)
 
-> Anthropic "Harness Design for Long-Running Apps" 5-agent architecture.
-> Scout → Planner → Builder → Refiner → QA with file-based handoffs.
+> Anthropic "Harness Design for Long-Running Apps" multi-agent architecture.
+> SINGLE mode: Scout → Planner → Builder → Refiner → QA with file-based handoffs.
+> TEAM mode: Scout → Planner/Architect → Workers(N) → Sentinel → Integrator → QA with worktree isolation.
+
+## Arguments
+
+- First argument: task description (required)
+- `--workers N`: Force TEAM mode with N parallel workers (default 3, max 5). Only applicable to Scale L.
 
 ## User Request
 
@@ -109,28 +115,19 @@ Then proceed to Phase 1.
 ## Architecture Overview
 
 ```
-/harness <prompt>
+/harness <prompt> [--workers N]
   |
-  +- Phase 0: Triage             -> Scale S/M/L classification
-  +- Phase 0.5: Security Triage  -> LOW/MEDIUM/HIGH classification
-  +- Phase 1: Setup              -> .harness/ directory + git init
-  +- Phase 2: Scout              -> Scout agent -> .harness/build-context.md
-  |                              -> Security Triage re-evaluation
-  +- Phase 3: Planning           -> Planner agent -> .harness/build-spec.md
-  |                              -> User reviews and approves
-  +- Phase 4: Build-Sentinel-Refine-QA -> Up to S=1, M=2, L=3 rounds:
-  |   +- Snapshot                -> captures git/build/test state
-  |   +- Builder agent           -> implements/fixes
-  |   +- Sentinel agent          -> security check (conditional)
-  |   |  +- BLOCK?               -> return to Builder
-  |   +- Refiner agent           -> cleans/hardens
-  |   +- QA agent                -> tests/scores (+ security track)
-  |   +- Score check             -> all >= 7? done : next round
-  |   +- Diagnostician agent     -> root cause analysis (M/L, round 2+ only)
-  |   +- History accumulate      -> append round outcomes to build-history.md
-  +- Phase 4-post: Artifacts     -> Artifact validation
-  +- Phase 4-audit: Auditor      -> Cross-verification (conditional, M/L only)
-  +- Phase 5: Summary            -> Final report to user
+  +- Phase 0: Triage            -> Scale S/M/L
+  +- Phase 0.5: Security Triage -> LOW/MEDIUM/HIGH
+  +- Phase 1: Setup             -> .harness/ + session state
+  +- Phase 2: Scout             -> build-context.md
+  +- Phase 3: Planning          -> build-spec.md (includes Build Mode: SINGLE/TEAM)
+  |                             -> User reviews and approves
+  +- Phase 4: Build Loop        -> Mode-dependent:
+  |   SINGLE: Builder → Sentinel → Refiner → QA → Diagnostician
+  |   TEAM:   Architect → Workers(N, worktree) → Sentinel → Integrator → QA
+  +- Phase 4-audit: Auditor     -> Cross-verification
+  +- Phase 5: Summary
 ```
 
 ---
@@ -318,9 +315,42 @@ After completion:
 - **WAIT for user approval.**
 - After approval, update session state and event log (same as Scale M above).
 
+### Build Mode Decision (Scale L only)
+
+After the Planner completes and the user approves the spec:
+
+1. If `--workers N` flag was provided: **Force TEAM mode** with N workers.
+2. Otherwise, read `.harness/build-spec.md` for the Planner's Build Mode recommendation:
+   - If Planner recommends TEAM: present to user: **"Planner가 TEAM 모드를 추천합니다 (Workers: {N}명). TEAM 모드로 진행할까요?"**
+   - If Planner recommends SINGLE: proceed with SINGLE mode (default).
+   - User can override in either direction.
+3. Write the decision to `.harness/build-mode.md`:
+   ```bash
+   echo "mode: {SINGLE/TEAM}" > .harness/build-mode.md
+   echo "workers: {N}" >> .harness/build-mode.md
+   ```
+
 ---
 
 ## Phase 4: Build-Sentinel-Refine-QA Loop (Meta-Harness Enhanced)
+
+### Build Mode Branch
+
+Read `.harness/build-mode.md` (or default to SINGLE if file doesn't exist — Scale S/M always SINGLE).
+
+**If SINGLE mode**: Follow the Build-Sentinel-Refine-QA loop below (existing content, unchanged).
+
+**If TEAM mode**: Read and follow `~/.claude/harness/references/team-build-protocol.md`. The team protocol handles:
+- Architect (wave planning)
+- Workers (parallel, worktree isolation)
+- Per-Worker Sentinel gate
+- Branch merge (CLEAR only)
+- Integrator (merge + hygiene)
+- QA + Diagnostician (same as SINGLE mode)
+
+After TEAM mode's QA completes, return here for Phase 4-audit (Auditor) and Phase 5 (Summary).
+
+### SINGLE Mode: Build-Sentinel-Refine-QA
 
 Read the builder, refiner, QA, and diagnostician prompt templates from `~/.claude/harness/`.
 
@@ -780,6 +810,9 @@ echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] summary | done | — | Pipeline complete,
 24. **Sentinel model is `sonnet`** — checklist-driven pattern matching, not deep reasoning.
 25. **Auditor runs AFTER the final QA round, BEFORE Summary** (when active).
 26. **LOW integrity verdict blocks auto-commit.** User must verify manually.
+27. **Scale S/M always use SINGLE mode.** TEAM mode is only available for Scale L.
+28. **`--workers N` flag forces TEAM mode** regardless of Planner's recommendation. Max 5 workers.
+29. **TEAM mode follows `team-build-protocol.md` reference.** All team-specific logic lives there, not in this file.
 
 ## Cost Awareness
 
@@ -787,7 +820,8 @@ echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] summary | done | — | Pipeline complete,
 |-------|-----------------|-------------|
 | S | 5-15 min | 4 (scout + builder + refiner + QA) |
 | M | 20-50 min | 6-10 (scout + planner + [builder + refiner + QA + diagnostician] × 1-2) |
-| L | 1-4 hours | 10-17 (scout + planner + [builder + refiner + QA + diagnostician] × 1-3) |
+| L (SINGLE) | 1-4 hours | 10-17 (scout + planner + [builder + refiner + QA + diagnostician] × 1-3) |
+| L (TEAM, 3 workers) | 25-50 min | 12-18 (scout + planner + architect + [W0 + W1-3 + sentinel×3 + integrator + QA + diagnostician] × 1-2) |
 
 **Note**: Diagnostician adds ~2-5 min per round but saves 10-20 min of Builder investigation time in subsequent rounds (Meta-Harness principle: causal diagnosis > summary-based guessing).
 

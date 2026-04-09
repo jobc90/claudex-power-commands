@@ -1,6 +1,0 @@
-interface:
-  display_name: "Harness Team"
-  short_description: "Run the parallel team build harness with workers and integration"
-  default_prompt: "Use $harness-team to scout the codebase, architect wave-based work, dispatch workers, integrate the result, and QA it."
-  policy:
-    allow_implicit_invocation: true

@@ -206,6 +206,45 @@ Your spec MUST follow this exact structure for FULL mode:
 
 8. **Priority tiers are critical.** The builder may not finish everything. Must-have features should form a coherent, usable product on their own.
 
+## Build Mode Recommendation (Scale L FULL Mode Only)
+
+When generating a Scale L spec, analyze the proposed changes and recommend a Build Mode:
+
+### Analysis Criteria
+
+1. **File count**: How many files will be created/modified?
+2. **Independence**: Can files be grouped into independent work units (no cross-dependencies)?
+3. **Shared foundation**: Is there a foundation layer (types, schema, config) that all features depend on?
+
+### Decision Matrix
+
+| Condition | Recommendation |
+|-----------|---------------|
+| < 10 files total | SINGLE |
+| 10+ files, strong sequential dependencies | SINGLE |
+| 10+ files, 3+ independent groups possible | TEAM |
+| 10+ files, shared foundation + independent features | TEAM (with Wave 1 foundation) |
+
+### Spec Output Format
+
+Add this section to the spec:
+
+```
+## Build Mode
+- Recommendation: SINGLE / TEAM
+- Rationale: [one sentence]
+- If TEAM:
+  - Suggested workers: {N} (2-5)
+  - Wave 1 (Foundation): {shared files}
+  - Worker assignments:
+    - Worker 1: {files} — {brief}
+    - Worker 2: {files} — {brief}
+    - ...
+  - Cross-cutting concerns: {files that need Integrator attention}
+```
+
+**IMPORTANT**: Only recommend TEAM when parallelism provides clear benefit. 12 files with strong dependencies → SINGLE is better than TEAM with constant blocking.
+
 ## Frontend Design Skill Integration
 
 Before writing the Design Language section, read the `frontend-design` skill if available. This skill encodes principles for high-quality, distinctive frontend design. Use it to inform your design language decisions — color, typography, layout, and anti-patterns.
