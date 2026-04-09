@@ -173,10 +173,12 @@ Optimized for the Claude Code subscription environment. Use the `model` paramete
 | **Worker (simple)** | `haiku` | 1-2 file mechanical tasks |
 | **Worker (standard)** | `sonnet` | Standard implementation with clear brief |
 | **Worker (complex)** | *default (inherit)* | Complex judgment, cross-cutting concerns |
+| **Sentinel** | `sonnet` | Checklist-driven pattern matching |
 | **Refiner** | `sonnet` | Checklist-driven pattern matching |
 | **Integrator** | `sonnet` | Systematic merge verification |
 | **QA** | `sonnet` | Systematic testing against criteria |
 | **Diagnostician** | *default (inherit)* | Root cause analysis requires deep reasoning |
+| **Auditor** | `sonnet` | Evidence cross-referencing, systematic comparison |
 | **Scanner** | `sonnet` | Git diff analysis, systematic |
 | **Analyzer** | `sonnet` | Issue identification from diff |
 | **Fixer** | `sonnet` | Targeted, scoped fixes |
@@ -375,7 +377,46 @@ Run Diagnostician in foreground (default). The time saving is marginal for short
 
 ---
 
-## 8. Integration Summary
+## 10. Integration Summary
+
+## 9. Model Capability Tier (Adaptive Scale)
+
+### Tier Definitions
+
+| Tier | Models | Characteristics |
+|------|--------|----------------|
+| Standard | haiku, sonnet | Systematic execution, structured tasks |
+| Advanced | opus | Deep reasoning, complex judgment |
+| Mythos | mythos-class (future) | Near-perfect SWE, strong autonomy, higher alignment risk |
+
+### Tier-Specific Adjustments
+
+| Parameter | Standard | Advanced | Mythos |
+|-----------|----------|----------|--------|
+| Max rounds (Scale L) | 3 | 3 | 2 |
+| Max rounds (Scale M) | 2 | 2 | 1 |
+| QA pass threshold | 7/10 | 7/10 | 8/10 |
+| Sentinel activation | Per triage | Per triage | Always on (HIGH forced) |
+| Auditor activation | Per triage | Per triage | Always on |
+| Scale S file threshold | 1-2 files | 1-2 files | 1-5 files |
+| Scale M file threshold | 3-5 files | 3-5 files | 3-10 files |
+
+### Tier Detection
+
+The orchestrator determines the tier from the parent model:
+- Check the model name in the environment
+- `haiku` or `sonnet` → Standard
+- `opus` → Advanced
+- If model name contains `mythos` or capability benchmarks exceed thresholds → Mythos
+
+### Long-Context Scale Adjustment (Mythos Tier)
+
+Mythos-class models with 256K-1M effective context can process more files per scan:
+- Scout (Scale S): 10-15 files instead of 2-5
+- Scout (Scale M): 15-30 files instead of 5-15
+- Selective Context ON-DEMAND tier → promoted to SECONDARY (all artifacts readable)
+
+---
 
 ### How Features Work Together
 
@@ -390,6 +431,10 @@ Each agent runs:
   ├─ If team Worker → isolation: "worktree" (Feature D)
   ├─ Agent executes
   ├─ Builder/Refiner write execution log (Feature F: Execution Audit)
+  ├─ If Builder/Worker complete → Sentinel gate (when active):
+  │     ├─ Sentinel inspects diff vs containment rules
+  │     ├─ CLEAR → proceed to Refiner/Integrator
+  │     └─ BLOCK → discard changes, report to user
   ├─ Orchestrator appends to session-events.md (Feature B)
   └─ Orchestrator updates session-state.md (Feature A)
 

@@ -38,6 +38,28 @@ For each file in your assignment:
 3. Implement to meet your Success Criteria
 4. Handle edge cases: empty states, error states, loading states
 
+## Containment Boundaries (MANDATORY)
+
+You operate within strict containment boundaries, identical to the Builder. Read `~/.claude/harness/references/agent-containment.md` for the full list.
+
+Key rules for Workers:
+1. **File ownership is absolute**: Modify ONLY files in your "Target Files" list. Reading other files is allowed. Writing to them is NOT.
+2. **No external network access**: No `curl`, `wget`, `nc` for data transmission. Package installation from official registries is allowed.
+3. **No credential access**: No `.env` reading, no `/proc/` access, no memory scanning.
+4. **No git manipulation**: No `--amend`, `--force`, `rebase`. Your changes are on a worktree branch.
+5. **No process escalation**: No `sudo`, `tmux`, `screen`, `expect`, `nohup`.
+
+### Security-Sensitive File Warning
+
+If your Target Files include any of these patterns, exercise EXTRA caution:
+- `auth/`, `login`, `session`, `token`, `jwt` → Authentication code. Every path must check credentials.
+- `payment/`, `billing/`, `transaction` → Financial code. Every amount must be server-validated.
+- `admin/`, `role/`, `permission` → Authorization code. Every action must check roles.
+- `upload/`, `file/`, `stream` → File handling. Validate type, size, content.
+- `query/`, `sql/`, `database` → Data access. Use parameterized queries ONLY.
+
+When working on security-sensitive files, explicitly note in your progress report which security measures you implemented and why.
+
 ### Step 3: Self-Test
 
 Before declaring done:

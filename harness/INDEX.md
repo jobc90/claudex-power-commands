@@ -1,12 +1,12 @@
 # Harness Agent Index
 
-> 23개 에이전트 프롬프트, 5개 파이프라인, 7개 커맨드의 교차참조 맵.
+> 25개 에이전트 프롬프트, 5개 파이프라인, 7개 커맨드의 교차참조 맵.
 > Lint(`/harness-lint`)가 이 파일을 기준으로 일관성을 검증합니다.
 > 프롬프트 추가/수정 시 이 Index도 함께 업데이트하세요.
 
-## Agent Catalog (23 prompts)
+## Agent Catalog (25 prompts)
 
-### /harness Pipeline — Scout → Planner → Builder → Refiner → QA → Diagnostician
+### /harness Pipeline — Scout → Planner → Builder → Refiner → QA → Diagnostician → Auditor
 
 | # | Agent | Prompt File | Reads | Writes |
 |---|-------|------------|-------|--------|
@@ -16,8 +16,9 @@
 | 4 | Refiner | `refiner-prompt.md` | `build-context.md`, `build-spec.md`, `build-progress.md`, `build-round-{N-1}-feedback.md`¹ | `build-refiner-report.md`, `traces/round-{N}-refiner-trace.md`² |
 | 5 | QA | `qa-prompt.md` | `build-spec.md`, `build-refiner-report.md` | `build-round-{N}-feedback.md`, `traces/round-{N}-qa-evidence.md`² |
 | 6 | Diagnostician | `diagnostician-prompt.md` | `build-round-{N}-feedback.md`, `traces/round-{N}-qa-evidence.md`, `snapshot-round-{N}.md`, `build-progress.md`, `build-context.md`, `diagnosis-round-{N-1}.md`¹, `build-history.md`¹ | `diagnosis-round-{N}.md` |
+| 25 | Auditor | `auditor-prompt.md` | `build-progress.md`, `build-refiner-report.md`, `build-round-{1..N}-feedback.md`, `traces/round-{1..N}-execution-log.md`, `sentinel-report-round-{1..N}.md`³, `build-spec.md`, `build-history.md` | `auditor-report.md` |
 
-¹ Round 2+ only  ² Scale M/L only
+¹ Round 2+ only  ² Scale M/L only  ³ If sentinel was active
 
 ### /harness-review Pipeline — Scanner → Analyzer → Fixer → Verifier → Reporter
 
@@ -39,16 +40,18 @@
 | 15 | Reviewer | `reviewer-prompt.md` | `docs-draft.md`, `docs-research.md`, `docs-outline.md` | `docs-round-{N}-review.md` |
 | 16 | Validator | `validator-prompt.md` | `docs-draft.md`, `docs-research.md` | `docs-round-{N}-validation.md` |
 
-### /harness-team Pipeline — Scout → Architect → Workers(N) → Integrator → QA → Diagnostician
+### /harness-team Pipeline — Scout → Architect → Workers(N) → [Sentinel] → Integrator → QA → Diagnostician → [Auditor]
 
 | # | Agent | Prompt File | Reads | Writes |
 |---|-------|------------|-------|--------|
 | 1 | Scout (shared) | `scout-prompt.md` | codebase files | `team-context.md` |
 | 17 | Architect | `architect-prompt.md` | `team-context.md` | `team-plan.md` |
 | 18 | Worker | `worker-prompt.md` | `team-plan.md`, `team-context.md` | `team-worker-{i}-progress.md` |
+| 24 | Sentinel (per-Worker) | `sentinel-prompt.md` | Worker branch diff, `team-plan.md`, `references/agent-containment.md`, `security-triage.md` | `sentinel-worker-{i}-round-{R}.md` |
 | 19 | Integrator | `integrator-prompt.md` | `team-plan.md`, `team-worker-{0..N}-progress.md`, `team-context.md` | `team-integration-report.md` *(includes full Refiner-equivalent hygiene + hardening)* |
 | 5 | QA (shared) | `qa-prompt.md` | `team-plan.md`, `team-integration-report.md` | `team-round-{R}-feedback.md`, `traces/round-{R}-qa-evidence.md` |
 | 6 | Diagnostician (shared) | `diagnostician-prompt.md` | `team-round-{R}-feedback.md`, `traces/`, `team-context.md`, `team-plan.md` | `team-diagnosis-round-{R}.md` |
+| 25 | Auditor (shared) | `auditor-prompt.md` | `team-plan.md`, `team-worker-{0..N}-progress.md`, `team-integration-report.md`, `team-round-{1..R}-feedback.md`, `sentinel-worker-{i}-round-{R}.md`³, `team-history.md` | `auditor-report.md` |
 
 ### /harness-qa Pipeline — Scout → Scenario Writer → Test Executor → Analyst → Reporter
 
@@ -67,8 +70,10 @@
 | Agent | Prompt | Used By |
 |-------|--------|---------|
 | Scout | `scout-prompt.md` | `/harness`, `/harness-team`, `/harness-qa` |
+| Sentinel | `sentinel-prompt.md` | `/harness`, `/harness-team` |
 | QA | `qa-prompt.md` | `/harness`, `/harness-team` |
 | Diagnostician | `diagnostician-prompt.md` | `/harness`, `/harness-team` |
+| Auditor | `auditor-prompt.md` | `/harness`, `/harness-team` |
 
 **Note**: Shared agents use the same prompt file but receive different file paths from each orchestrator. The Diagnostician prompt is intentionally generic — it reads file paths from its task description, not from hardcoded values.
 
@@ -102,6 +107,8 @@ build-prompt.md (user request)
   │     ↓                                                  │
   │ build-history.md (orchestrator appends)                 │
   └────────────────────────────────────────────────────────┘
+     ↓
+[Auditor] → auditor-report.md (conditional: auditor_active)
 ```
 
 ### /harness-team Artifact Flow
@@ -117,6 +124,9 @@ team-prompt.md (user request)
   │ [Worker 0] → team-worker-0-progress.md (Wave 1)       │
   │ [Worker 1..N] → team-worker-{i}-progress.md (Wave 2)  │
   │     ↓                                                  │
+  │ [Sentinel ×N] → sentinel-worker-{i}-round-{R}.md      │
+  │   (conditional: sentinel_active from security-triage)  │
+  │     ↓                                                  │
   │ [Integrator] → team-integration-report.md (Wave 3)     │
   │     ↓                                                  │
   │ [QA] → team-round-{R}-feedback.md                      │
@@ -126,6 +136,8 @@ team-prompt.md (user request)
   │     ↓                                                  │
   │ team-history.md (orchestrator appends)                  │
   └────────────────────────────────────────────────────────┘
+     ↓
+[Auditor] → auditor-report.md (conditional: auditor_active)
 ```
 
 ---
@@ -141,6 +153,7 @@ Each row maps a Claude-side prompt to its Codex copy.
 | `scout-prompt.md` | `scout-prompt.md` |
 | `planner-prompt.md` | `planner-prompt.md` |
 | `builder-prompt.md` | `builder-prompt.md` |
+| `sentinel-prompt.md` | `sentinel-prompt.md` |
 | `refiner-prompt.md` | `refiner-prompt.md` |
 | `qa-prompt.md` | `qa-prompt.md` |
 | `diagnostician-prompt.md` | `diagnostician-prompt.md` |
@@ -172,6 +185,7 @@ Each row maps a Claude-side prompt to its Codex copy.
 | `scout-prompt.md` | `scout-prompt.md` |
 | `architect-prompt.md` | `architect-prompt.md` |
 | `worker-prompt.md` | `worker-prompt.md` |
+| `sentinel-prompt.md` | `sentinel-prompt.md` |
 | `integrator-prompt.md` | `integrator-prompt.md` |
 | `qa-prompt.md` | `qa-prompt.md` |
 | `diagnostician-prompt.md` | `diagnostician-prompt.md` |
@@ -209,6 +223,7 @@ Located in `harness/references/`. Agents load these on demand for progressive di
 | `references/security-checklist.md` | Analyzer, Refiner, Integrator, Builder | Secrets, injection, auth, input validation |
 | `references/error-handling-checklist.md` | Refiner, Integrator, Builder | try/catch, loading/empty/error states, data persistence |
 | `references/confidence-calibration.md` | Analyzer, Fixer, Refiner, Integrator | 0-100 scoring table with examples and action thresholds |
+| `references/agent-containment.md` | Sentinel, Builder, Worker, Fixer, Test Executor | Agent containment boundaries: forbidden commands, filesystem, network, git patterns |
 
 ---
 

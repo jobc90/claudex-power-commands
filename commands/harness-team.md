@@ -41,6 +41,7 @@ If the request is NOT a build/implementation request:
   |   +- Wave 3 (sequential)   -> Integrator merges + verifies
   |   +- QA                    -> Tests + scores
   |   +- Score check           -> all >= 7? done : next round
+  +- Phase 4-audit: Auditor    -> Cross-verification (conditional)
   +- Phase 5: Summary          -> Final report
 ```
 
@@ -48,6 +49,67 @@ If the request is NOT a build/implementation request:
 
 - First argument: task description (required)
 - `--agents N`: number of parallel Workers in Wave 2 (default 3, max 5)
+
+---
+
+## Phase 0.5: Security Triage
+
+After confirming this is a build request (Phase 0), determine the security sensitivity.
+
+### Classification
+
+Analyze `$ARGUMENTS` for security-sensitive keywords:
+
+**HIGH sensitivity** (any match triggers HIGH):
+- Authentication/Authorization: auth, login, password, token, jwt, session, permissions, role, RBAC, admin, sudo
+- Financial: payment, billing, stripe, credit, invoice, transaction
+- Cryptography: crypto, encrypt, decrypt, key, certificate, hash, salt
+- Data privacy: PII, GDPR, personal data, email, phone, address
+- Infrastructure: infra, deploy, CI/CD, pipeline, docker, k8s, terraform
+- Secrets: .env, secret, credential, API key
+
+**MEDIUM sensitivity** (if no HIGH keywords):
+- API: endpoint, route, middleware, controller, handler
+- Data: database, schema, migration, query, model
+- Network: CORS, header, cookie, webhook, external, integration
+- File handling: upload, download, file, stream
+
+**LOW sensitivity** (if no HIGH or MEDIUM keywords):
+- UI: component, style, CSS, layout, animation, color, font
+- Docs: README, docs, comment, typo, format
+- Quality: lint, test, refactor (UI-only), i18n
+
+### Write Triage Result
+
+```bash
+cat > .harness/security-triage.md << 'HEREDOC'
+# Security Triage
+- sensitivity: {HIGH/MEDIUM/LOW}
+- keywords_matched: [{list}]
+- sentinel_active: {true/false}
+- qa_security_track: {true/false}
+- auditor_active: {true/false}
+HEREDOC
+```
+
+**Activation rules** (team builds are always Scale L):
+- HIGH → sentinel_active: true, qa_security_track: true, auditor_active: true
+- MEDIUM → sentinel_active: true, qa_security_track: true, auditor_active: false
+- LOW → sentinel_active: false, qa_security_track: false, auditor_active: false
+
+### Announce to User
+
+```
+보안 민감도: {HIGH/MEDIUM/LOW} — {matched keywords}
+Sentinel: {활성화/비활성화}, QA Security Track: {활성화/비활성화}
+```
+
+### Post-Scout Re-evaluation
+
+After Phase 2 (Scout) completes, re-read `.harness/team-context.md` and check the files identified:
+- If files include paths containing `auth/`, `payment/`, `security/`, `.env`, `credential` → upgrade to HIGH
+- If files include paths containing `api/`, `routes/`, `middleware/`, `model/` → upgrade to at least MEDIUM
+- Update `.harness/security-triage.md` if sensitivity increased. Notify user: "보안 민감도가 {OLD} → {NEW}로 상향되었습니다."
 
 ---
 
@@ -209,20 +271,79 @@ After all Workers complete:
 1. **Collect worktree results**: Each Worker returns `{ path, branch }` if changes were made.
 2. **Write progress files**: For each Worker, write `.harness/team-worker-{i}-progress.md` from the Worker's result message.
 3. **Merge Worker branches** into main working tree:
-   ```bash
-   # For each Worker branch with changes:
-   git merge {worker-branch} --no-ff -m "Merge Worker {i}: {brief description}"
-   ```
-   If merge conflicts occur (should be rare with proper file ownership), note them for the Integrator.
+   - **If Sentinel is active** (`sentinel_active: true` in `.harness/security-triage.md`): **DO NOT merge yet.** Proceed to 4b-post (Per-Worker Sentinel Gate) first. Merging happens there after Sentinel clearance.
+   - **If Sentinel is inactive**: Merge directly:
+     ```bash
+     # For each Worker branch with changes:
+     git merge {worker-branch} --no-ff -m "Merge Worker {i}: {brief description}"
+     ```
+     If merge conflicts occur (should be rare with proper file ownership), note them for the Integrator.
 4. **Update event log**:
    ```bash
    echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] workers:r{R} | done | team-worker-{1..N}-progress.md | {N} workers, {merged_count} branches merged" >> .harness/session-events.md
    ```
 5. Check statuses:
-   - All DONE → proceed to Wave 3
+   - All DONE → proceed to Sentinel Gate (4b-post) or Wave 3
    - Any DONE_WITH_CONCERNS → note concerns for Integrator
    - Any NEEDS_CONTEXT → provide context and re-dispatch that Worker (without worktree)
    - Any BLOCKED → assess and escalate to user if needed
+
+#### 4b-post. Per-Worker Sentinel Gate (Conditional)
+
+**Skip if**: `.harness/security-triage.md` shows `sentinel_active: false`
+
+**CRITICAL**: Sentinel runs BEFORE merging Worker branches. This ensures contaminated changes never reach the main tree.
+
+After all Workers complete but BEFORE merging any Worker branches:
+
+For each Worker i that returned changes (has a branch):
+
+Launch a **general-purpose Agent** with **model `sonnet`**:
+- **prompt**: The sentinel prompt template (`~/.claude/harness/sentinel-prompt.md`) + context:
+  - "Team plan: `.harness/team-plan.md` — file ownership assignments for Worker {i}"
+  - "Worker {i} branch: `{worker-branch-i}` at path `{worktree-path-i}`"
+  - "Worker {i} progress (from agent result): `{worker-i-result-text}`"
+  - "Containment reference: `~/.claude/harness/references/agent-containment.md`"
+  - "Security triage: `.harness/security-triage.md`"
+  - "Round number: {R}"
+  - "Mode: TEAM_PER_WORKER — inspect this single Worker's branch diff. Check:"
+  - "  1. Files changed are within Worker {i}'s assigned ownership from team-plan.md"
+  - "  2. No forbidden commands in the branch diff (grep the diff, not just progress)"
+  - "  3. No credential exposure in changed files"
+  - "  4. No prompt injection patterns in source code"
+  - "  5. No external network calls (curl, wget, gh gist) in the diff"
+  - "  6. git diff --stat of branch matches Worker's claimed file list"
+  - "Write report to `.harness/sentinel-worker-{i}-round-{R}.md`"
+- **description**: "harness-team sentinel worker {i} round {R}"
+- **model**: `sonnet`
+
+**Note**: Per-Worker Sentinels can run in **parallel** (multiple Agent calls in one message), since each inspects an independent branch.
+
+After all per-Worker Sentinels complete, collect verdicts:
+
+| Verdict | Action |
+|---------|--------|
+| **CLEAR** | Merge: `git merge {worker-branch-i} --no-ff -m "Merge Worker {i}: {brief description}"` |
+| **WARN** | Merge, note warnings for Integrator context |
+| **BLOCK** | **Do NOT merge.** Discard branch: `git branch -D {worker-branch-i}`. Report to user. |
+
+If any Worker is BLOCKed:
+```bash
+# Discard offending branch (changes never reach main tree)
+git branch -D {blocked-worker-branch} 2>/dev/null
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] sentinel:worker-{i}:r{R} | BLOCK | sentinel-worker-{i}-round-{R}.md | {violation summary}" >> .harness/session-events.md
+```
+- Report to user: **"Sentinel BLOCK: Worker {i}가 보안 경계를 위반했습니다. 해당 브랜치는 폐기됩니다."**
+- If BLOCKed Worker's files are critical for integration: re-dispatch that Worker only (fresh worktree) with Sentinel report as context
+- If non-critical: proceed without them, note in Integrator context
+
+Only CLEAR/WARN branches are merged. Update session state:
+```bash
+sed -i '' 's/last_completed_agent: .*/last_completed_agent: sentinel/' .harness/session-state.md
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] sentinel:team:r{R} | done | sentinel-worker-{1..N}-round-{R}.md | CLEAR:{X} WARN:{Y} BLOCK:{Z}" >> .harness/session-events.md
+```
+
+**If Sentinel is inactive** (sentinel_active: false): skip this section entirely and merge Worker branches directly as described in step 3 of Wave 2.
 
 #### 4c. Wave 3 — Integration
 
@@ -352,10 +473,48 @@ for R in $(seq 1 {completed_rounds}); do
 done
 # History
 [ ! -f ".harness/team-history.md" ] && echo "MISSING: .harness/team-history.md" && MISSING=$((MISSING+1))
+# Auditor artifact (if auditor was active)
+if grep -q 'auditor_active: true' .harness/security-triage.md 2>/dev/null; then
+  [ ! -f ".harness/auditor-report.md" ] && echo "MISSING: .harness/auditor-report.md" && MISSING=$((MISSING+1))
+fi
 echo "Artifacts: $MISSING missing"
 ```
 
 Include artifact status in the Summary.
+
+---
+
+## Phase 4-audit: Auditor Verification (Conditional)
+
+**Skip if**: `.harness/security-triage.md` shows `auditor_active: false`
+
+After the Build waves and QA loop exit (PASS or max rounds), run the Auditor for cross-verification.
+
+Read the auditor prompt template: `~/.claude/harness/auditor-prompt.md`
+
+Launch a **general-purpose Agent** with **model `sonnet`**:
+- **prompt**: The auditor prompt template + context:
+  - "Team plan: `.harness/team-plan.md`"
+  - "Worker progress reports: `.harness/team-worker-{0..N}-progress.md`"
+  - "Integration report: `.harness/team-integration-report.md`"
+  - "QA feedback files: `.harness/team-round-{1..R}-feedback.md`"
+  - "Sentinel reports: `.harness/sentinel-worker-{i}-round-{R}.md` (if exist)"
+  - "Build history: `.harness/team-history.md`"
+  - "Total rounds completed: {R}"
+  - "Write your report to `.harness/auditor-report.md`"
+- **description**: "harness-team auditor"
+- **model**: `sonnet`
+
+After Auditor completes:
+1. Read `.harness/auditor-report.md`
+2. Extract integrity verdict: HIGH / MEDIUM / LOW
+3. If LOW: **"Auditor: LOW integrity 탐지. 수동 검증을 권장합니다."**
+4. Include integrity verdict in Phase 5 Summary
+
+Update event log:
+```bash
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] auditor | {verdict} | auditor-report.md | integrity: {HIGH/MEDIUM/LOW}" >> .harness/session-events.md
+```
 
 ---
 
@@ -391,6 +550,9 @@ Include artifact status in the Summary.
 ### Remaining Issues
 [From last QA report]
 
+### Integrity
+**Integrity**: {HIGH/MEDIUM/LOW} (from Auditor, if active; otherwise "N/A — Auditor inactive")
+
 ### Artifacts
 - Context: `.harness/team-context.md`
 - Plan: `.harness/team-plan.md`
@@ -425,6 +587,12 @@ echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] summary | done | — | Team pipeline comp
 12. **Model selection follows the protocol**: Scout → `sonnet`; Architect/Diagnostician → inherit parent; Workers → per complexity; Integrator/QA → `sonnet`.
 13. **Round 2 Workers use Selective Context**: PRIMARY (diagnosis), SECONDARY (plan), ON-DEMAND (feedback).
 14. **Diagnostician runs in background** (`run_in_background: true`). History and user reporting proceed in parallel.
+15. **Per-Worker Sentinel runs AFTER Workers complete, BEFORE branch merging** (when active). A BLOCK verdict discards the Worker's branch — contaminated code never reaches the main tree.
+16. **Security Triage runs in Phase 0.5** after the Guard Clause. It determines whether Sentinel is activated. Re-evaluate after Scout if file paths suggest higher sensitivity.
+17. **Sentinel model is `sonnet`** — checklist-driven pattern matching, not deep reasoning.
+18. **Sentinel agents for different Workers run in parallel** — each inspects an independent branch, no cross-dependencies.
+19. **Auditor runs AFTER the final QA round, BEFORE Summary** (when active).
+20. **LOW integrity verdict blocks auto-commit.** User must verify manually.
 
 ## Cost Awareness
 

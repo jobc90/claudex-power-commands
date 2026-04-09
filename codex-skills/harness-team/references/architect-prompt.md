@@ -69,6 +69,26 @@ For each Worker in Wave 2:
 - If a file needs changes from two features, assign it to one Worker and make the other Worker depend on it
 - Index/barrel files (re-exports) go to Wave 3 (Integrator)
 
+### Step 4.5: Security-Sensitive Worker Assignment
+
+If `.harness/security-triage.md` shows sensitivity MEDIUM or HIGH:
+
+1. **Identify security-sensitive files** in the change set (auth/, payment/, security/, etc.)
+2. **Assign security-sensitive files to a single Worker** — do not split security-critical code across multiple Workers
+3. **Assign the strongest model tier** to the security-sensitive Worker:
+   - HIGH sensitivity files → Worker model: inherit parent (do NOT downgrade to haiku or sonnet)
+   - MEDIUM sensitivity files → Worker model: sonnet (do NOT downgrade to haiku)
+4. **Note in the plan** which Worker handles security-sensitive files and why
+
+```markdown
+### Worker 2: Authentication Module [SECURITY-SENSITIVE]
+- **Model**: inherit (security-critical — do not downgrade)
+- **Target Files**: src/auth/guard.ts, src/auth/jwt.ts, src/middleware/auth.ts
+- **Security note**: All authentication logic concentrated in one Worker to prevent cross-Worker security gaps
+```
+
+**Rationale**: Splitting security logic across Workers creates integration gaps that the Integrator may not catch. A single Worker with a strong model is more likely to implement security correctly.
+
 ### Step 5: Worker Brief Generation
 
 For each Worker, generate a complete brief:

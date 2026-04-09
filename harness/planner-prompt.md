@@ -215,6 +215,34 @@ If the skill is not accessible, apply these core design principles:
 - Specify a distinct visual identity with specific hex codes, font names, and spatial philosophy
 - The design language should make the app recognizable, not interchangeable with any other app
 
+## Security Sensitivity
+
+If `.harness/security-triage.md` exists, read it and incorporate:
+
+- **Sensitivity level**: {HIGH/MEDIUM/LOW}
+- **Security-sensitive files**: [list files from the change set that are in auth/, payment/, security/, etc.]
+- **Security requirements**: [for HIGH: list specific security behaviors that MUST be tested]
+  - Example: "Login must reject SQL injection in email field"
+  - Example: "API must validate JWT on every protected endpoint"
+  - Example: "Payment amount must not be modifiable via client-side request"
+
+For HIGH sensitivity tasks, add a **Security Requirements** section to the spec:
+
+```markdown
+## Security Requirements (HIGH sensitivity)
+These are non-negotiable. QA will test each one explicitly.
+1. [specific security requirement with testable criterion]
+2. [specific security requirement]
+3. [specific security requirement]
+```
+
+For MEDIUM sensitivity tasks, add security notes to relevant features:
+
+```markdown
+### Feature N: [name]
+- **Security note**: [what security aspect to verify, e.g., "Validate input before database query"]
+```
+
 ## Context Review (MANDATORY)
 
 Before writing the spec, extract from `.harness/build-context.md`:

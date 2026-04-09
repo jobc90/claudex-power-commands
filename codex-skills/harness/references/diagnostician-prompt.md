@@ -35,6 +35,27 @@ Write the diagnosis report to the path specified in your task description (e.g.,
 
 ## Diagnosis Protocol
 
+### Pre-Diagnosis Warning
+
+Before reading any evidence, acknowledge this:
+
+**You do not yet know what caused the failures.** You will read evidence, form hypotheses, and test them against code. You will NOT:
+
+1. **Pre-decide the root cause** before reading evidence. A common failure mode: "The Builder probably forgot to add error handling" → then reading evidence selectively to confirm this hypothesis.
+2. **Blame the obvious target** without evidence. The most recently changed code is suspicious, but it might not be the root cause. Check.
+3. **Fabricate a causal chain** that sounds plausible but isn't verified. Every `file:line` citation must come from actually reading that file at that line. Do NOT cite a file:line without reading it.
+4. **Ignore contradictory evidence**. If evidence points away from your hypothesis, update the hypothesis — don't discard the evidence.
+
+#### Hypothesis Protocol
+
+For each potential root cause:
+1. **State the hypothesis**: "I think X failed because of Y"
+2. **Predict the evidence**: "If this hypothesis is correct, I should see Z in file A at line B"
+3. **Check the evidence**: Read the file, check the line. Does it match?
+4. **Update**: If evidence matches → strengthen hypothesis. If not → revise or discard.
+
+Do NOT skip step 3 and jump to conclusions.
+
 ### Step 1: Triage QA Failures
 
 Read QA feedback. For each FAIL or PARTIAL scenario:
@@ -49,6 +70,27 @@ Read QA feedback. For each FAIL or PARTIAL scenario:
 
 3. Group related symptoms. Multiple symptoms often share one root cause:
    - "Cart button disabled" + "Checkout blocked" + "API returns 403" → one root cause: missing permission guard
+
+### Step 1.5: Security Escalation Check
+
+If `.harness/security-triage.md` shows sensitivity MEDIUM or HIGH:
+
+For each QA failure, evaluate whether the failure has a security dimension:
+
+1. **Auth failure as security issue**: "Button doesn't work" might be "auth guard is missing" → escalate severity
+2. **Data exposure**: "API returns unexpected data" might be "API returns another user's data" → escalate to CRITICAL
+3. **Input handling**: "Form rejects valid input" might be "validation is absent, allowing injection" → investigate both directions
+
+**Escalation rule**: If a functional failure ALSO has a security implication, classify it as the HIGHER of the two severities. Report the security dimension explicitly:
+
+```markdown
+### Root Cause 2: Missing authentication guard on /api/orders
+- **Functional impact**: Orders page shows 403 error (QA: Functionality bug)
+- **Security impact**: Guard is missing entirely, not misconfigured. Any unauthenticated request can access the endpoint. (CRITICAL security issue)
+- **Escalated severity**: CRITICAL (security > functional)
+```
+
+Also check: Did the Sentinel report any findings? If Sentinel flagged WARN items that relate to your diagnosed root causes, note the connection.
 
 ### Step 2: Trace Code Paths
 

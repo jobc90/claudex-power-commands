@@ -39,7 +39,70 @@ Announce the classification to the user:
 Scale: [S/M/L] — [one-line rationale]
 ```
 
-Then proceed to Phase 1 with the classified scale.
+Then proceed to Phase 0.5 with the classified scale.
+
+---
+
+## Phase 0.5: Security Triage
+
+After Scale classification, determine the security sensitivity of the request.
+
+### Classification
+
+Analyze `$ARGUMENTS` for security-sensitive keywords:
+
+**HIGH sensitivity** (any match triggers HIGH):
+- Authentication/Authorization: auth, login, password, token, jwt, session, permissions, role, RBAC, admin, sudo
+- Financial: payment, billing, stripe, credit, invoice, transaction
+- Cryptography: crypto, encrypt, decrypt, key, certificate, hash, salt
+- Data privacy: PII, GDPR, personal data, email, phone, address
+- Infrastructure: infra, deploy, CI/CD, pipeline, docker, k8s, terraform
+- Secrets: .env, secret, credential, API key
+
+**MEDIUM sensitivity** (if no HIGH keywords):
+- API: endpoint, route, middleware, controller, handler
+- Data: database, schema, migration, query, model
+- Network: CORS, header, cookie, webhook, external, integration
+- File handling: upload, download, file, stream
+
+**LOW sensitivity** (if no HIGH or MEDIUM keywords):
+- UI: component, style, CSS, layout, animation, color, font
+- Docs: README, docs, comment, typo, format
+- Quality: lint, test, refactor (UI-only), i18n
+
+### Write Triage Result
+
+```bash
+cat > .harness/security-triage.md << 'HEREDOC'
+# Security Triage
+- sensitivity: {HIGH/MEDIUM/LOW}
+- keywords_matched: [{list}]
+- sentinel_active: {true/false}
+- qa_security_track: {true/false}
+- auditor_active: {true/false}
+HEREDOC
+```
+
+**Activation rules:**
+- HIGH → sentinel_active: true, qa_security_track: true, auditor_active: true
+- MEDIUM → sentinel_active: {true if Scale L, false otherwise}, qa_security_track: true, auditor_active: {true if Scale M/L, false otherwise}
+- LOW → sentinel_active: false, qa_security_track: false, auditor_active: false
+
+### Announce to User
+
+```
+보안 민감도: {HIGH/MEDIUM/LOW} — {matched keywords}
+Sentinel: {활성화/비활성화}, QA Security Track: {활성화/비활성화}
+```
+
+### Post-Scout Re-evaluation
+
+After Phase 2 (Scout) completes, re-read `.harness/build-context.md` and check the "Files to Change" section:
+- If files include paths containing `auth/`, `payment/`, `security/`, `.env`, `credential` → upgrade to HIGH
+- If files include paths containing `api/`, `routes/`, `middleware/`, `model/` → upgrade to at least MEDIUM
+- Update `.harness/security-triage.md` if sensitivity increased. Notify user: **"보안 민감도가 {OLD} → {NEW}로 상향되었습니다."**
+
+Then proceed to Phase 1.
 
 ---
 
@@ -48,20 +111,26 @@ Then proceed to Phase 1 with the classified scale.
 ```
 /harness <prompt>
   |
-  +- Phase 0: Triage         -> Scale S/M/L classification
-  +- Phase 1: Setup           -> .harness/ directory + git init
-  +- Phase 2: Scout           -> Scout agent -> .harness/build-context.md
-  +- Phase 3: Planning        -> Planner agent -> .harness/build-spec.md
-  |                           -> User reviews and approves
-  +- Phase 4: Build-Refine-QA -> Up to S=1, M=2, L=3 rounds:
-  |   +- Snapshot             -> captures git/build/test state
-  |   +- Builder agent        -> implements/fixes -> .harness/build-progress.md
-  |   +- Refiner agent        -> cleans/hardens  -> .harness/build-refiner-report.md
-  |   +- QA agent             -> tests/scores    -> .harness/build-round-N-feedback.md
-  |   +- Score check          -> all >= 7? done : next round
-  |   +- Diagnostician agent  -> root cause analysis (M/L, round 2+ only)
-  |   +- History accumulate   -> append round outcomes to build-history.md
-  +- Phase 5: Summary         -> Final report to user
+  +- Phase 0: Triage             -> Scale S/M/L classification
+  +- Phase 0.5: Security Triage  -> LOW/MEDIUM/HIGH classification
+  +- Phase 1: Setup              -> .harness/ directory + git init
+  +- Phase 2: Scout              -> Scout agent -> .harness/build-context.md
+  |                              -> Security Triage re-evaluation
+  +- Phase 3: Planning           -> Planner agent -> .harness/build-spec.md
+  |                              -> User reviews and approves
+  +- Phase 4: Build-Sentinel-Refine-QA -> Up to S=1, M=2, L=3 rounds:
+  |   +- Snapshot                -> captures git/build/test state
+  |   +- Builder agent           -> implements/fixes
+  |   +- Sentinel agent          -> security check (conditional)
+  |   |  +- BLOCK?               -> return to Builder
+  |   +- Refiner agent           -> cleans/hardens
+  |   +- QA agent                -> tests/scores (+ security track)
+  |   +- Score check             -> all >= 7? done : next round
+  |   +- Diagnostician agent     -> root cause analysis (M/L, round 2+ only)
+  |   +- History accumulate      -> append round outcomes to build-history.md
+  +- Phase 4-post: Artifacts     -> Artifact validation
+  +- Phase 4-audit: Auditor      -> Cross-verification (conditional, M/L only)
+  +- Phase 5: Summary            -> Final report to user
 ```
 
 ---
@@ -251,7 +320,7 @@ After completion:
 
 ---
 
-## Phase 4: Build-Refine-QA Loop (Meta-Harness Enhanced)
+## Phase 4: Build-Sentinel-Refine-QA Loop (Meta-Harness Enhanced)
 
 Read the builder, refiner, QA, and diagnostician prompt templates from `~/.claude/harness/`.
 
@@ -309,6 +378,61 @@ Launch a **general-purpose Agent** (Scale S/M: **model `sonnet`**; Scale L: inhe
 After Builder completes, update event log:
 ```bash
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] builder:r{N} | done | build-progress.md | {summary}" >> .harness/session-events.md
+```
+
+#### 4a-post. Sentinel Check (Conditional)
+
+**Skip if**: `.harness/security-triage.md` shows `sentinel_active: false`
+
+Read the sentinel prompt template: `~/.claude/harness/sentinel-prompt.md`
+
+Launch a **general-purpose Agent** with **model `sonnet`**:
+- **prompt**: The sentinel prompt template + these context instructions:
+  - "Execution audit log: `.harness/traces/round-{N}-execution-log.md`"
+  - "Build progress: `.harness/build-progress.md`"
+  - "Product spec: `.harness/build-spec.md`"
+  - "Containment reference: `~/.claude/harness/references/agent-containment.md`"
+  - "Security triage: `.harness/security-triage.md`"
+  - "Round number: {N}"
+  - "Write your report to `.harness/sentinel-report-round-{N}.md`"
+- **description**: "harness sentinel round {N}"
+- **model**: `sonnet`
+
+After Sentinel completes:
+1. Read `.harness/sentinel-report-round-{N}.md`
+2. Extract the verdict: BLOCK / WARN / CLEAR
+
+**If BLOCK**:
+- Update session protocol:
+  ```bash
+  echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] sentinel:r{N} | block | sentinel-report-round-{N}.md | {finding_count} CRITICAL findings, returning to Builder" >> .harness/session-events.md
+  sed -i '' 's/last_completed_agent: .*/last_completed_agent: sentinel_block_r{N}/' .harness/session-state.md
+  sed -i '' 's/last_completed_at: .*/last_completed_at: '"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'/' .harness/session-state.md
+  ```
+- Report to user: **"Sentinel BLOCK — {finding count} CRITICAL 보안 문제 탐지. Builder에게 반환합니다."**
+- Pass sentinel report to Builder as additional context
+- Re-launch Builder with:
+  - "**SENTINEL BLOCK**: Read `.harness/sentinel-report-round-{N}.md`. Address ALL CRITICAL findings. Do NOT proceed with any other changes until all CRITICAL findings are resolved."
+- After Builder re-completes, re-run Sentinel
+- If BLOCK again after 2 consecutive attempts:
+  ```bash
+  echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] sentinel:r{N} | abort | sentinel-report-round-{N}.md | 2 consecutive BLOCKs, pipeline aborted" >> .harness/session-events.md
+  sed -i '' 's/last_completed_agent: .*/last_completed_agent: sentinel_abort_r{N}/' .harness/session-state.md
+  sed -i '' 's/last_completed_at: .*/last_completed_at: '"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'/' .harness/session-state.md
+  ```
+  Abort pipeline, report to user: **"2회 연속 Sentinel BLOCK. 수동 검토가 필요합니다."**
+
+**If WARN**:
+- Report to user: **"Sentinel WARN — {finding count} HIGH 수준 발견. Refiner에게 전달합니다."**
+- Pass sentinel report path to Refiner prompt: "Also read `.harness/sentinel-report-round-{N}.md` — Sentinel flagged {count} HIGH items."
+- Proceed to Refiner (4b)
+
+**If CLEAR**:
+- Proceed to Refiner (4b) normally
+
+Update event log:
+```bash
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] sentinel:r{N} | {verdict} | sentinel-report-round-{N}.md | {summary}" >> .harness/session-events.md
 ```
 
 #### 4b. Refine
@@ -447,7 +571,7 @@ echo "## Artifact Validation"
 MISSING=0
 
 # Core artifacts (all scales)
-for f in build-context.md build-spec.md build-prompt.md build-progress.md; do
+for f in build-context.md build-spec.md build-prompt.md build-progress.md security-triage.md; do
   [ ! -f ".harness/$f" ] && echo "MISSING: .harness/$f" && MISSING=$((MISSING+1))
 done
 
@@ -466,6 +590,13 @@ if [ "{scale}" != "S" ]; then
   for N in $(seq 1 {completed_rounds}); do
     [ ! -f ".harness/traces/round-${N}-qa-evidence.md" ] && echo "WARN: .harness/traces/round-${N}-qa-evidence.md not found (may be OK if all PASS)"
   done
+
+  # Sentinel reports (if sentinel was active)
+  if grep -q 'sentinel_active: true' .harness/security-triage.md 2>/dev/null; then
+    for N in $(seq 1 {completed_rounds}); do
+      [ ! -f ".harness/sentinel-report-round-${N}.md" ] && echo "WARN: .harness/sentinel-report-round-${N}.md not found (sentinel was active)"
+    done
+  fi
 fi
 
 # Diagnostician artifacts (M/L, round 2+)
@@ -475,12 +606,53 @@ if [ {completed_rounds} -gt 1 ] && [ "{scale}" != "S" ]; then
   done
 fi
 
+# Auditor artifact (if auditor was active)
+if grep -q 'auditor_active: true' .harness/security-triage.md 2>/dev/null; then
+  [ ! -f ".harness/auditor-report.md" ] && echo "MISSING: .harness/auditor-report.md" && MISSING=$((MISSING+1))
+fi
+
 echo "Artifacts: $MISSING missing"
 ```
 
 Report the result to the user:
 - 0 missing → **"Artifact validation: PASS"**
 - Any missing → **"Artifact validation: [X] missing files"** + list them in the Summary
+
+---
+
+## Phase 4-audit: Auditor Verification (Conditional)
+
+**Skip if**: `.harness/security-triage.md` shows `auditor_active: false`
+**Skip for Scale S**: Auditor is only active for Scale M/L with MEDIUM/HIGH security sensitivity.
+
+After the Build-Sentinel-Refine-QA loop exits (PASS or max rounds), run the Auditor for cross-verification.
+
+Read the auditor prompt template: `~/.claude/harness/auditor-prompt.md`
+
+Launch a **general-purpose Agent** with **model `sonnet`**:
+- **prompt**: The auditor prompt template + context:
+  - "Build progress: `.harness/build-progress.md`"
+  - "Refiner report: `.harness/build-refiner-report.md`"
+  - "QA feedback files: `.harness/build-round-{1..N}-feedback.md`"
+  - "Execution logs: `.harness/traces/round-{1..N}-execution-log.md`"
+  - "Sentinel reports: `.harness/sentinel-report-round-{1..N}.md` (if exist)"
+  - "Product spec: `.harness/build-spec.md`"
+  - "Build history: `.harness/build-history.md`"
+  - "Total rounds completed: {N}"
+  - "Write your report to `.harness/auditor-report.md`"
+- **description**: "harness auditor"
+- **model**: `sonnet`
+
+After Auditor completes:
+1. Read `.harness/auditor-report.md`
+2. Extract integrity verdict: HIGH / MEDIUM / LOW
+3. If LOW: **"Auditor: LOW integrity 탐지. 수동 검증을 권장합니다."**
+4. Include integrity verdict in Phase 5 Summary
+
+Update event log:
+```bash
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] auditor | {verdict} | auditor-report.md | integrity: {HIGH/MEDIUM/LOW}" >> .harness/session-events.md
+```
 
 ---
 
@@ -523,6 +695,9 @@ Report the result to the user:
 ### Remaining Issues
 [From last QA report if any]
 
+### Integrity
+**Integrity**: {HIGH/MEDIUM/LOW} (from Auditor, if active; otherwise "N/A — Auditor inactive")
+
 ### Next Step
 Run `/harness-review` to review and commit, or `/harness-review --pr` to create a PR.
 ```
@@ -551,6 +726,9 @@ Run `/harness-review` to review and commit, or `/harness-review --pr` to create 
 
 ### Remaining Issues
 [From last QA report — actionable items]
+
+### Integrity
+**Integrity**: {HIGH/MEDIUM/LOW} (from Auditor, if active; otherwise "N/A — Auditor inactive")
 
 ### Artifacts
 - Context: `.harness/build-context.md`
@@ -597,6 +775,11 @@ echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] summary | done | — | Pipeline complete,
 19. **Round 2+ Builder uses Selective Context**: PRIMARY (diagnosis + snapshot), SECONDARY (spec), ON-DEMAND (rest). See session-protocol.md §3.
 20. **Scale L Diagnostician runs in background** (`run_in_background: true`). History and user reporting proceed in parallel.
 21. **Builder and Refiner write execution audit logs** to `.harness/traces/round-{N}-execution-log.md`. Diagnostician reads these for root cause analysis.
+22. **Sentinel runs AFTER Builder, BEFORE Refiner** (when active). A BLOCK verdict skips Refiner and QA, returning to Builder. Two consecutive BLOCKs abort the pipeline.
+23. **Security Triage runs AFTER Scale classification** and re-evaluates AFTER Scout. See Phase 0.5.
+24. **Sentinel model is `sonnet`** — checklist-driven pattern matching, not deep reasoning.
+25. **Auditor runs AFTER the final QA round, BEFORE Summary** (when active).
+26. **LOW integrity verdict blocks auto-commit.** User must verify manually.
 
 ## Cost Awareness
 
@@ -607,3 +790,5 @@ echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] summary | done | — | Pipeline complete,
 | L | 1-4 hours | 10-17 (scout + planner + [builder + refiner + QA + diagnostician] × 1-3) |
 
 **Note**: Diagnostician adds ~2-5 min per round but saves 10-20 min of Builder investigation time in subsequent rounds (Meta-Harness principle: causal diagnosis > summary-based guessing).
+
+**Security overhead**: When Security Triage is HIGH, add 1-2 agent calls per round (Sentinel check + potential Builder retry on BLOCK). MEDIUM adds 0-1 (Sentinel only on Scale L). LOW adds 0.

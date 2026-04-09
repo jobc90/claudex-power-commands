@@ -1,7 +1,7 @@
 {
   "name": "claudex",
-  "description": "7 harness commands for Claude Code and Codex: /harness (6-agent build pipeline with Diagnostician), /harness-docs (5-agent documentation), /harness-review (5-agent code review + git), /harness-team (parallel multi-worker build with worktree isolation), /harness-qa (functional QA with Playwright, 8 test modes), /design (3-dial frontend design), /claude-dashboard (statusline). 23 specialized agent prompts with Managed Agents-inspired session protocol, execution audit trails, smart model routing, and background diagnostician.",
-  "version": "3.2.0",
+  "description": "7 harness commands for Claude Code and Codex: /harness (8-agent build pipeline with Sentinel + Auditor), /harness-docs (5-agent documentation), /harness-review (5-agent code review + git), /harness-team (parallel multi-worker build with per-Worker Sentinel gate), /harness-qa (functional QA with Playwright + Security Track), /design (3-dial frontend design), /claude-dashboard (statusline). 25 specialized agent prompts with Mythos-ready containment, Security Triage, Adaptive Scale Protocol, and anti-fabrication defenses.",
+  "version": "3.5.0",
   "author": {
     "name": "jobc90",
     "url": "https://github.com/jobc90"

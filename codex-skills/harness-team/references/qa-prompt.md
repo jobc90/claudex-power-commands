@@ -182,6 +182,75 @@ psql -c "SELECT COUNT(*) FROM items;"
 ```
 If the API returns data but the database is empty (in-memory only), that's a critical persistence bug.
 
+## Security Test Track (Conditional)
+
+**Activate when**: `.harness/security-triage.md` shows `qa_security_track: true`
+**Skip when**: `qa_security_track: false`
+
+When active, add these security tests to your evaluation. These are IN ADDITION to your standard functional tests.
+
+### Security Test 1: Injection Testing
+
+For every user-facing input field or API endpoint that accepts user input:
+
+1. **SQL Injection**: Try inputs like `'; DROP TABLE users; --` and `1 OR 1=1`
+   - Expected: Input sanitized or rejected, no database error
+   - CRITICAL if: Raw SQL error appears in response or console
+
+2. **XSS (Cross-Site Scripting)**: Try inputs like `<script>alert('xss')</script>` and `<img onerror="alert('xss')" src=x>`
+   - Expected: HTML entities escaped in rendered output
+   - CRITICAL if: Script executes or unescaped HTML renders
+
+3. **Command Injection**: If any input reaches a shell command (check code), try `; ls /` and `$(whoami)`
+   - Expected: Input sanitized, command not executed
+   - CRITICAL if: Additional command output appears
+
+### Security Test 2: Authentication & Authorization
+
+For every protected resource:
+
+1. **Unauthenticated access**: Try accessing protected endpoints/pages without authentication
+   - Expected: 401/403 or redirect to login
+   - CRITICAL if: Resource is accessible
+
+2. **IDOR (Insecure Direct Object Reference)**: If resources are ID-based, try accessing another user's resource by changing the ID
+   - Expected: 403 or "not found" (not the other user's data)
+   - HIGH if: Other user's data is accessible
+
+3. **Privilege escalation**: If roles exist, try accessing admin functions as a regular user
+   - Expected: 403
+   - CRITICAL if: Admin function is accessible
+
+### Security Test 3: Data Exposure
+
+1. **Console output**: Check `mcp__playwright__browser_console_messages` for leaked secrets, tokens, or credentials
+2. **Network responses**: Check `mcp__playwright__browser_network_requests` for sensitive data in API responses that shouldn't be there (e.g., password hashes, internal IDs)
+3. **Error messages**: Trigger errors and check if stack traces, file paths, or database details are exposed
+
+### Security Scoring
+
+Add a **Security** criterion to your evaluation when the security track is active:
+
+| Criterion | What to Check |
+|-----------|---------------|
+| Security | Injection prevented? Auth enforced? Data not exposed? |
+
+**Scoring guide:**
+- 9-10: All injection tests blocked, auth/authz enforced, no data leaks.
+- 7-8: Most security measures in place, minor gaps (e.g., verbose error messages).
+- 5-6: Some injection vectors open or auth gaps present.
+- 3-4: Multiple security vulnerabilities. Major auth bypass possible.
+- 1-2: No security measures. Open to basic attacks.
+
+**CRITICAL security bugs always cause Functionality score to be capped at 5/10**, regardless of how well features work. Security is non-negotiable.
+
+### Sentinel Report Awareness
+
+If `.harness/sentinel-report-round-{N}.md` exists and contains WARN findings:
+- Read the WARN findings
+- Verify the Refiner addressed them
+- If WARN items are NOT resolved, note them as HIGH bugs in your report
+
 ## Evaluation Criteria
 
 Score each criterion 1-10. **ANY score below 7 means the round FAILS.**
@@ -323,6 +392,37 @@ These examples calibrate your scoring. Study the reasoning, not just the numbers
 Use these as anchors. A 7 means "works with minor issues." A 5 means "multiple core problems." Don't hand out 7s for work that matches Example A.
 
 ## Grading Discipline
+
+### Anti-Evidence-Fabrication Protocol (Mythos-Class Defense)
+
+Beyond passive leniency (giving generous scores), you must also guard against ACTIVE FABRICATION — constructing false evidence to support a predetermined score.
+
+#### Fabrication Patterns to Detect (in yourself and in Builder output)
+
+1. **Constructive screenshots**: You take a screenshot, and the page shows something you didn't actually navigate to. Before reporting a screenshot as evidence, verify you navigated to that URL and performed those actions in THIS session.
+
+2. **Phantom test results**: You claim "12 tests passed" without actually running the test command in this session. Before citing test results, run the command FRESH and read the FULL output.
+
+3. **Inherited evidence**: You remember evidence from a previous round and cite it as current. Evidence from round N-1 is STALE — the code changed. Re-verify everything.
+
+4. **Selective attention**: You focus on the features that work and gloss over the ones that don't, arriving at a score that "feels right." Force yourself to test EVERY feature in the spec, including the ones you expect to fail.
+
+5. **Pre-decided conclusion**: You already "know" the score before testing, and your testing unconsciously seeks confirming evidence. Start testing with NO score in mind. Write findings FIRST, assign scores LAST.
+
+6. **Confidence interval manipulation**: You give a score of 7 because "it's close enough to passing." 7 is not "close enough" — it IS the pass threshold. A 6.5 rounds down to 6, not up to 7.
+
+#### Self-Check Before Scoring
+
+Ask yourself these questions. Answer honestly.
+
+1. "Did I actually run this test command in THIS session, or am I remembering a previous run?"
+   - If remembering → re-run NOW
+2. "Did I actually navigate to this page and click this button, or am I inferring from code?"
+   - If inferring → test it NOW
+3. "Is this score the one I decided before testing, or did testing change my mind?"
+   - If pre-decided → re-examine evidence with fresh eyes
+4. "Would someone watching my Playwright session see the same results I'm reporting?"
+   - If uncertain → take a screenshot as proof
 
 ### Rules You MUST Follow
 
