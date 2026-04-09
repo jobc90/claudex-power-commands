@@ -4,12 +4,26 @@
 
 > A 7-command harness suite for Claude Code, mirrored as 7 skills for Codex
 
-This repository no longer centers on the old `check / cowork / docs / super` set.
-The source of truth is now the harness-based command suite first organized on the Claude side, then ported to Codex with the same shape.
+The source of truth is the harness-based command suite first organized on the Claude side, then ported to Codex with the same shape.
 
 - Claude source of truth: 7 files in `commands/`
 - Codex ports: 7 matching skills in `codex-skills/`
-- Shared harness prompt bundle: 22 agent prompts in `harness/`
+- Shared harness prompt bundle: 23 agent prompts in `harness/`
+- Reference checklists: 4 files in `harness/references/`
+
+### v3.2.0 — Managed Agents-Inspired Session Protocol
+
+Inspired by Anthropic's [Managed Agents](https://www.anthropic.com/engineering/managed-agents) architecture, 7 features were added:
+
+| Feature | Description | Impact |
+|---------|-------------|--------|
+| **Session Protocol** | Track session state in `.harness/session-state.md` + resume | Avoid full restart on Scale L interruptions |
+| **Unified Event Log** | Append-only timeline in `.harness/session-events.md` | Better pattern recognition + debugging |
+| **Selective Context** | 3-tier context hierarchy for Round 2+ Builder | Token savings + improved agent focus |
+| **Worktree Isolation** | `isolation: "worktree"` for Team Workers | True parallel safety (official Claude Code feature) |
+| **Model Selection** | Per-agent optimal model routing (sonnet/opus) | Faster execution + cost reduction |
+| **Execution Audit** | Builder/Refiner action logs for Diagnostician | More accurate root cause analysis, fewer rounds |
+| **Background Diagnostician** | `run_in_background` for Scale L | Reduced wait time |
 
 ---
 
@@ -29,13 +43,13 @@ The source of truth is now the harness-based command suite first organized on th
 
 | Group | Agents |
 |---|---|
-| `/harness` | `scout`, `planner`, `builder`, `refiner`, `qa` |
+| `/harness` | `scout`, `planner`, `builder`, `refiner`, `qa`, `diagnostician` |
 | `/harness-docs` | `researcher`, `outliner`, `writer`, `reviewer`, `validator` |
 | `/harness-review` | `scanner`, `analyzer`, `fixer`, `verifier`, `reporter` |
 | `/harness-team` | `architect`, `worker`, `integrator` plus reused `scout` and `qa` |
 | `/harness-qa` | `scenario-writer`, `test-executor`, `analyst`, `qa-reporter` plus reused `scout` |
 
-There are 22 prompt templates under `harness/`.
+There are 23 prompt templates under `harness/`, plus 4 reference checklists in `harness/references/`.
 
 ---
 
@@ -99,9 +113,10 @@ git clone https://github.com/jobc90/claudex-power-commands.git
 # 2. Copy commands
 cp claudex-power-commands/commands/*.md ~/.claude/commands/
 
-# 3. Copy harness prompts
-mkdir -p ~/.claude/harness
+# 3. Copy harness prompts + reference checklists
+mkdir -p ~/.claude/harness/references
 cp claudex-power-commands/harness/*.md ~/.claude/harness/
+cp claudex-power-commands/harness/references/*.md ~/.claude/harness/references/
 
 # 4. Verify
 # In a new session, /harness /harness-docs /harness-review /harness-team /harness-qa /design /claude-dashboard should appear
@@ -144,6 +159,11 @@ claudex-power-commands/
 │   ├── design.md
 │   └── claude-dashboard.md
 ├── harness/
+│   ├── references/
+│   │   ├── session-protocol.md   # Session state, event log, model routing, execution audit
+│   │   ├── security-checklist.md
+│   │   ├── error-handling-checklist.md
+│   │   └── confidence-calibration.md
 │   ├── scout-prompt.md
 │   ├── planner-prompt.md
 │   ├── builder-prompt.md

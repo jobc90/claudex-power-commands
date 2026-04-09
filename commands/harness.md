@@ -68,13 +68,48 @@ Then proceed to Phase 1 with the classified scale.
 
 ## Phase 1: Setup
 
+Read the session protocol reference: `~/.claude/harness/references/session-protocol.md`
+
+### 1a. Session Recovery Check
+
+Before creating `.harness/`, check for an existing session:
+
+1. If `.harness/session-state.md` exists:
+   - Read it and verify referenced artifacts exist on disk
+   - Present to user: **"이전 세션이 감지되었습니다. Phase {phase}, {last_completed_agent} 완료 후 중단. 이어서 진행할까요?"**
+   - If **resume**: skip to the phase AFTER `last_completed_agent`, reading existing artifacts as context
+   - If **restart**: `mv .harness/ .harness-backup-$(date +%s)/` and continue to 1b
+2. If no session-state.md: continue to 1b
+
+### 1b. Fresh Setup
+
 1. Identify or create the project directory.
 2. Run:
    ```bash
-   mkdir -p .harness
+   mkdir -p .harness/traces
    git init 2>/dev/null || true
    ```
 3. Write the user's original prompt (`$ARGUMENTS`) and the classified scale to `.harness/build-prompt.md`.
+4. Initialize session state:
+   ```bash
+   cat > .harness/session-state.md << 'HEREDOC'
+   # Session State
+   - pipeline: harness
+   - scale: {S/M/L}
+   - phase: 1
+   - round: 1
+   - last_completed_agent: setup
+   - last_completed_at: {ISO8601}
+   - status: IN_PROGRESS
+   - artifacts_written:
+     - .harness/build-prompt.md
+   HEREDOC
+   ```
+5. Initialize event log:
+   ```bash
+   echo "# Session Events" > .harness/session-events.md
+   echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] setup | done | build-prompt.md | Scale {S/M/L}, harness pipeline" >> .harness/session-events.md
+   ```
 
 ---
 
@@ -99,7 +134,7 @@ For FIX/MODIFY requests, append this instruction to the Scout prompt:
 
 ### Scale S — Targeted Scan
 
-Launch a **general-purpose Agent** with subagent_type `Explore`:
+Launch a **general-purpose Agent** with subagent_type `Explore` and **model `sonnet`**:
 - **prompt**: The scout prompt template + context:
   - "Project directory: `{cwd}`"
   - "User's request: `{$ARGUMENTS}`"
@@ -107,10 +142,11 @@ Launch a **general-purpose Agent** with subagent_type `Explore`:
   - "Write output to `.harness/build-context.md`"
   - If FIX/MODIFY: Deep Dive instruction (see above)
 - **description**: "harness scout (S)"
+- **model**: `sonnet`
 
 ### Scale M — Module Scan
 
-Launch a **general-purpose Agent** with subagent_type `Explore`:
+Launch a **general-purpose Agent** with subagent_type `Explore` and **model `sonnet`**:
 - **prompt**: The scout prompt template + context:
   - "Project directory: `{cwd}`"
   - "User's request: `{$ARGUMENTS}`"
@@ -118,10 +154,11 @@ Launch a **general-purpose Agent** with subagent_type `Explore`:
   - "Write output to `.harness/build-context.md`"
   - If FIX/MODIFY: Deep Dive instruction (see above)
 - **description**: "harness scout (M)"
+- **model**: `sonnet`
 
 ### Scale L — Full Codebase Scan
 
-Launch a **general-purpose Agent** with subagent_type `Explore`:
+Launch a **general-purpose Agent** with subagent_type `Explore` and **model `sonnet`**:
 - **prompt**: The scout prompt template + context:
   - "Project directory: `{cwd}`"
   - "User's request: `{$ARGUMENTS}`"
@@ -129,8 +166,17 @@ Launch a **general-purpose Agent** with subagent_type `Explore`:
   - "Write output to `.harness/build-context.md`"
   - If FIX/MODIFY: Deep Dive instruction (see above)
 - **description**: "harness scout (L)"
+- **model**: `sonnet`
 
-After Scout completes, briefly confirm to the user: **"Scout 완료. 코드베이스 컨텍스트를 수집했습니다."** (No approval needed — proceed to Planning.)
+After Scout completes:
+1. Briefly confirm to the user: **"Scout 완료. 코드베이스 컨텍스트를 수집했습니다."** (No approval needed.)
+2. Update session state and event log:
+   ```bash
+   sed -i '' 's/phase: .*/phase: 2/' .harness/session-state.md
+   sed -i '' 's/last_completed_agent: .*/last_completed_agent: scout/' .harness/session-state.md
+   sed -i '' "s/last_completed_at: .*/last_completed_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)/" .harness/session-state.md
+   echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] scout | done | build-context.md | {summary}" >> .harness/session-events.md
+   ```
 
 ---
 
@@ -168,7 +214,7 @@ Present the scope note to the user and ask: **"Scope를 검토해주세요. 진�
 
 ### Scale M — Lite Planner
 
-Launch a **general-purpose Agent**:
+Launch a **general-purpose Agent** (inherit parent model — planning quality is critical):
 - **prompt**: The planner prompt template + `"MODE: LITE. Scale is M."` + the user's request.
   - "Codebase context is at `.harness/build-context.md` — read it first to understand existing patterns, conventions, and reusable assets."
 - **description**: "harness lite planner"
@@ -179,6 +225,14 @@ After completion:
 - Present summary: feature count, changed files, test criteria
 - Ask: **"Spec을 검토해주세요. 진행할까요?"**
 - **WAIT for user approval.**
+- After approval, update session state and event log:
+  ```bash
+  sed -i '' 's/phase: .*/phase: 3/' .harness/session-state.md
+  sed -i '' 's/last_completed_agent: .*/last_completed_agent: planner/' .harness/session-state.md
+  sed -i '' "s/last_completed_at: .*/last_completed_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)/" .harness/session-state.md
+  echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] planner | done | build-spec.md | {feature_count} features" >> .harness/session-events.md
+  echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] approval | user | — | Spec approved" >> .harness/session-events.md
+  ```
 
 ### Scale L — Full Planner
 
@@ -193,6 +247,7 @@ After completion:
 - Present summary: feature count, key features, tech stack, AI integrations
 - Ask: **"Spec을 검토해주세요. 진행할까요, 수정할 부분이 있나요?"**
 - **WAIT for user approval.**
+- After approval, update session state and event log (same as Scale M above).
 
 ---
 
@@ -233,21 +288,32 @@ Pass this snapshot path to the Builder: "Environment snapshot: `.harness/snapsho
 
 #### 4a. Build
 
-Launch a **general-purpose Agent**:
+Launch a **general-purpose Agent** (Scale S/M: **model `sonnet`**; Scale L: inherit parent):
 - **prompt**: The builder prompt template + these context instructions:
   - "Codebase context: `.harness/build-context.md` — read it to understand existing patterns and reusable assets."
   - "Product spec: `.harness/build-spec.md` — your blueprint."
   - "Environment snapshot: `.harness/snapshot-round-{N}.md` — read this FIRST to understand current project state."
   - "Scale: {S/M/L}"
   - If N == 1: "This is a fresh build. Implement the changes described in the spec."
-  - If N > 1: "Read the Diagnosis Report at `.harness/diagnosis-round-{N-1}.md` — this is your PRIMARY input with root cause analysis. Also read cumulative history at `.harness/build-history.md` and QA evidence traces at `.harness/traces/round-{N-1}-qa-evidence.md`. Fix ROOT CAUSES, not symptoms."
+  - If N > 1 (**Selective Context Protocol**):
+    - "**PRIMARY** (read FIRST): `.harness/diagnosis-round-{N-1}.md` — root cause analysis with file:line citations. `.harness/snapshot-round-{N}.md` — current project state."
+    - "**SECONDARY** (reference): `.harness/build-spec.md` — the spec."
+    - "**ON-DEMAND** (only if diagnosis is insufficient): `.harness/build-history.md`, `.harness/traces/round-{N-1}-qa-evidence.md`, `.harness/traces/round-{N-1}-execution-log.md`"
+    - "Fix ROOT CAUSES from the diagnosis. Do not re-investigate from scratch."
   - "Write your progress to `.harness/build-progress.md`."
+  - "Write your execution audit to `.harness/traces/round-{N}-execution-log.md` (see Execution Audit in builder prompt)."
   - Scale M/L only: "Start the dev server in background and note the URL in progress.md."
 - **description**: "harness builder round {N}"
+- **model**: Scale S/M → `sonnet`; Scale L → omit (inherit parent)
+
+After Builder completes, update event log:
+```bash
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] builder:r{N} | done | build-progress.md | {summary}" >> .harness/session-events.md
+```
 
 #### 4b. Refine
 
-Launch a **general-purpose Agent**:
+Launch a **general-purpose Agent** with **model `sonnet`**:
 - **prompt**: The refiner prompt template + these context instructions:
   - "Codebase context: `.harness/build-context.md`"
   - "Product spec: `.harness/build-spec.md`"
@@ -256,8 +322,15 @@ Launch a **general-purpose Agent**:
   - "Round: {N}"
   - If N > 1: "Previous QA feedback: `.harness/build-round-{N-1}-feedback.md`"
   - "Apply fixes directly to the code. Write your report to `.harness/build-refiner-report.md`."
+  - "Append your refinement actions to `.harness/traces/round-{N}-execution-log.md` under a '## Refiner Actions' header."
   - Scale M/L: "Also write execution trace to `.harness/traces/round-{N}-refiner-trace.md` (build/test results after your fixes)."
 - **description**: "harness refiner round {N}"
+- **model**: `sonnet`
+
+After Refiner completes, update event log:
+```bash
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] refiner:r{N} | done | build-refiner-report.md | {summary}" >> .harness/session-events.md
+```
 
 #### 4c. Verify (Scale M/L only)
 
@@ -269,7 +342,7 @@ After the refiner agent completes:
 
 #### 4d. QA
 
-Launch a **general-purpose Agent**:
+Launch a **general-purpose Agent** with **model `sonnet`**:
 - **prompt**: The QA prompt template + these context instructions:
   - "Product spec: `.harness/build-spec.md`"
   - "Refiner report: `.harness/build-refiner-report.md`"
@@ -280,6 +353,12 @@ Launch a **general-purpose Agent**:
   - Scale M: `"QA_MODE: STANDARD. Use Playwright if the app has UI. Otherwise code review + build/test."` + "App URL: `{URL from progress.md}`" + `"Write evidence traces to .harness/traces/round-{N}-qa-evidence.md for FAIL/PARTIAL results."`
   - Scale L: `"QA_MODE: FULL. Playwright is MANDATORY."` + "App URL: `{URL from progress.md}`" + `"Write evidence traces to .harness/traces/round-{N}-qa-evidence.md for ALL results."`
 - **description**: "harness QA round {N}"
+- **model**: `sonnet`
+
+After QA completes, update event log:
+```bash
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] qa:r{N} | {pass/fail} | build-round-{N}-feedback.md | scores: {scores}" >> .harness/session-events.md
+```
 
 #### 4e. Evaluate
 
@@ -299,10 +378,14 @@ After QA agent completes:
 
 Read the diagnostician prompt template: `~/.claude/harness/diagnostician-prompt.md`
 
-Launch a **general-purpose Agent**:
+Launch a **general-purpose Agent** (inherit parent model — deep reasoning needed).
+**Scale L**: use `run_in_background: true` and proceed to 4g (History) immediately. Scale M: foreground (default).
+
 - **prompt**: The diagnostician prompt template + these context instructions:
   - "QA feedback: `.harness/build-round-{N}-feedback.md`"
   - "QA evidence traces: `.harness/traces/round-{N}-qa-evidence.md`"
+  - "Execution audit log: `.harness/traces/round-{N}-execution-log.md`"
+  - "Event log: `.harness/session-events.md`"
   - "Environment snapshot: `.harness/snapshot-round-{N}.md`"
   - "Build progress: `.harness/build-progress.md`"
   - "Codebase context: `.harness/build-context.md`"
@@ -311,10 +394,22 @@ Launch a **general-purpose Agent**:
   - If N > 1: "Build history: `.harness/build-history.md`"
   - "Write your diagnosis to `.harness/diagnosis-round-{N}.md`"
 - **description**: "harness diagnostician round {N}"
+- **run_in_background**: Scale L only → `true`
 
-After completion:
-- Read `.harness/diagnosis-round-{N}.md`
+**Scale L flow** (background Diagnostician):
+1. Diagnostician runs in background
+2. Proceed immediately to 4g (History) — does not depend on diagnosis
+3. Report QA scores to user while Diagnostician works
+4. When Diagnostician notification arrives → read diagnosis, report root cause summary
+
+**Scale M flow** (foreground):
+- After completion, read `.harness/diagnosis-round-{N}.md`
 - Briefly report to user: root cause count, regression count (if any), top priority fix
+
+After Diagnostician completes (either flow), update event log:
+```bash
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] diagnostician:r{N} | done | diagnosis-round-{N}.md | {root_cause_count} root causes" >> .harness/session-events.md
+```
 
 #### 4g. Accumulate History (Every Round)
 
@@ -333,6 +428,13 @@ After Evaluate (and Diagnose if applicable), append to `.harness/build-history.m
 ```
 
 This file is cumulative — NEVER overwrite, only append. Create it on Round 1 with a header.
+
+After History is written, update session state for the round transition:
+```bash
+sed -i '' "s/round: .*/round: {N+1}/" .harness/session-state.md
+sed -i '' "s/last_completed_agent: .*/last_completed_agent: qa_round_{N}/" .harness/session-state.md
+sed -i '' "s/last_completed_at: .*/last_completed_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)/" .harness/session-state.md
+```
 
 ---
 
@@ -462,6 +564,14 @@ Run `/harness-review` to review and commit, or `/harness-review --pr` to create 
 Run `/harness-review` to review and commit, or `/harness-review --pr` to create a PR.
 ```
 
+After presenting the Summary, finalize session:
+```bash
+sed -i '' 's/status: IN_PROGRESS/status: COMPLETED/' .harness/session-state.md
+sed -i '' 's/phase: .*/phase: 5/' .harness/session-state.md
+sed -i '' "s/last_completed_at: .*/last_completed_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)/" .harness/session-state.md
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] summary | done | — | Pipeline complete, status: {PASS/PARTIAL}" >> .harness/session-events.md
+```
+
 ---
 
 ## Critical Rules
@@ -482,6 +592,11 @@ Run `/harness-review` to review and commit, or `/harness-review --pr` to create 
 14. **Environment snapshot runs BEFORE every Build round.** The Builder must know exact project state before making changes.
 15. **Build history is cumulative.** NEVER overwrite `.harness/build-history.md` — only append.
 16. **Evidence traces go to `.harness/traces/`.** QA and Refiner write raw diagnostic data here for the Diagnostician.
+17. **Session state and event log are updated after EVERY agent.** See `~/.claude/harness/references/session-protocol.md`.
+18. **Model selection follows the protocol**: Scout/Refiner/QA → `sonnet`; Planner/Diagnostician → inherit parent. See session-protocol.md §4.
+19. **Round 2+ Builder uses Selective Context**: PRIMARY (diagnosis + snapshot), SECONDARY (spec), ON-DEMAND (rest). See session-protocol.md §3.
+20. **Scale L Diagnostician runs in background** (`run_in_background: true`). History and user reporting proceed in parallel.
+21. **Builder and Refiner write execution audit logs** to `.harness/traces/round-{N}-execution-log.md`. Diagnostician reads these for root cause analysis.
 
 ## Cost Awareness
 

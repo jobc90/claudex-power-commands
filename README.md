@@ -4,14 +4,26 @@
 
 > Claude Code용 harness commands와 Codex용 harness skills를 같은 구조로 맞춘 7종 세트
 
-이 저장소는 이제 예전 `check / cowork / docs / super` 중심 구성이 아니라,
-`harness` 계열 중심 구조를 기준으로 운영합니다.
+이 저장소는 `harness` 계열 중심 구조를 기준으로 운영합니다.
 
 - Claude Code 기준 진실: `commands/` 7개
 - Codex 포트: `codex-skills/` 7개
-- 하네스 프롬프트 번들: `harness/` 22개 에이전트
+- 하네스 프롬프트 번들: `harness/` 23개 에이전트
+- 참조 체크리스트: `harness/references/` 4개
 
-즉, Claude에서 먼저 정리한 구조를 Codex에서도 같은 이름, 같은 파이프라인 감각으로 사용할 수 있게 맞춘 저장소입니다.
+### v3.2.0 — Managed Agents-Inspired Session Protocol
+
+Anthropic의 [Managed Agents](https://www.anthropic.com/engineering/managed-agents) 아키텍처에서 영감을 받아 7가지 기능을 추가했습니다:
+
+| 기능 | 설명 | 효과 |
+|------|------|------|
+| **Session Protocol** | `.harness/session-state.md`로 세션 상태 추적 + 재진입 | Scale L 중단 시 처음부터 재시작 방지 |
+| **Unified Event Log** | `.harness/session-events.md` append-only 타임라인 | 패턴 인식 + 정확한 디버깅 |
+| **Selective Context** | Round 2+ Builder에 3단계 컨텍스트 계층 | 토큰 절약 + agent 집중도 향상 |
+| **Worktree Isolation** | Team Workers에 `isolation: "worktree"` 적용 | 병렬 안전성 (Claude Code 공식 기능) |
+| **Model Selection** | agent별 최적 모델 라우팅 (sonnet/opus) | 속도 향상 + 비용 절감 |
+| **Execution Audit** | Builder/Refiner 실행 로그 → Diagnostician | 근본 원인 추적 정확도 향상 → 라운드 절감 |
+| **Background Diagnostician** | Scale L에서 `run_in_background` 적용 | 대기 시간 절감 |
 
 ---
 
@@ -148,6 +160,11 @@ claudex-power-commands/
 │   └── claude-dashboard.md
 ├── harness/
 │   ├── INDEX.md                  # Agent cross-reference map
+│   ├── references/
+│   │   ├── session-protocol.md   # Session state, event log, model routing, execution audit
+│   │   ├── security-checklist.md
+│   │   ├── error-handling-checklist.md
+│   │   └── confidence-calibration.md
 │   ├── scout-prompt.md
 │   ├── planner-prompt.md
 │   ├── builder-prompt.md

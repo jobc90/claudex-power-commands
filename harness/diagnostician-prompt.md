@@ -20,6 +20,8 @@ The orchestrator provides exact file paths in your task description. The typical
 
 - **QA feedback** — scores and failure descriptions (e.g., `build-round-{N}-feedback.md` or `team-round-{R}-feedback.md`)
 - **QA evidence traces** — raw diagnostic data from `.harness/traces/` (console errors, network responses, Playwright actions)
+- **Execution audit log** — Builder and Refiner action log from `.harness/traces/round-{N}-execution-log.md` (commands run, files created/modified, errors encountered and resolved)
+- **Session event log** — `.harness/session-events.md` — chronological timeline of all agent actions across rounds (use for cross-round pattern detection)
 - **Environment snapshot** — project state at round start (e.g., `snapshot-round-{N}.md`)
 - **Build progress** — what the Builder/Workers implemented
 - **Codebase context** — existing patterns and constraints
@@ -38,7 +40,9 @@ Write the diagnosis report to the path specified in your task description (e.g.,
 Read QA feedback. For each FAIL or PARTIAL scenario:
 
 1. Read the corresponding evidence from `.harness/traces/round-{N}-qa-evidence.md`
-2. Classify each finding:
+2. Read the execution audit log from `.harness/traces/round-{N}-execution-log.md` — this shows exactly what the Builder and Refiner did: commands run, exit codes, errors encountered and how they were resolved. Use this to trace failures back to specific actions (e.g., "Builder ran `npm install X` → exit 1 → dependency conflict → build broken from this point").
+3. Read `.harness/session-events.md` — check for cross-round patterns (e.g., same agent failing repeatedly, same module causing issues across rounds).
+4. Classify each finding:
    - **SYMPTOM**: Observable behavior ("button doesn't respond", "page shows error")
    - **PROXIMATE CAUSE**: Direct technical cause ("API returned 403", "missing null check")
    - **ROOT CAUSE**: Underlying design/logic issue ("auth guard doesn't account for this user type", "state isn't persisted to database")

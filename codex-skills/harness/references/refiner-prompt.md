@@ -130,6 +130,29 @@ For Scale M/L, write `.harness/traces/round-{N}-refiner-trace.md` to preserve yo
 
 This trace helps the Diagnostician understand the state of the codebase AFTER refinement. If QA later finds failures, the Diagnostician can check whether the build/tests were already failing at this stage.
 
+## Execution Audit (MANDATORY)
+
+After completing your refinement work, **append** your actions to `.harness/traces/round-{N}-execution-log.md` (the Builder already wrote the first section). Add your entries under a `## Refiner Actions` header:
+
+```markdown
+## Refiner Actions
+[TIMESTAMP] FIX: src/components/Login.tsx:45 — removed console.log
+[TIMESTAMP] FIX: src/lib/auth.ts:12 — added error handling (try/catch)
+[TIMESTAMP] FIX: src/utils/format.ts:8 — replaced reimplemented utility with existing asset
+[TIMESTAMP] CMD: npm run build → exit 0
+[TIMESTAMP] CMD: npm test → 12 passed, 0 failed
+[TIMESTAMP] SKIP: src/pages/Dashboard.tsx:88 — unused variable, but outside Builder scope
+```
+
+**What to log:**
+- `FIX`: file:line — what was fixed
+- `CMD`: command → exit code
+- `SKIP`: issue — why deferred (not your scope, not your changes)
+
+**Why**: The Diagnostician reads this log alongside the Builder's actions. It shows the complete picture of what happened in each round, enabling faster and more accurate root cause analysis.
+
+---
+
 ## Scale Adjustments
 
 | Scale | Scope | Depth |

@@ -53,11 +53,43 @@ If the request is NOT a build/implementation request:
 
 ## Phase 1: Setup
 
+Read the session protocol reference: `~/.claude/harness/references/session-protocol.md`
+
+### 1a. Session Recovery Check
+
+Before creating `.harness/`, check for an existing session:
+
+1. If `.harness/session-state.md` exists:
+   - Read it and verify referenced artifacts exist on disk
+   - Present to user: **"이전 세션이 감지되었습니다. Phase {phase}, {last_completed_agent} 완료 후 중단. 이어서 진행할까요?"**
+   - If **resume**: skip to the phase AFTER `last_completed_agent`
+   - If **restart**: `mv .harness/ .harness-backup-$(date +%s)/` and continue to 1b
+2. If no session-state.md: continue to 1b
+
+### 1b. Fresh Setup
+
 ```bash
-mkdir -p .harness
+mkdir -p .harness/traces
 ```
 
 Write the user's request and agent count to `.harness/team-prompt.md`.
+Initialize session state and event log:
+```bash
+cat > .harness/session-state.md << 'HEREDOC'
+# Session State
+- pipeline: harness-team
+- scale: L
+- phase: 1
+- round: 1
+- last_completed_agent: setup
+- last_completed_at: {ISO8601}
+- status: IN_PROGRESS
+- artifacts_written:
+  - .harness/team-prompt.md
+HEREDOC
+echo "# Session Events" > .harness/session-events.md
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] setup | done | team-prompt.md | Team build, {N} workers" >> .harness/session-events.md
+```
 
 ---
 
@@ -78,7 +110,7 @@ Before launching the Scout, classify the request type:
 For FIX/MODIFY requests, append this instruction to the Scout prompt:
 - "This is a FIX/MODIFICATION request. After the standard codebase scan, you MUST execute the **Deep Dive Protocol** described in the scout prompt. Trace the specific feature's data flow end-to-end, verify each flag/guard/condition with file:line evidence, and map behavior per user type/role. The Architect will reject unverified claims."
 
-Launch a **general-purpose Agent** with subagent_type `Explore`:
+Launch a **general-purpose Agent** with subagent_type `Explore` and **model `sonnet`**:
 - **prompt**: The scout prompt template + context:
   - "Project directory: `{cwd}`"
   - "User's request: `{$ARGUMENTS}`"
@@ -86,6 +118,14 @@ Launch a **general-purpose Agent** with subagent_type `Explore`:
   - "Write output to `.harness/team-context.md`"
   - If FIX/MODIFY: Deep Dive instruction (see above)
 - **description**: "harness-team scout"
+- **model**: `sonnet`
+
+After Scout completes, update session state and event log:
+```bash
+sed -i '' 's/last_completed_agent: .*/last_completed_agent: scout/' .harness/session-state.md
+sed -i '' "s/last_completed_at: .*/last_completed_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)/" .harness/session-state.md
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] scout | done | team-context.md | {summary}" >> .harness/session-events.md
+```
 
 ---
 
@@ -93,7 +133,7 @@ Launch a **general-purpose Agent** with subagent_type `Explore`:
 
 Read the architect prompt template: `~/.claude/harness/architect-prompt.md`
 
-Launch a **general-purpose Agent**:
+Launch a **general-purpose Agent** (inherit parent model — architectural decisions are critical):
 - **prompt**: The architect prompt template + context:
   - "Codebase context: `.harness/team-context.md`"
   - "User's request: `{$ARGUMENTS}`"
@@ -110,6 +150,14 @@ After completion:
   - Key risks
 - Ask: **"빌드 계획을 검토해주세요. 진행할까요, 조정할 부분이 있나요?"**
 - **WAIT for user approval.**
+- After approval, update session state and event log:
+  ```bash
+  sed -i '' 's/phase: .*/phase: 3/' .harness/session-state.md
+  sed -i '' 's/last_completed_agent: .*/last_completed_agent: architect/' .harness/session-state.md
+  sed -i '' "s/last_completed_at: .*/last_completed_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)/" .harness/session-state.md
+  echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] architect | done | team-plan.md | {N} workers, {wave_count} waves" >> .harness/session-events.md
+  echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] approval | user | — | Plan approved" >> .harness/session-events.md
+  ```
 
 ---
 
@@ -135,40 +183,65 @@ Launch a **general-purpose Agent**:
 
 After completion, verify Wave 1 outputs exist before proceeding to Wave 2.
 
-#### 4b. Wave 2 — Implementation (Parallel)
+#### 4b. Wave 2 — Implementation (Parallel + Worktree Isolation)
 
-Launch N Worker agents **simultaneously in a single message**:
+Launch N Worker agents **simultaneously in a single message**, each with **`isolation: "worktree"`**:
 
 For each Worker i (1 to N):
 - **prompt**: The worker prompt template + Worker i's brief from `plan.md`:
   - "You are Worker {i}. Your brief is in `.harness/team-plan.md` under Worker {i}."
   - "Codebase context: `.harness/team-context.md`"
   - "Wave 1 outputs are available — read-only."
-  - "Write progress to `.harness/team-worker-{i}-progress.md`"
-  - If R > 1: "Read QA feedback at `.harness/team-round-{R-1}-feedback.md` and fix issues relevant to your files."
+  - "You are running in an isolated worktree. Implement your files, run build/test to verify, and return your progress report as your final message."
+  - If R > 1 (**Selective Context Protocol**):
+    - "**PRIMARY**: `.harness/team-diagnosis-round-{R-1}.md` — root cause analysis for your files."
+    - "**SECONDARY**: `.harness/team-plan.md` — your brief."
+    - "**ON-DEMAND**: `.harness/team-round-{R-1}-feedback.md` — only if diagnosis is insufficient."
+    - "Fix ROOT CAUSES from the diagnosis, not symptoms."
+  - If R == 1: "Write progress to `.harness/team-worker-{i}-progress.md`"
 - **description**: "harness-team worker {i}"
+- **isolation**: `"worktree"`
+- **model**: Use `haiku` for 1-2 file mechanical tasks, `sonnet` for standard work, inherit parent for complex judgment calls (per Architect's plan complexity rating).
 
 **All N Workers must complete before proceeding.**
 
 After all Workers complete:
-- Read all worker progress files
-- Check statuses:
-  - All DONE → proceed to Wave 3
-  - Any DONE_WITH_CONCERNS → note concerns for Integrator
-  - Any NEEDS_CONTEXT → provide context and re-dispatch that Worker
-  - Any BLOCKED → assess and escalate to user if needed
+1. **Collect worktree results**: Each Worker returns `{ path, branch }` if changes were made.
+2. **Write progress files**: For each Worker, write `.harness/team-worker-{i}-progress.md` from the Worker's result message.
+3. **Merge Worker branches** into main working tree:
+   ```bash
+   # For each Worker branch with changes:
+   git merge {worker-branch} --no-ff -m "Merge Worker {i}: {brief description}"
+   ```
+   If merge conflicts occur (should be rare with proper file ownership), note them for the Integrator.
+4. **Update event log**:
+   ```bash
+   echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] workers:r{R} | done | team-worker-{1..N}-progress.md | {N} workers, {merged_count} branches merged" >> .harness/session-events.md
+   ```
+5. Check statuses:
+   - All DONE → proceed to Wave 3
+   - Any DONE_WITH_CONCERNS → note concerns for Integrator
+   - Any NEEDS_CONTEXT → provide context and re-dispatch that Worker (without worktree)
+   - Any BLOCKED → assess and escalate to user if needed
 
 #### 4c. Wave 3 — Integration
 
-Launch a **general-purpose Agent**:
+Launch a **general-purpose Agent** with **model `sonnet`**:
 - **prompt**: The integrator prompt template + context:
   - "Architect's plan: `.harness/team-plan.md`"
   - "Worker progress reports: `.harness/team-worker-{0..N}-progress.md`"
   - "Codebase context: `.harness/team-context.md`"
   - "Write output to `.harness/team-integration-report.md`"
   - If R > 1: "Previous QA feedback: `.harness/team-round-{R-1}-feedback.md`"
-  - "IMPORTANT: After merging, perform CODE HYGIENE on all Worker-changed files: remove console.log/debug, remove TODO/FIXME comments, remove commented-out code, verify naming matches context.md conventions, check for unused imports. Report hygiene issues found/fixed in the integration report."
+  - "NOTE: Worker branches have already been merged by the orchestrator. If merge conflicts were noted, resolve them as part of integration."
+  - "IMPORTANT: Perform CODE HYGIENE on all Worker-changed files: remove console.log/debug, remove TODO/FIXME comments, remove commented-out code, verify naming matches context.md conventions, check for unused imports. Report hygiene issues found/fixed in the integration report."
 - **description**: "harness-team integrator"
+- **model**: `sonnet`
+
+After Integrator completes, update event log:
+```bash
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] integrator:r{R} | done | team-integration-report.md | {summary}" >> .harness/session-events.md
+```
 
 After completion:
 - Read `.harness/team-integration-report.md`
@@ -179,7 +252,7 @@ After completion:
 
 Read the QA prompt template: `~/.claude/harness/qa-prompt.md`
 
-Launch a **general-purpose Agent**:
+Launch a **general-purpose Agent** with **model `sonnet`**:
 - **prompt**: The QA prompt template + context:
   - "Product spec/plan: `.harness/team-plan.md`"
   - "Integration report: `.harness/team-integration-report.md`"
@@ -190,6 +263,12 @@ Launch a **general-purpose Agent**:
   - "Write evidence traces to `.harness/traces/round-{R}-qa-evidence.md` for FAIL/PARTIAL results."
   - If app has UI: "App URL: `{URL from integration-report.md}`"
 - **description**: "harness-team QA round {R}"
+- **model**: `sonnet`
+
+After QA completes, update event log:
+```bash
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] qa:r{R} | {pass/fail} | team-round-{R}-feedback.md | scores: {scores}" >> .harness/session-events.md
+```
 
 #### 4e. Evaluate
 
@@ -208,16 +287,28 @@ If round R failed and R < max rounds, run the Diagnostician to analyze failures 
 
 Read the diagnostician prompt template: `~/.claude/harness/diagnostician-prompt.md`
 
-Launch a **general-purpose Agent**:
+Launch a **general-purpose Agent** (inherit parent model) with **`run_in_background: true`**:
 - **prompt**: The diagnostician prompt template + context:
   - "QA feedback: `.harness/team-round-{R}-feedback.md`"
   - "QA evidence traces: `.harness/traces/round-{R}-qa-evidence.md`"
+  - "Event log: `.harness/session-events.md`"
   - "Architect plan: `.harness/team-plan.md`"
   - "Codebase context: `.harness/team-context.md`"
   - "Round: {R}"
   - "Write diagnosis to `.harness/team-diagnosis-round-{R}.md`"
   - "IMPORTANT: Map each root cause to the Worker who owns the affected files (use file ownership from team-plan.md). This helps the orchestrator re-dispatch only the relevant Workers."
 - **description**: "harness-team diagnostician round {R}"
+- **run_in_background**: `true`
+
+While Diagnostician runs in background:
+1. Write History entry (4g)
+2. Report QA scores to user
+3. When Diagnostician notification arrives → read diagnosis, report root cause summary
+
+After Diagnostician completes, update event log:
+```bash
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] diagnostician:r{R} | done | team-diagnosis-round-{R}.md | {root_cause_count} root causes" >> .harness/session-events.md
+```
 
 After completion, use the diagnosis to inform Round 2 re-dispatch logic:
 
@@ -308,6 +399,14 @@ Include artifact status in the Summary.
 - Worker progress: `.harness/team-worker-{0..N}-progress.md`
 ```
 
+After presenting the Summary, finalize session:
+```bash
+sed -i '' 's/status: IN_PROGRESS/status: COMPLETED/' .harness/session-state.md
+sed -i '' 's/phase: .*/phase: 5/' .harness/session-state.md
+sed -i '' "s/last_completed_at: .*/last_completed_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)/" .harness/session-state.md
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] summary | done | — | Team pipeline complete, status: {PASS/PARTIAL}" >> .harness/session-events.md
+```
+
 ---
 
 ## Critical Rules
@@ -320,7 +419,12 @@ Include artifact status in the Summary.
 6. **ALWAYS present the Architect's plan to the user and wait for approval.**
 7. **Workers CANNOT self-certify.** The Integrator verifies integration; QA verifies quality.
 8. **Read prompt templates from `~/.claude/harness/`** before spawning each agent.
-9. **Worker model selection**: Use `haiku` for 1-2 file mechanical tasks, `sonnet` for standard work, `opus` for complex judgment calls. Pass model hint in Agent tool call.
+9. **Worker model selection**: Use `haiku` for 1-2 file mechanical tasks, `sonnet` for standard work, inherit parent for complex judgment calls. Pass `model` parameter in Agent tool call.
+10. **Wave 2 Workers use `isolation: "worktree"`** for true parallel safety. Orchestrator merges branches before Integrator runs.
+11. **Session state and event log are updated after EVERY agent.** See `~/.claude/harness/references/session-protocol.md`.
+12. **Model selection follows the protocol**: Scout → `sonnet`; Architect/Diagnostician → inherit parent; Workers → per complexity; Integrator/QA → `sonnet`.
+13. **Round 2 Workers use Selective Context**: PRIMARY (diagnosis), SECONDARY (plan), ON-DEMAND (feedback).
+14. **Diagnostician runs in background** (`run_in_background: true`). History and user reporting proceed in parallel.
 
 ## Cost Awareness
 

@@ -45,8 +45,35 @@ If there are NO changed files (`git diff --name-only` returns empty):
 
 ## Phase 1: Setup
 
+Read the session protocol reference: `~/.claude/harness/references/session-protocol.md`
+
+### 1a. Session Recovery Check
+
+If `.harness/session-state.md` exists and `pipeline: harness-review`:
+- Present to user: **"이전 리뷰 세션이 감지되었습니다. {last_completed_agent} 완료 후 중단. 이어서 진행할까요?"**
+- If **resume**: skip to the phase AFTER `last_completed_agent`
+- If **restart**: `mv .harness/ .harness-backup-$(date +%s)/`
+
+### 1b. Fresh Setup
+
 ```bash
 mkdir -p .harness
+```
+
+Initialize session state and event log:
+```bash
+cat > .harness/session-state.md << 'HEREDOC'
+# Session State
+- pipeline: harness-review
+- scale: —
+- phase: 1
+- round: 1
+- last_completed_agent: setup
+- last_completed_at: {ISO8601}
+- status: IN_PROGRESS
+HEREDOC
+echo "# Session Events" > .harness/session-events.md
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] setup | done | — | Review pipeline started" >> .harness/session-events.md
 ```
 
 ---
@@ -55,16 +82,18 @@ mkdir -p .harness
 
 Read the scanner prompt template: `~/.claude/harness/scanner-prompt.md`
 
-Launch a **general-purpose Agent** with subagent_type `Explore`:
+Launch a **general-purpose Agent** with subagent_type `Explore` and **model `sonnet`**:
 - **prompt**: The scanner prompt template + context:
   - "Project directory: `{cwd}`"
   - "Write output to `.harness/review-context.md`"
 - **description**: "harness-review scanner"
+- **model**: `sonnet`
 
 After completion:
 - Read `.harness/review-context.md`
 - If "NO CHANGES DETECTED" → report to user and EXIT
 - Otherwise, briefly confirm: **"Scanner 완료. [X]개 파일 변경 감지, [Y]개 HIGH risk."**
+- Update event log: `echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] scanner | done | review-context.md | {X} files, {Y} HIGH risk" >> .harness/session-events.md`
 - Proceed without user approval (review is automated).
 
 ---
@@ -73,15 +102,17 @@ After completion:
 
 Read the analyzer prompt template: `~/.claude/harness/analyzer-prompt.md`
 
-Launch a **general-purpose Agent**:
+Launch a **general-purpose Agent** with **model `sonnet`**:
 - **prompt**: The analyzer prompt template + context:
   - "Review context: `.harness/review-context.md`"
   - "Write output to `.harness/review-analysis.md`"
 - **description**: "harness-review analyzer"
+- **model**: `sonnet`
 
 After completion:
 - Read `.harness/review-analysis.md`
 - Briefly report: **"분석 완료. [X]개 이슈 발견 (CRITICAL: [N], HIGH: [N], MEDIUM: [N])."**
+- Update event log: `echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] analyzer | done | review-analysis.md | {X} issues" >> .harness/session-events.md`
 
 ### `--dry-run` mode: STOP here. Present analysis summary to user and EXIT.
 
@@ -91,12 +122,15 @@ After completion:
 
 Read the fixer prompt template: `~/.claude/harness/fixer-prompt.md`
 
-Launch a **general-purpose Agent**:
+Launch a **general-purpose Agent** with **model `sonnet`**:
 - **prompt**: The fixer prompt template + context:
   - "Analysis report: `.harness/review-analysis.md`"
   - "Review context: `.harness/review-context.md`"
   - "Write output to `.harness/review-fix-report.md`"
 - **description**: "harness-review fixer"
+- **model**: `sonnet`
+
+After completion, update event log: `echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] fixer | done | review-fix-report.md | {summary}" >> .harness/session-events.md`
 
 ---
 
@@ -104,13 +138,16 @@ Launch a **general-purpose Agent**:
 
 Read the verifier prompt template: `~/.claude/harness/verifier-prompt.md`
 
-Launch a **general-purpose Agent**:
+Launch a **general-purpose Agent** with **model `sonnet`**:
 - **prompt**: The verifier prompt template + context:
   - "Fix report: `.harness/review-fix-report.md`"
   - "Analysis report: `.harness/review-analysis.md`"
   - "Review context: `.harness/review-context.md`"
   - "Write output to `.harness/review-verify-report.md`"
 - **description**: "harness-review verifier"
+- **model**: `sonnet`
+
+After completion, update event log: `echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] verifier | done | review-verify-report.md | {summary}" >> .harness/session-events.md`
 
 ---
 
@@ -118,7 +155,7 @@ Launch a **general-purpose Agent**:
 
 Read the reporter prompt template: `~/.claude/harness/reporter-prompt.md`
 
-Launch a **general-purpose Agent**:
+Launch a **general-purpose Agent** with **model `sonnet`**:
 - **prompt**: The reporter prompt template + context:
   - "Review context: `.harness/review-context.md`"
   - "Analysis report: `.harness/review-analysis.md`"
@@ -127,6 +164,7 @@ Launch a **general-purpose Agent**:
   - "Git action flags: `{--dry-run | --commit | --push | --pr | default}`"
   - "Write output to `.harness/review-report.md`"
 - **description**: "harness-review reporter"
+- **model**: `sonnet`
 
 After completion:
 - Read `.harness/review-report.md`
@@ -145,6 +183,11 @@ After completion:
   ```
 - Present the user-facing summary from the report
 - Include artifact status: "Artifacts: [X] missing" or "Artifacts: OK"
+- Finalize session:
+  ```bash
+  sed -i '' 's/status: IN_PROGRESS/status: COMPLETED/' .harness/session-state.md
+  echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] reporter | done | review-report.md | Pipeline complete" >> .harness/session-events.md
+  ```
 
 ---
 
@@ -157,6 +200,8 @@ After completion:
 5. **Never push to main/master without user confirmation**, even with `--push` flag.
 6. **Read prompt templates from `~/.claude/harness/`** before spawning each agent.
 7. **No user approval gates.** Review pipeline runs automatically (unlike /harness which waits for spec approval).
+8. **Session state and event log are updated after EVERY agent.** See `~/.claude/harness/references/session-protocol.md`.
+9. **All agents use model `sonnet`** — review is systematic work, not creative judgment.
 
 ## Cost Awareness
 

@@ -192,6 +192,36 @@ Update `.harness/build-progress.md` with:
 - Improved: [area that was enhanced]
 ```
 
+## Execution Audit (MANDATORY)
+
+As you work, maintain a running log of your key actions. After completing your implementation, write this log to `.harness/traces/round-{N}-execution-log.md` (the round number is provided in your task description).
+
+Log these events under a `## Builder Actions` header:
+
+```markdown
+## Builder Actions
+[TIMESTAMP] FILE_CREATE: src/components/Login.tsx (85 lines)
+[TIMESTAMP] FILE_MODIFY: src/app/layout.tsx (added import, +3 lines)
+[TIMESTAMP] CMD: npm install zod → exit 0
+[TIMESTAMP] CMD: npm run build → exit 1 → ERROR: Cannot find module '@/lib/auth'
+[TIMESTAMP] FILE_CREATE: src/lib/auth.ts (42 lines) — fixing missing module
+[TIMESTAMP] CMD: npm run build → exit 0
+[TIMESTAMP] CMD: npm run dev → started on :3000
+[TIMESTAMP] DEP_INSTALL: zod@3.23.0, @tanstack/react-query@5.60.0
+[TIMESTAMP] ERROR_RESOLVED: missing module → created src/lib/auth.ts
+```
+
+**What to log:**
+- `FILE_CREATE`: path (line count)
+- `FILE_MODIFY`: path (what changed, +/- lines)
+- `CMD`: command → exit code [→ ERROR: message if failed]
+- `DEP_INSTALL`: package@version list
+- `ERROR_RESOLVED`: what error, how fixed
+
+**Why**: This log is read by the Diagnostician if your round fails. Accurate logging = faster diagnosis = fewer rounds. Without this, the Diagnostician must reverse-engineer what you did from code diffs, wasting an entire analysis pass.
+
+---
+
 ## Anti-Patterns — DO NOT
 
 - **Do NOT stub features.** "Coming soon", TODO placeholders, or empty pages are failures. If you implement a feature, implement it fully. If you can't, skip it entirely and note it in progress.md. The QA will flag every stub as a FAIL.

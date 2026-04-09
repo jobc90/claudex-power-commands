@@ -74,12 +74,38 @@ Scale: [S/M/L] — [one-line rationale]
 
 ## Phase 1: Setup
 
+Read the session protocol reference: `~/.claude/harness/references/session-protocol.md`
+
+### 1a. Session Recovery Check
+
+If `.harness/session-state.md` exists and `pipeline: harness-docs`:
+- Present to user: **"이전 문서 세션이 감지되었습니다. {last_completed_agent} 완료 후 중단. 이어서 진행할까요?"**
+- If **resume**: skip to the phase AFTER `last_completed_agent`
+- If **restart**: `mv .harness/ .harness-backup-$(date +%s)/`
+
+### 1b. Fresh Setup
+
 1. Identify the target project directory. If the user specifies a project, `cd` there first.
 2. Create the working directory:
    ```bash
    mkdir -p .harness
    ```
 3. Write the user's request and classified scale to `.harness/docs-request.md`.
+4. Initialize session state and event log:
+   ```bash
+   cat > .harness/session-state.md << 'HEREDOC'
+   # Session State
+   - pipeline: harness-docs
+   - scale: {S/M/L}
+   - phase: 1
+   - round: 1
+   - last_completed_agent: setup
+   - last_completed_at: {ISO8601}
+   - status: IN_PROGRESS
+   HEREDOC
+   echo "# Session Events" > .harness/session-events.md
+   echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] setup | done | docs-request.md | Scale {S/M/L}, docs pipeline" >> .harness/session-events.md
+   ```
 
 ---
 
@@ -99,22 +125,28 @@ No approval needed — proceed directly to Phase 3.
 
 ### Scale M — Focused Research
 
-Launch a **general-purpose Agent** with subagent_type `Explore`:
+Launch a **general-purpose Agent** with subagent_type `Explore` and **model `sonnet`**:
 - **prompt**: The researcher prompt template + `"MODE: FOCUSED. Scale is M."` + context:
   - "Project directory: `{cwd}`"
   - "User's request: `{$ARGUMENTS}`"
   - "Focus ONLY on modules/files relevant to the request. Do NOT scan the entire codebase."
   - "Write output to `.harness/docs-research.md`"
 - **description**: "harness-docs focused research"
+- **model**: `sonnet`
+
+After Researcher completes, update event log: `echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] researcher | done | docs-research.md | {summary}" >> .harness/session-events.md`
 
 ### Scale L — Full Research
 
-Launch a **general-purpose Agent** with subagent_type `Explore`:
+Launch a **general-purpose Agent** with subagent_type `Explore` and **model `sonnet`**:
 - **prompt**: The researcher prompt template + `"MODE: FULL. Scale is L."` + context:
   - "Project directory: `{cwd}`"
   - "User's request: `{$ARGUMENTS}`"
   - "Write output to `.harness/docs-research.md`"
 - **description**: "harness-docs full research"
+- **model**: `sonnet`
+
+After Researcher completes, update event log: `echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] researcher | done | docs-research.md | {summary}" >> .harness/session-events.md`
 
 ---
 
@@ -142,7 +174,7 @@ Present to user: **"문서 범위와 구조를 검토해주세요. 진행할까�
 
 ### Scale M — Focused Outline
 
-Launch a **general-purpose Agent**:
+Launch a **general-purpose Agent** with **model `sonnet`**:
 - **prompt**: The outliner prompt template + context:
   - "Research file: `.harness/docs-research.md`"
   - "User's request: `{$ARGUMENTS}`"
@@ -158,7 +190,7 @@ After completion:
 
 ### Scale L — Full Outline
 
-Launch a **general-purpose Agent**:
+Launch a **general-purpose Agent** with **model `sonnet`**:
 - **prompt**: The outliner prompt template + context:
   - "Research file: `.harness/docs-research.md`"
   - "User's request: `{$ARGUMENTS}`"
@@ -190,7 +222,7 @@ Read the writer, reviewer, and validator prompt templates from `~/.claude/harnes
 
 #### 4a. Write
 
-Launch a **general-purpose Agent**:
+Launch a **general-purpose Agent** (inherit parent model — writing quality is critical):
 - **prompt**: The writer prompt template + context:
   - "Research file: `.harness/docs-research.md`"
   - "Document blueprint: `.harness/docs-outline.md` — follow this structure."
@@ -208,7 +240,7 @@ Launch a **general-purpose Agent**:
 
 Launch BOTH agents in parallel:
 
-**Reviewer:**
+**Reviewer** (model `sonnet`):
 - **prompt**: The reviewer prompt template + context:
   - "Document to review: `.harness/docs-draft.md`"
   - "Research baseline: `.harness/docs-research.md`"
@@ -221,7 +253,7 @@ Launch BOTH agents in parallel:
   - Scale L: `"REVIEW_MODE: FULL. Verify ALL factual claims against actual source code."`
 - **description**: "harness-docs reviewer round {N}"
 
-**Validator:**
+**Validator** (model `sonnet`):
 - **prompt**: The validator prompt template + context:
   - "Document to validate: `.harness/docs-draft.md`"
   - "Research baseline: `.harness/docs-research.md`"
@@ -241,7 +273,13 @@ After BOTH reviewer and validator complete:
    - Review scores per criterion
    - Validation summary: X pass / X fail / X conditional
    - Key issues from both
-4. **Decision**:
+4. Update event log:
+   ```bash
+   echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] writer:r{N} | done | docs-draft.md | {summary}" >> .harness/session-events.md
+   echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] reviewer:r{N} | done | docs-round-{N}-review.md | scores: {scores}" >> .harness/session-events.md
+   echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] validator:r{N} | done | docs-round-{N}-validation.md | {pass}/{fail}" >> .harness/session-events.md
+   ```
+5. **Decision**:
    - ALL review criteria >= 7/10 AND zero FAIL validations → **PASS** → exit loop
    - ANY review criterion < 7/10 OR any FAIL validations → **FAIL** → next round
    - N == max rounds → exit loop regardless
@@ -371,6 +409,14 @@ Include artifact status in the Summary.
 9. **Documents are written in the language matching the user's request.** Korean → Korean. English → English.
 10. **Scale S skips Outliner agent, review loop, and validation** for efficiency.
 11. **When in doubt on scale, pick smaller.**
+12. **Session state and event log are updated after EVERY agent.** See `~/.claude/harness/references/session-protocol.md`.
+13. **Model selection**: Researcher/Outliner/Reviewer/Validator → `sonnet`; Writer → inherit parent.
+
+After Phase 6 Summary, finalize session:
+```bash
+sed -i '' 's/status: IN_PROGRESS/status: COMPLETED/' .harness/session-state.md
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] summary | done | — | Docs pipeline complete" >> .harness/session-events.md
+```
 
 ## Cost Awareness
 
