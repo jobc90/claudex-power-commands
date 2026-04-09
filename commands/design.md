@@ -1,5 +1,5 @@
 ---
-description: "3-dial system (Variance/Motion/Density) + presets (landing/dashboard/workspace) for frontend design quality control. init creates/updates design system, auto-integrates with /harness and /harness-team."
+description: "3-dial system (Variance/Motion/Density) + presets (landing/dashboard/workspace) + reference URL analysis for frontend design quality control. init creates/updates design system, --ref analyzes reference sites via Playwright, auto-integrates with /harness."
 ---
 
 # /design — Frontend Design Quality Control
@@ -29,6 +29,10 @@ Serves as a single entry point to the taste-skill ecosystem.
 - `--v N` / `--variance N`: layout experimentalism (1-10, default 8)
 - `--m N` / `--motion N`: animation intensity (1-10, default 6)
 - `--d N` / `--density N`: screen fill density (1-10, default 4)
+
+### Reference Analysis
+- `--ref <url>`: analyze a reference website via Playwright → extract design tokens → auto-generate design.md
+- `--ref <url> --compare`: analyze reference + compare with current project design
 
 ### Options
 - `--output-guard`: prevent code truncation/omission (combinable with any preset)
@@ -201,9 +205,10 @@ Mobile override: ranges 4-10 collapse to single column below 768px (`w-full`, `p
 ### 1. Determine Mode
 
 1. `init` subcommand → run design.md generator
-2. Preset flag (style name or use case name) → activate corresponding skill
-3. Custom dials (`--v`, `--m`, `--d`) → taste-skill dial override
-4. No flags → taste-skill defaults (V8/M6/D4)
+2. `--ref <url>` → Reference URL Analysis mode (Section 5)
+3. Preset flag (style name or use case name) → activate corresponding skill
+4. Custom dials (`--v`, `--m`, `--d`) → taste-skill dial override
+5. No flags → taste-skill defaults (V8/M6/D4)
 
 ### 2. Skill Routing
 
@@ -299,6 +304,238 @@ Preserve functionality. Improve design only.
 
 ---
 
+## 5. Reference URL Analysis Mode
+
+When `--ref <url>` is specified, analyze the reference site to extract design tokens and recommend dial values.
+
+**Requires**: `@playwright/mcp` (Playwright MCP tools must be available)
+
+### Execution Flow
+
+```
+/design --ref <url> [task description]
+  |
+  +- Step 1: Navigate & Screenshot
+  +- Step 2: Extract Design Tokens (colors, fonts, spacing, layout)
+  +- Step 3: Analyze & Classify into 3-Dial System
+  +- Step 4: Generate design.md with extracted tokens
+  +- Step 5: Present to user for confirmation
+```
+
+### Step 1: Navigate & Screenshot
+
+```
+1. mcp__playwright__browser_navigate → url
+2. mcp__playwright__browser_take_screenshot → full-page screenshot (show to user)
+3. mcp__playwright__browser_snapshot → accessibility tree (layout structure)
+```
+
+### Step 2: Extract Design Tokens
+
+Use `mcp__playwright__browser_evaluate` to run extraction scripts:
+
+#### 2a. Color Extraction
+```javascript
+// Extract all unique colors from computed styles
+(() => {
+  const colors = new Set();
+  const elements = document.querySelectorAll('*');
+  elements.forEach(el => {
+    const style = getComputedStyle(el);
+    ['color', 'backgroundColor', 'borderColor', 'boxShadow'].forEach(prop => {
+      const val = style[prop];
+      if (val && val !== 'rgba(0, 0, 0, 0)' && val !== 'transparent') {
+        colors.add(val);
+      }
+    });
+  });
+  // Classify by usage frequency
+  const colorCounts = {};
+  elements.forEach(el => {
+    const bg = getComputedStyle(el).backgroundColor;
+    if (bg && bg !== 'rgba(0, 0, 0, 0)') colorCounts[bg] = (colorCounts[bg] || 0) + 1;
+  });
+  return { unique: [...colors].slice(0, 30), frequency: Object.entries(colorCounts).sort((a,b) => b[1]-a[1]).slice(0, 10) };
+})()
+```
+
+#### 2b. Typography Extraction
+```javascript
+(() => {
+  const fonts = new Set();
+  const sizes = new Set();
+  const weights = new Set();
+  document.querySelectorAll('*').forEach(el => {
+    const style = getComputedStyle(el);
+    if (el.textContent.trim()) {
+      fonts.add(style.fontFamily.split(',')[0].trim().replace(/['"]/g, ''));
+      sizes.add(style.fontSize);
+      weights.add(style.fontWeight);
+    }
+  });
+  return { fonts: [...fonts], sizes: [...sizes].sort(), weights: [...weights] };
+})()
+```
+
+#### 2c. Spacing & Layout Extraction
+```javascript
+(() => {
+  const paddings = [];
+  const gaps = [];
+  const borderRadii = new Set();
+  const shadows = new Set();
+  const containers = document.querySelectorAll('main, section, article, div[class]');
+  containers.forEach(el => {
+    const s = getComputedStyle(el);
+    paddings.push(s.padding);
+    if (s.gap && s.gap !== 'normal') gaps.push(s.gap);
+    if (s.borderRadius && s.borderRadius !== '0px') borderRadii.add(s.borderRadius);
+    if (s.boxShadow && s.boxShadow !== 'none') shadows.add(s.boxShadow);
+  });
+  // Layout type detection
+  const gridElements = document.querySelectorAll('[style*="grid"], [class*="grid"]').length;
+  const flexElements = document.querySelectorAll('[style*="flex"], [class*="flex"]').length;
+  return {
+    avgPadding: paddings.slice(0, 50),
+    gaps: [...new Set(gaps)],
+    borderRadii: [...borderRadii],
+    shadows: [...shadows].slice(0, 5),
+    layoutType: gridElements > flexElements ? 'grid-dominant' : 'flex-dominant',
+    gridCount: gridElements, flexCount: flexElements
+  };
+})()
+```
+
+#### 2d. Motion Detection
+```javascript
+(() => {
+  const transitions = new Set();
+  const animations = new Set();
+  document.querySelectorAll('*').forEach(el => {
+    const s = getComputedStyle(el);
+    if (s.transition && s.transition !== 'all 0s ease 0s') transitions.add(s.transition);
+    if (s.animation && s.animation !== 'none 0s ease 0s 1 normal none running') animations.add(s.animationName);
+  });
+  // Check for Framer Motion / GSAP / CSS scroll animations
+  const hasFramerMotion = !!document.querySelector('[data-framer-appear-id], [style*="willChange"]');
+  const hasScrollAnimations = !!document.querySelector('[data-scroll], .aos-animate, [class*="animate-"]');
+  return {
+    transitions: [...transitions].slice(0, 10),
+    animations: [...animations],
+    hasFramerMotion, hasScrollAnimations,
+    motionLevel: animations.length > 3 ? 'heavy' : transitions.size > 5 ? 'moderate' : 'minimal'
+  };
+})()
+```
+
+### Step 3: Analyze & Classify
+
+Based on extracted tokens, calculate recommended dial values:
+
+#### Variance (Layout Experimentalism)
+| Signal | Score |
+|--------|-------|
+| Symmetric grid-only layout | 1-3 |
+| Mix of grid + offset layouts, varied column widths | 4-6 |
+| Asymmetric, masonry, broken-grid, wide margins | 7-10 |
+
+Indicators: column count variation, padding asymmetry, presence of offset/overlapping elements.
+
+#### Motion (Animation Intensity)
+| Signal | Score |
+|--------|-------|
+| No transitions or animations detected | 1-2 |
+| CSS transitions on hover/focus only | 3-5 |
+| Scroll-triggered animations, cascade delays | 6-8 |
+| Framer Motion / GSAP, parallax, persistent animation | 9-10 |
+
+#### Density (Screen Fill)
+| Signal | Score |
+|--------|-------|
+| Large padding (>48px sections), wide margins, few elements per screen | 1-3 |
+| Standard web spacing, moderate content per screen | 4-6 |
+| Tight padding (<16px), dividers, many data points per screen | 7-10 |
+
+### Step 4: Generate design.md
+
+Write the design.md file using extracted tokens:
+
+```markdown
+# Design System: {Project Name}
+
+## Reference
+- Source: {url}
+- Screenshot: (attached above)
+- Analyzed: {date}
+
+## Goals (Auto-detected from {url})
+preset: {closest matching preset}
+variance: {detected V}
+motion: {detected M}
+density: {detected D}
+
+## Color Palette (Extracted)
+- Canvas: {most frequent background color → hex}
+- Surface: {secondary background → hex}
+- Text: {primary text color → hex}
+- Accent: {most prominent non-neutral color → hex}
+- Base: {Zinc or Slate based on color temperature}
+
+## Typography (Extracted)
+- Display: {primary heading font}, {largest size}
+- Body: {body text font}, {body size}
+- Mono: {monospace font if detected, else recommend Geist Mono}
+- Scale: {detected sizes list}
+
+## Component Patterns (Observed)
+- Cards: {border-radius, shadow, padding patterns}
+- Buttons: {style, hover effect}
+- Navigation: {type — sticky/fixed, layout}
+- Spacing: {primary gap/padding values}
+
+## Motion (Detected)
+- Transition: {primary transition pattern}
+- Animations: {detected animation types}
+- Scroll behavior: {scroll-triggered? parallax?}
+
+## Responsive
+- Breakpoints: {detected if available}
+- Mobile pattern: {observed mobile behavior if tested}
+```
+
+### Step 5: Present to User
+
+Show:
+1. The screenshot (already displayed in Step 1)
+2. Extracted dial values with justification
+3. The generated design.md content
+4. Ask: **"추출된 디자인 시스템을 검토해주세요. 저장할까요?"**
+
+### --compare Mode
+
+When `--ref <url> --compare` is used with an existing design.md:
+
+1. Extract tokens from reference URL (Steps 1-3)
+2. Read existing design.md
+3. Generate comparison table:
+
+```markdown
+## Design Comparison: Current vs Reference
+
+| Aspect | Current | Reference ({url}) | Gap |
+|--------|---------|-------------------|-----|
+| Variance | V{current} | V{ref} | {diff} |
+| Motion | M{current} | M{ref} | {diff} |
+| Density | D{current} | D{ref} | {diff} |
+| Primary Font | {current} | {ref} | {match/mismatch} |
+| Accent Color | {current} | {ref} | {similarity %} |
+| Spacing Scale | {current} | {ref} | {match/mismatch} |
+```
+
+4. Ask: **"참고 사이트 방향으로 디자인을 조정할까요? (현재 design.md를 업데이트합니다)"**
+
+---
+
 ## Usage Examples
 
 ```bash
@@ -324,8 +561,14 @@ Preserve functionality. Improve design only.
 # Redesign
 /design --redesign Upgrade this project's design
 
+# Reference URL analysis
+/design --ref https://linear.app SaaS dashboard inspired by Linear
+/design --ref https://stripe.com Payment landing page like Stripe
+/design --ref https://vercel.com --compare Compare my design vs Vercel
+
 # Combinations
 /design --landing --output-guard Landing page (full code output)
+/design --ref https://notion.so --output-guard Notion-style workspace (full code)
 ```
 
 ## Dependencies
