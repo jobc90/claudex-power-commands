@@ -1,6 +1,6 @@
 ---
 name: harness-docs
-description: Autonomous documentation harness for `/harness-docs` or `$harness-docs` requests. Use when Codex needs the same Researcher -> Outliner -> Writer -> Reviewer + Validator workflow as the Claude command, including S/M/L scaling and file-based handoffs.
+description: Autonomous documentation harness for `/harness-docs` or `$harness-docs` requests. Researcher -> Outliner -> Writer -> Reviewer + Validator workflow with S/M/L scaling. v4.1.0 — tier-aware (Standard/Advanced/Elite) round limits and optional Meta-Loop phase-book decomposition for multi-chapter Scale L documents.
 ---
 
 # Harness Docs
@@ -9,9 +9,13 @@ description: Autonomous documentation harness for `/harness-docs` or `$harness-d
 
 Run the Codex version of `/harness-docs`. Treat `/harness-docs` and `$harness-docs` as the same workflow intent inside Codex.
 
+**v4.1.0 changes:**
+- Capability tier detection (`Standard | Advanced | Elite`) at session start; round limits consult `references/tier-matrix.md`.
+- Optional Meta-Loop mode for multi-chapter Scale L documents: invoke `references/phase-book-planner-prompt.md` to decompose chapters into phases; otherwise the single-pass pipeline below is equivalent to a 1-phase book.
+
 This skill mirrors the Claude harness-docs structure:
 
-`TRIAGE -> SETUP -> RESEARCH -> OUTLINE -> USER APPROVAL -> WRITE/REVIEW LOOP -> FINALIZE -> SUMMARY`
+`TRIAGE -> CAPABILITY -> SETUP -> RESEARCH -> OUTLINE -> USER APPROVAL -> WRITE/REVIEW LOOP -> FINALIZE -> SUMMARY`
 
 ## Guard Clause
 

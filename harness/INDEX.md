@@ -1,11 +1,12 @@
 # Harness Agent Index
 
-> 25개 에이전트 프롬프트, 4개 파이프라인, 6개 커맨드의 교차참조 맵.
+> 27개 에이전트 프롬프트 + 1개 orchestrator helper, 4개 파이프라인, 6개 커맨드의 교차참조 맵.
+> **v4.1.0**: Meta-Loop is the default execution model for `/harness`. Phase-Book Planner, Phase Verifier, and Phase Orchestrator reference added.
 > **v4.0.0**: `/harness-team` merged into `/harness` as TEAM mode.
 > Lint(`/harness-lint`)가 이 파일을 기준으로 일관성을 검증합니다.
 > 프롬프트 추가/수정 시 이 Index도 함께 업데이트하세요.
 
-## Agent Catalog (25 prompts)
+## Agent Catalog (27 prompts + 1 helper)
 
 ### /harness Pipeline — SINGLE Mode: Scout → Planner → Builder → Refiner → QA → Diagnostician → Auditor
 
@@ -63,6 +64,16 @@
 | 21 | Test Executor | `test-executor-prompt.md` | `qa-scenarios.md` | `qa-results.md` |
 | 22 | Analyst | `analyst-prompt.md` | `qa-results.md`, `qa-scenarios.md`, `qa-context.md` | `qa-analysis.md` |
 | 23 | QA Reporter | `qa-reporter-prompt.md` | `qa-analysis.md`, `qa-results.md`, `qa-scenarios.md`, `qa-context.md` | `qa-report.md` |
+
+### Meta-Loop Agents (used by every `/harness` invocation)
+
+| # | Agent | Prompt File | Reads | Writes |
+|---|-------|------------|-------|--------|
+| 26 | Phase-Book Planner | `phase-book-planner-prompt.md` | `build-prompt.md`, `security-triage.md`, `session-state.md` | `phase-book.md` |
+| 27 | Phase Verifier | `phase-verifier-prompt.md` | `phase-book.md`, current phase artifacts, working tree | `phase-evidence-{i}.md` |
+| — | Phase Orchestrator (helper) | `phase-orchestrator-prompt.md` | referenced by top-level orchestrator | no direct artifacts |
+
+Phase Orchestrator is a **reference document for the `/harness` orchestrator**, not an independent agent. The top-level command loads it to execute the Meta-Loop correctly.
 
 ---
 
@@ -147,7 +158,7 @@ team-prompt.md (user request)
 
 Each row maps a Claude-side prompt to its Codex copy.
 
-### /harness mirrors (SINGLE + TEAM mode)
+### /harness mirrors (SINGLE + TEAM mode, Meta-Loop)
 
 | Original (`harness/`) | Mirror (`codex-skills/harness/references/`) |
 |----------------------|---------------------------------------------|
@@ -161,6 +172,15 @@ Each row maps a Claude-side prompt to its Codex copy.
 | `architect-prompt.md` | `architect-prompt.md` |
 | `worker-prompt.md` | `worker-prompt.md` |
 | `integrator-prompt.md` | `integrator-prompt.md` |
+| `auditor-prompt.md` | `auditor-prompt.md` |
+| `phase-book-planner-prompt.md` | `phase-book-planner-prompt.md` |
+| `phase-verifier-prompt.md` | `phase-verifier-prompt.md` |
+| `phase-orchestrator-prompt.md` | `phase-orchestrator-prompt.md` |
+| `references/meta-loop-protocol.md` | `references/meta-loop-protocol.md` |
+| `references/phase-verification-protocol.md` | `references/phase-verification-protocol.md` |
+| `references/tier-matrix.md` | `references/tier-matrix.md` |
+| `references/agent-containment.md` | `references/agent-containment.md` |
+| `references/session-protocol.md` | `references/session-protocol.md` |
 
 ### /harness-review mirrors
 
@@ -216,6 +236,9 @@ Located in `harness/references/`. Agents load these on demand for progressive di
 | `references/error-handling-checklist.md` | Refiner, Integrator, Builder | try/catch, loading/empty/error states, data persistence |
 | `references/confidence-calibration.md` | Analyzer, Fixer, Refiner, Integrator | 0-100 scoring table with examples and action thresholds |
 | `references/agent-containment.md` | Sentinel, Builder, Worker, Fixer, Test Executor | Agent containment boundaries: forbidden commands, filesystem, network, git patterns |
+| `references/meta-loop-protocol.md` | Top-level orchestrator, Phase-Book Planner, Phase Verifier | Meta-Loop execution model (phase decomposition, verify/retry cycle, safety limits) |
+| `references/phase-verification-protocol.md` | Phase Verifier | Standard procedure for confirming phase DoD + verify commands + cross-phase invariants |
+| `references/tier-matrix.md` | Orchestrator and every tier-aware agent | Tier × Scale × Parameter reference (round limits, QA threshold, Sentinel/Auditor activation, Scale file thresholds) |
 
 ---
 

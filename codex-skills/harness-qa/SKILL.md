@@ -1,6 +1,6 @@
 ---
 name: harness-qa
-description: Functional QA harness for `/harness-qa` or `$harness-qa` requests. 5-agent pipeline (Scout → Scenario Writer → Test Executor → Analyst → Reporter) with 8 test modes (full, onboarding, forms, responsive, regression, journey, a11y, pre-launch).
+description: Functional QA harness for `/harness-qa` or `$harness-qa` requests. 5-agent pipeline (Scout → Scenario Writer → Test Executor → Analyst → Reporter) with 8 test modes. v4.1.0 — tier-aware round limits (Standard/Advanced: 2, Elite: 1) and optional Meta-Loop phase-book decomposition for multi-suite runs.
 ---
 
 # Harness QA (v2)
@@ -9,9 +9,13 @@ description: Functional QA harness for `/harness-qa` or `$harness-qa` requests. 
 
 Run the Codex version of `/harness-qa`. Treat `/harness-qa` and `$harness-qa` as the same workflow intent inside Codex.
 
+**v4.1.0 changes:**
+- Capability tier detection (`Standard | Advanced | Elite`) at session start; round limits from `references/tier-matrix.md`.
+- Optional Meta-Loop mode for multi-suite QA: invoke `references/phase-book-planner-prompt.md` to decompose distinct suites into phases; otherwise the single-run pipeline below is equivalent to a 1-phase book.
+
 This skill mirrors the Claude harness-qa structure:
 
-`SETUP -> SCOUT -> SCENARIOS -> USER APPROVAL -> EXECUTE -> ANALYZE -> REPORT`
+`CAPABILITY -> SETUP -> SCOUT -> SCENARIOS -> USER APPROVAL -> EXECUTE -> ANALYZE -> REPORT`
 
 **v2**: 8 specialized test modes for targeted, expert-level QA.
 

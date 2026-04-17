@@ -383,38 +383,79 @@ Run Diagnostician in foreground (default). The time saving is marginal for short
 
 ### Tier Definitions
 
-| Tier | Models | Characteristics |
-|------|--------|----------------|
-| Standard | haiku, sonnet | Systematic execution, structured tasks |
-| Advanced | opus | Deep reasoning, complex judgment |
-| Mythos | mythos-class (future) | Near-perfect SWE, strong autonomy, higher alignment risk |
+| Tier | Typical Models | Characteristics |
+|------|---------------|----------------|
+| Standard | small/fast general-purpose models | Systematic execution, structured tasks |
+| Advanced | mid-size reasoning models | Deep reasoning, reliable judgment |
+| Elite | high-capability frontier models | Exceptional autonomy; mistakes can be subtle; stricter alignment posture required |
 
 ### Tier-Specific Adjustments
 
-| Parameter | Standard | Advanced | Mythos |
-|-----------|----------|----------|--------|
+| Parameter | Standard | Advanced | Elite |
+|-----------|----------|----------|-------|
 | Max rounds (Scale L) | 3 | 3 | 2 |
 | Max rounds (Scale M) | 2 | 2 | 1 |
 | QA pass threshold | 7/10 | 7/10 | 8/10 |
-| Sentinel activation | Per triage | Per triage | Always on (HIGH forced) |
+| Sentinel activation | Per triage | Per triage | MEDIUM + HIGH always on |
 | Auditor activation | Per triage | Per triage | Always on |
 | Scale S file threshold | 1-2 files | 1-2 files | 1-5 files |
 | Scale M file threshold | 3-5 files | 3-5 files | 3-10 files |
+| Scale L file threshold | 6+ files | 6+ files | 11+ files |
 
 ### Tier Detection
 
-The orchestrator determines the tier from the parent model:
-- Check the model name in the environment
-- `haiku` or `sonnet` → Standard
-- `opus` → Advanced
-- If model name contains `mythos` or capability benchmarks exceed thresholds → Mythos
+The orchestrator classifies the parent model at session start by the following priority:
 
-### Long-Context Scale Adjustment (Mythos Tier)
+1. **Explicit override** — `CLAUDEX_TIER_OVERRIDE` environment variable (`standard` | `advanced` | `elite`). For testing and admin-approved scenarios.
+2. **Elite allowlist** — if the runtime model identifier appears in the comma-separated `CLAUDEX_ELITE_MODELS` environment variable → Elite.
+3. **Name-based fallback** (for unlisted models):
+   - Identifier contains `sonnet` or `haiku` → Standard
+   - Identifier contains `opus` → Advanced
+   - Otherwise → Standard (conservative default)
 
-Mythos-class models with 256K-1M effective context can process more files per scan:
+**User-facing output**: at session start, emit a single line — `tier: {Standard|Advanced|Elite}` — without revealing the underlying model identifier.
+
+### Long-Context Scale Adjustment (Elite Tier)
+
+Elite-tier models with very large effective context (256K–1M+) can process more files per scan:
 - Scout (Scale S): 10-15 files instead of 2-5
 - Scout (Scale M): 15-30 files instead of 5-15
 - Selective Context ON-DEMAND tier → promoted to SECONDARY (all artifacts readable)
+
+---
+
+## 9.5 Elite Model Allowlist
+
+Elite-tier classification is intentionally decoupled from hard-coded model names to preserve the project's naming-neutrality policy. The allowlist lives in an environment variable so downstream consumers and agent prompts see only the `Elite` tier label, never the underlying model identifier.
+
+### Setup
+
+Add to your shell profile or `.env`:
+
+```bash
+# Comma-separated list of runtime model identifiers that should use the Elite tier.
+export CLAUDEX_ELITE_MODELS="id-1,id-2"
+```
+
+### Criteria for inclusion
+
+A model qualifies for Elite classification when it meets **at least two** of the following:
+- SWE-bench Verified ≥ 90%
+- Terminal-Bench ≥ 80%
+- Long-context BFS (256K–1M) ≥ 75%
+- Documented exceptional autonomous task completion capability
+
+### Verification
+
+After setting the environment variable, run any `/harness` invocation and confirm the session start emits `tier: Elite`.
+
+### Override flow
+
+For one-off experiments without modifying the allowlist:
+
+```bash
+CLAUDEX_TIER_OVERRIDE=elite /harness "..."
+```
 
 ---
 

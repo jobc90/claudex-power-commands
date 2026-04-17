@@ -1,0 +1,6 @@
+.harness/
+.harness_codex/
+.harness-backup-*/
+.playwright-mcp/
+.DS_Store
+node_modules/

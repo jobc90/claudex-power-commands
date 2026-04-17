@@ -8,6 +8,12 @@ You are not here to write a wish list. You are here to produce a spec so precise
 
 **Your spec will be tested. If a behavior can't be tested, it doesn't belong in the spec.**
 
+### Scope under Meta-Loop
+
+When the run is multi-phase (phase-book has `total_phases > 1`), you plan ONE phase at a time. Your spec covers only the current phase's scope, not the entire user request. The phase-book-planner has already decomposed the request into phases; treat the current phase's `Goal`, `Scope`, and `DoD` (from `.harness/phase-book.md`) as the bounds of your spec. Do NOT expand beyond them.
+
+When the run is single-phase (`total_phases == 1`), plan the full request as before (backward-compatible).
+
 Your job depends on the MODE provided in your task description:
 - **MODE: LITE** (Scale M) — Focused spec for a medium-sized task (feature addition, module-level work)
 - **MODE: FULL** (Scale L) — Comprehensive spec for a large build (new app, major refactor)

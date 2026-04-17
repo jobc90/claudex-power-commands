@@ -19,7 +19,26 @@ $ARGUMENTS
 
 ## Phase 0: Triage
 
-Classify the request into one of three scales. This determines the entire protocol path.
+Detect the session's capability tier, then classify the request into a scale. Together they determine the protocol path.
+
+### Capability Detection
+
+Run this step FIRST, before scale classification. See `harness/references/session-protocol.md` §9 for authoritative rules.
+
+1. If `CLAUDEX_TIER_OVERRIDE` is set to `standard`, `advanced`, or `elite` → use that value.
+2. Otherwise, if the runtime model identifier appears in the comma-separated `CLAUDEX_ELITE_MODELS` env var → tier = `Elite`.
+3. Otherwise, apply name-based fallback:
+   - identifier contains `sonnet` or `haiku` → `Standard`
+   - identifier contains `opus` → `Advanced`
+   - unknown → `Standard` (conservative default)
+
+**Announce the detected tier in a single line** (do NOT reveal the model identifier):
+
+```
+tier: {Standard|Advanced|Elite}
+```
+
+Persist the tier to `.harness/session-state.md` under a `tier:` field so all downstream agents can read it. Pipeline behavior (round limits, QA threshold, Sentinel/Auditor activation, Scale thresholds) consults `harness/references/tier-matrix.md`.
 
 ### Non-Build Requests (EXIT)
 
@@ -29,13 +48,18 @@ If the request is a question, audit, or configuration change (not a build/fix/im
 
 ### Scale Classification
 
-Analyze `$ARGUMENTS` and classify:
+Analyze `$ARGUMENTS` and classify. Thresholds depend on the detected tier — read `harness/references/tier-matrix.md` for the authoritative table. Summary:
 
-| Scale | Criteria | Examples |
-|-------|----------|---------|
-| **S** (Small) | Bug fix, typo, 1-2 file changes, config tweak | "Fix the login button 404", "Update the API timeout to 30s" |
-| **M** (Medium) | Feature addition, 3-5 file changes, module-level work | "Add password reset flow", "Refactor auth to use JWT" |
-| **L** (Large) | New application, major refactor, 6+ files, multi-module | "Build a dashboard app", "Rewrite the payment system" |
+| Scale | Standard / Advanced | Elite |
+|-------|---------------------|-------|
+| **S** (Small) | 1–2 file changes, bug fix, config tweak | 1–5 file changes |
+| **M** (Medium) | 3–5 file changes, module-level work | 3–10 file changes |
+| **L** (Large) | 6+ files, multi-module, new application | 11+ files |
+
+Examples (tier-agnostic):
+- S — "Fix the login button 404", "Update the API timeout to 30s"
+- M — "Add password reset flow", "Refactor auth to use JWT"
+- L — "Build a dashboard app", "Rewrite the payment system"
 
 **Decision rule**: When in doubt between two scales, pick the smaller one. The QA loop will catch if more work is needed.
 
@@ -89,10 +113,17 @@ cat > .harness/security-triage.md << 'HEREDOC'
 HEREDOC
 ```
 
-**Activation rules:**
+**Activation rules (tier-aware — see `harness/references/tier-matrix.md`):**
+
+Base rules (Standard / Advanced):
 - HIGH → sentinel_active: true, qa_security_track: true, auditor_active: true
 - MEDIUM → sentinel_active: {true if Scale L, false otherwise}, qa_security_track: true, auditor_active: {true if Scale M/L, false otherwise}
 - LOW → sentinel_active: false, qa_security_track: false, auditor_active: false
+
+Elite-tier overrides (apply in addition to base rules):
+- MEDIUM → sentinel_active: true (regardless of scale), auditor_active: true
+- LOW + Scale L → sentinel_active: true
+- Any sensitivity → auditor_active: true (Elite Auditor is always on)
 
 ### Announce to User
 
@@ -108,7 +139,49 @@ After Phase 2 (Scout) completes, re-read `.harness/build-context.md` and check t
 - If files include paths containing `api/`, `routes/`, `middleware/`, `model/` → upgrade to at least MEDIUM
 - Update `.harness/security-triage.md` if sensitivity increased. Notify user: **"보안 민감도가 {OLD} → {NEW}로 상향되었습니다."**
 
-Then proceed to Phase 1.
+Then proceed to Phase 0.7 (Phase-Book Planner).
+
+---
+
+## Phase 0.7: Phase-Book Planner (Meta-Loop entry)
+
+Meta-Loop is the default execution model for every `/harness` invocation. Before running the phase-internal pipeline, decompose the user's request into a phase book. Small requests produce a 1-phase book (backward-compatible with the pre-Meta-Loop flow); large requests produce multiple phases.
+
+### 0.7a. Resume detection
+
+Before launching the Phase-Book Planner:
+
+1. If `.harness/phase-book.md` exists and its frontmatter shows `status: in_progress` or `status: paused`:
+   - Parse `current_phase`, `total_phases`, `status`.
+   - Ask the user: **"이전 phase-book이 감지되었습니다. Phase {current}/{total} ({status}). 이어서 진행할까요? (Y / N / reset)"**
+   - `Y` → skip 0.7b; jump to Meta-Loop with `i = current_phase`.
+   - `N` → exit (phase-book stays paused; user can resume later).
+   - `reset` → `mv .harness .harness-backup-$(date +%s)` and continue to 0.7b.
+2. Otherwise continue to 0.7b.
+
+### 0.7b. Launch Phase-Book Planner
+
+Read the agent prompt: `~/.claude/harness/phase-book-planner-prompt.md`.
+
+Launch a **general-purpose Agent** (model inherits parent — decomposition quality matters):
+- **prompt**: The phase-book-planner prompt + context:
+  - "User request: `.harness/build-prompt.md` (write $ARGUMENTS there first)."
+  - "Scale: {S/M/L} (from Phase 0)."
+  - "Tier: {Standard/Advanced/Elite} (from Phase 0, read `.harness/session-state.md`)."
+  - "Security triage: `.harness/security-triage.md`."
+  - "Reference: `harness/references/meta-loop-protocol.md`."
+  - "Write the phase book to `.harness/phase-book.md`. Emit ONE announcement line."
+- **description**: "phase-book planner"
+
+### 0.7c. User approval gate
+
+After the planner writes the phase-book, relay its announcement verbatim to the user and wait for approval:
+
+- `Y` → set frontmatter `status: in_progress` (if still `pending`), proceed to Meta-Loop.
+- `N` → set `status: paused`, exit.
+- `edit` → print: "`.harness/phase-book.md` 를 수정한 후 다시 Y로 응답하세요." Wait.
+
+This is the **only user gate** in the Meta-Loop. After approval, the loop runs to completion without further confirmation, pausing only on 3-retry exhaustion, cross-phase regression, Sentinel BLOCK, or budget stop.
 
 ---
 
@@ -117,22 +190,39 @@ Then proceed to Phase 1.
 ```
 /harness <prompt> [--workers N]
   |
-  +- Phase 0: Triage            -> Scale S/M/L
-  +- Phase 0.5: Security Triage -> LOW/MEDIUM/HIGH
-  +- Phase 1: Setup             -> .harness/ + session state
-  +- Phase 2: Scout             -> build-context.md
-  +- Phase 3: Planning          -> build-spec.md (includes Build Mode: SINGLE/TEAM)
-  |                             -> User reviews and approves
-  +- Phase 4: Build Loop        -> Mode-dependent:
-  |   SINGLE: Builder → Sentinel → Refiner → QA → Diagnostician
-  |   TEAM:   Architect → Workers(N, worktree) → Sentinel → Integrator → QA
-  +- Phase 4-audit: Auditor     -> Cross-verification
-  +- Phase 5: Summary
+  +- Phase 0:    Triage                -> Capability tier + Scale S/M/L
+  +- Phase 0.5:  Security Triage       -> LOW/MEDIUM/HIGH
+  +- Phase 0.7:  Phase-Book Planner    -> .harness/phase-book.md (+ intent detection)
+  |                                    -> user approves phase book
+  +-------------------------------------------------------------------+
+  |  Meta-Loop (repeats for each phase i in phase-book):              |
+  |                                                                   |
+  |    +- Phase 1: Setup              -> .harness/phase-{i}/          |
+  |    |                                 (or .harness/ if total==1)   |
+  |    +- Phase 2: Scout              -> build-context.md             |
+  |    +- Phase 3: Planning           -> build-spec.md                |
+  |    +- Phase 4: Build-Sentinel-    -> Mode-dependent (SINGLE/TEAM) |
+  |    |   Refine-QA Loop                                             |
+  |    +- Phase 4-audit: Auditor      -> Cross-verification            |
+  |    +- Phase 4-verify:             -> phase-evidence-{i}.md         |
+  |    |   Phase Verifier                PASS → advance / FAIL → retry |
+  |    +- Cross-Phase Integrity Check                                 |
+  |                                                                   |
+  +-------------------------------------------------------------------+
+  |
+  +- Phase ∞-*: Commit / Push / Deploy / PR (intent-gated, terminal)
+  +- Phase ∞:   Final Auditor + Summary
 ```
+
+The phase-internal pipeline (Phase 1–Phase 4-audit) is unchanged for single-phase books. For multi-phase books it runs once per phase. All per-phase artifact paths are prefixed with `.harness/phase-{i}/` when `total_phases > 1`; when `total_phases == 1`, artifacts live directly under `.harness/` (backward compatibility).
+
+Authoritative control-flow reference: `harness/phase-orchestrator-prompt.md`.
 
 ---
 
 ## Phase 1: Setup
+
+> **Meta-Loop context**: Phase 1 runs at the start of each phase iteration. When `total_phases > 1`, prepend all artifact paths in Phases 1–4 with `.harness/phase-{i}/`. When `total_phases == 1`, paths remain `.harness/...` for backward compatibility.
 
 Read the session protocol reference: `~/.claude/harness/references/session-protocol.md`
 
@@ -354,13 +444,27 @@ After TEAM mode's QA completes, return here for Phase 4-audit (Auditor) and Phas
 
 Read the builder, refiner, QA, and diagnostician prompt templates from `~/.claude/harness/`.
 
-### Max rounds by scale
+### Max rounds by tier × scale
 
-| Scale | Max Rounds | Refiner | QA Method | Diagnostician |
-|-------|-----------|---------|-----------|--------------|
-| S | 1 | Hygiene + pattern check only | Code review + build/test verification | Not used |
-| M | 2 | Full checklist | Code review + build/test + Playwright (if UI exists) | Before round 2 |
-| L | 3 | Full checklist + security scan | Playwright mandatory | Before rounds 2 and 3 |
+Read the detected `tier:` from `.harness/session-state.md` (persisted in Phase 0) and consult `harness/references/tier-matrix.md`. Summary:
+
+| Scale | Standard / Advanced | Elite | Refiner | QA Method | Diagnostician |
+|-------|---------------------|-------|---------|-----------|--------------|
+| S | 1 | 1 | Hygiene + pattern check only | Code review + build/test verification | Not used |
+| M | 2 | 1 | Full checklist | Code review + build/test + Playwright (if UI exists) | Before round 2 (if ≥ 2 rounds) |
+| L | 3 | 2 | Full checklist + security scan | Playwright mandatory | Before rounds 2 and 3 (if ≥ 2 rounds) |
+
+**Escape hatch**: If the Diagnostician's report for round N includes `needs_extra_round: true` with a documented root cause the final round cannot resolve, the orchestrator MAY permit one additional round beyond the cap. Use sparingly; prefer pausing and asking the user for input.
+
+### QA pass threshold (tier-aware)
+
+| Tier | Pass Threshold |
+|------|----------------|
+| Standard | All criteria ≥ 7/10 |
+| Advanced | All criteria ≥ 7/10 |
+| Elite | All criteria ≥ 8/10 |
+
+Propagate this threshold to the QA agent through its task description (`QA_PASS_THRESHOLD: 7` or `8`).
 
 ### For each round N:
 
@@ -686,7 +790,61 @@ echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] auditor | {verdict} | auditor-report.md |
 
 ---
 
+## Phase 4-verify: Phase Verifier (Meta-Loop gate)
+
+Runs after Phase 4-audit, before Phase 5. Decides whether the current phase passes its DoD or must be retried.
+
+Read the agent prompt: `~/.claude/harness/phase-verifier-prompt.md`.
+Read the protocol: `~/.claude/harness/references/phase-verification-protocol.md`.
+
+Launch a **general-purpose Agent** with **model `sonnet`**:
+- **prompt**: The phase-verifier prompt + context:
+  - "Phase book: `.harness/phase-book.md`."
+  - "Current phase: {i}. Phase name: {name from phase-book}."
+  - "Phase artifacts: `.harness/phase-{i}/` (or `.harness/` if total_phases == 1)."
+  - "Retry attempt: {1 | 2 | 3}."
+  - "Tier: read from `.harness/session-state.md`."
+  - "Write evidence to `.harness/phase-evidence-{i}.md`."
+- **description**: "phase verifier (phase {i})"
+- **model**: `sonnet`
+
+### Branch on verdict
+
+Read `.harness/phase-evidence-{i}.md` frontmatter `verdict`:
+
+- **PASS** → continue to Cross-Phase Integrity Check below.
+- **FAIL**:
+  1. Read `retry_attempt`.
+  2. If `retry_attempt >= 3`: set phase-book `status: paused`, escalate (see `meta-loop-protocol.md` §5), halt Meta-Loop.
+  3. Otherwise: rename `.harness/phase-evidence-{i}.md` → `.harness/phase-evidence-{i}.md.prev`, launch the Diagnostician with the evidence as input, and re-run the current phase's internal pipeline (back to Phase 1 of this iteration).
+
+### Cross-Phase Integrity Check
+
+Only on PASS:
+
+1. Compute files the current phase touched: `git diff --name-only HEAD~{rounds_this_phase}`.
+2. Intersect with cumulative scope of all earlier phases (read their `Scope` fields from `phase-book.md`).
+3. For each intersecting prior phase, re-run that phase's verify commands.
+4. Any regression → set `status: paused`, escalate, halt.
+
+### Terminal phase (intent-gated)
+
+If the just-verified phase is one of the intent-appended terminal phases (`Phase ∞-2: Commit`, `Phase ∞-1: Push`, `Phase ∞: Deploy`, `Phase ∞: Create PR` — see `commit_push_intent` in phase-book frontmatter), its verify commands already executed the git operation. No extra action here beyond recording evidence.
+
+### Advance
+
+Update phase-book frontmatter: `current_phase = i + 1`. Append to `.harness/phase-history.md`:
+```
+[YYYY-MM-DDTHH:MM:SSZ] Phase {i}/{N} | verdict: PASS | rounds: {K} | evidence: phase-evidence-{i}.md
+```
+
+If `current_phase > total_phases`, set `status: complete` and proceed to Phase 5 (Summary). Otherwise loop back to Phase 1 with `i = current_phase`.
+
+---
+
 ## Phase 5: Summary
+
+> Runs once, AFTER the Meta-Loop has completed all phases (`status: complete`) or has been paused. For paused runs, the summary reflects progress up to the pause point and points the user at the escalation evidence.
 
 ### Scale S — Compact Report
 

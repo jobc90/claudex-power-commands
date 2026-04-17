@@ -13,7 +13,17 @@ $ARGUMENTS
 
 ## Phase 0: Triage
 
-Classify the request into one of three scales. This determines the entire protocol path.
+Detect capability tier, then classify the request into a scale.
+
+### Capability Detection
+
+Run before scale classification. See `harness/references/session-protocol.md` §9 for details.
+
+1. If `CLAUDEX_TIER_OVERRIDE` is set (`standard|advanced|elite`) → use it.
+2. Else if runtime model identifier appears in `CLAUDEX_ELITE_MODELS` (comma-separated) → `Elite`.
+3. Else fallback: `sonnet` or `haiku` → `Standard`; `opus` → `Advanced`; unknown → `Standard`.
+
+Announce `tier: {Standard|Advanced|Elite}` (do NOT reveal the identifier). Persist to `.harness/session-state.md` under `tier:`.
 
 ### Non-Documentation Requests (EXIT)
 
@@ -48,6 +58,14 @@ Announce the classification:
 ```
 Scale: [S/M/L] — [one-line rationale]
 ```
+
+### Optional: Phase-Book for multi-chapter documents
+
+For Scale L documents with clearly separable chapters (e.g., "full architecture doc with Intro / Data Layer / API Layer / Deployment chapters"), the orchestrator MAY invoke the Phase-Book Planner (`~/.claude/harness/phase-book-planner-prompt.md`) to decompose the document into per-chapter phases. Each chapter becomes one phase with its own Researcher → Outliner → Writer → Reviewer → Validator cycle.
+
+For Scale S/M documents, proceed with the single-pass pipeline below (equivalent to `total_phases: 1`).
+
+See `~/.claude/harness/references/meta-loop-protocol.md` for details.
 
 ---
 
@@ -210,13 +228,15 @@ After completion:
 
 Read the writer, reviewer, and validator prompt templates from `~/.claude/harness/`.
 
-### Max rounds by scale
+### Max rounds by tier × scale
 
-| Scale | Max Rounds | Review | Validation |
-|-------|-----------|--------|------------|
-| S | 1 (write only) | None (self-review) | None |
-| M | 2 | Reviewer (focused) | Validator (commands + paths + env vars) |
-| L | 3 | Reviewer (full) | Validator (all executable items) |
+Read `tier:` from `.harness/session-state.md` (persisted in Phase 0). See `harness/references/tier-matrix.md`.
+
+| Scale | Standard / Advanced | Elite | Review | Validation |
+|-------|---------------------|-------|--------|------------|
+| S | 1 (write only) | 1 | None (self-review) | None |
+| M | 2 | 1 | Reviewer (focused) | Validator (commands + paths + env vars) |
+| L | 3 | 2 | Reviewer (full) | Validator (all executable items) |
 
 ### For each round N:
 

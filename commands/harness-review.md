@@ -11,7 +11,23 @@ description: "5-agent code review pipeline (Scanner → Analyzer → Fixer → V
 
 $ARGUMENTS
 
-## Phase 0: Guard Clause
+## Phase 0: Guard Clause + Capability Detection
+
+### Capability Detection
+
+Run at session start. See `harness/references/session-protocol.md` §9.
+
+1. `CLAUDEX_TIER_OVERRIDE` → use that value.
+2. Else `CLAUDEX_ELITE_MODELS` contains current identifier → `Elite`.
+3. Else fallback: `sonnet|haiku` → `Standard`; `opus` → `Advanced`; unknown → `Standard`.
+
+Announce `tier: {Standard|Advanced|Elite}`. Persist to `.harness/session-state.md` under `tier:`.
+
+**Tier effect on review** (no internal loop; tier biases severity thresholds):
+- Standard / Advanced: baseline severity thresholds
+- Elite: Analyzer and Verifier apply a +1 severity bump to detected issues (e.g., a `minor` finding under Standard may be classified `moderate` under Elite). Rationale: Elite-class mistakes are subtler and deserve closer scrutiny. See `harness/references/tier-matrix.md`.
+
+### Guard Clause
 
 If the request is NOT a code review request (question about harness, audit, configuration change):
 - Respond directly as a normal conversation

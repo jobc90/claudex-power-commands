@@ -4,14 +4,28 @@
 
 > Claude Code용 harness commands와 Codex용 harness skills를 같은 구조로 맞춘 6종 세트
 >
+> **v4.1.0**: Meta-Loop is the default — `/harness` 가 요청을 phase-book으로 분해하고 모든 phase의 DoD가 통과할 때까지 work→verify→apply 루프를 자동으로 돌립니다. 작은 요청은 phase=1로 자연 퇴화 (하위 호환).
 > **v4.0.0**: `/harness-team` merged into `/harness` as TEAM mode
 
 이 저장소는 `harness` 계열 중심 구조를 기준으로 운영합니다.
 
 - Claude Code 기준 진실: `commands/` 6개
 - Codex 포트: `codex-skills/` 6개
-- 하네스 프롬프트 번들: `harness/` 25개 에이전트 프롬프트
-- 참조 체크리스트: `harness/references/` 5개
+- 하네스 프롬프트 번들: `harness/` 27개 에이전트 프롬프트 + 1개 orchestrator helper
+- 참조 체크리스트: `harness/references/` 8개
+
+### v4.1.0 — Meta-Loop + Capability Detection
+
+| 변화 | 설명 | 효과 |
+|------|------|------|
+| **Meta-Loop (default)** | `/harness` 가 `phase-book.md` 를 자동 작성하고 phase별로 work → verify → apply 사이클을 반복 | 한 번의 요청으로 방대한 작업을 끝까지 실행 |
+| **Phase Verifier** | 각 phase의 DoD + verify command를 실제 실행하여 `phase-evidence-{i}.md` 생성 | 무증거 PASS 차단, retry 3회 cap |
+| **Intent auto-detection** | 요청에 "커밋/푸시/배포/PR" 포함 시 terminal phase 자동 추가 | Auto-commit 기본 off, 사용자가 명시하면 그대로 수행 |
+| **Capability Tier (Standard / Advanced / Elite)** | `CLAUDEX_ELITE_MODELS` env allowlist + `CLAUDEX_TIER_OVERRIDE` | tier별 round limit, QA threshold, Sentinel/Auditor 활성화 자동 조정 |
+| **Elite-tier 보강 체크** | Sentinel(scope creep / 증거 조작), Auditor(정량 주장 실측), QA(anti-sycophancy) 확장 | 자율성 높은 모델의 미묘한 실수 패턴 대응 |
+| **Cross-Phase Integrity** | 새 phase가 이전 phase의 파일을 수정하면 자동 회귀 검증 | 다중 phase간 일관성 유지 |
+
+공식 설계 문서: `docs/meta-loop-design.md`, `docs/capability-detection.md`.
 
 ### v3.2.0 — Managed Agents-Inspired Session Protocol
 
@@ -50,7 +64,7 @@ Anthropic의 [Managed Agents](https://www.anthropic.com/engineering/managed-agen
 | `/harness-review` | `scanner`, `analyzer`, `fixer`, `verifier`, `reporter` |
 | `/harness-qa` | `scenario-writer`, `test-executor`, `analyst`, `qa-reporter` + `scout` 재사용 |
 
-총 25개 에이전트 프롬프트 + INDEX가 `harness/` 아래에 들어 있습니다.
+총 27개 에이전트 프롬프트 + 1개 orchestrator helper + INDEX가 `harness/` 아래에 들어 있습니다. Meta-Loop 에이전트: `phase-book-planner`, `phase-verifier`, `phase-orchestrator` (helper).
 
 ---
 

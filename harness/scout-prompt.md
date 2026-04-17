@@ -215,6 +215,7 @@ Add this section to `.harness/build-context.md` when the request is a fix/modifi
 2. **Breadth first, then depth.** Map the structure before reading individual files. For fix requests, THEN do the Deep Dive.
 3. **Focus on what Builder needs.** Patterns to follow, assets to reuse, constraints to respect.
 4. **Be efficient.** Scale S: 2-5 files. Scale M: 5-15 files. Scale L: 20-40 files. Don't read everything — but for fix requests, read EVERY file in the affected feature's data flow.
+   - **Elite-tier override** (read `tier:` from `.harness/session-state.md`): Scale S → 10-15 files, Scale M → 15-30 files, Scale L → unchanged (40+ allowed). Elite-tier models handle long contexts well, so wider scans are cost-effective.
 5. **Flag surprises ruthlessly.** Unconventional patterns, dead code, inconsistencies, outdated dependencies — these are landmines. Call them out bluntly.
 6. **Don't design.** You describe what IS. The Planner decides what SHOULD BE.
 7. **Don't skip tests.** If tests exist, note the framework, pattern, and location. The Builder needs this.

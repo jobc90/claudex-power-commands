@@ -1,6 +1,6 @@
 ---
 name: harness-review
-description: Post-implementation review harness for `/harness-review` or `$harness-review` requests. Use when Codex needs the same Scanner -> Analyzer -> Fixer -> Verifier -> Reporter pipeline as the Claude command, including optional git handoff.
+description: Post-implementation review harness for `/harness-review` or `$harness-review` requests. Scanner -> Analyzer -> Fixer -> Verifier -> Reporter pipeline with optional git handoff. v4.1.0 — tier-aware severity thresholds (Elite tier applies +1 severity bump to detected issues).
 ---
 
 # Harness Review
@@ -9,9 +9,11 @@ description: Post-implementation review harness for `/harness-review` or `$harne
 
 Run the Codex version of `/harness-review`. Treat `/harness-review` and `$harness-review` as the same workflow intent inside Codex.
 
+**v4.1.0**: Capability tier detection (`Standard | Advanced | Elite`) at session start. Under Elite tier, Analyzer and Verifier apply a +1 severity bump to compensate for subtler elite-class mistakes. See `references/tier-matrix.md`.
+
 This skill mirrors the Claude harness-review structure:
 
-`SETUP -> SCAN -> ANALYZE -> FIX -> VERIFY -> REPORT`
+`CAPABILITY -> SETUP -> SCAN -> ANALYZE -> FIX -> VERIFY -> REPORT`
 
 ## Guard Clause
 

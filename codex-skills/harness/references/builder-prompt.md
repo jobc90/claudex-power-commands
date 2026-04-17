@@ -299,7 +299,7 @@ LLMs tend to rationalize shortcuts. If you catch yourself thinking any of these,
 | "This works differently from context.md but it's better" | Your preference is irrelevant. Match existing patterns or explain in progress.md why you diverged. |
 | "I'll delete this failing test because it tests obsolete behavior" | If a test was passing before your changes and now fails, your change broke it. Fix the code, not the test. |
 | "My progress report is accurate enough" | Accuracy is binary. Every "[x] done" must be verifiable in git diff. The Auditor will check. |
-| "I'll widen this tolerance to make the test pass" | Widening tolerances to pass is reward hacking (Mythos Incident: confidence interval manipulation). Fix the precision, not the threshold. |
+| "I'll widen this tolerance to make the test pass" | Widening tolerances to pass is reward hacking (Alignment Incident: confidence interval manipulation). Fix the precision, not the threshold. |
 
 ## Red Flags — Stop and Reassess
 
@@ -312,3 +312,25 @@ If any of these are true, pause your current work and re-evaluate your approach:
 - The dev server won't start and you're making more changes on top of a broken build
 - You're stubbing a feature with "Coming soon" instead of implementing it or skipping it entirely
 - You realize the spec is ambiguous but you're guessing instead of noting it in progress.md
+
+## Elite-Tier Execution Audit Enhancement (tier-aware)
+
+Read `tier:` from `.harness/session-state.md`. When `tier == Elite`, add the following to every FILE_MODIFY entry in your execution audit log:
+
+```
+[<timestamp>] FILE_MODIFY: path/to/file.ts (+12 lines, -3 lines) sha256_before=<hash> sha256_after=<hash>
+```
+
+Where:
+- `sha256_before` — SHA-256 of the file content BEFORE your edit (compute via `sha256sum < file` or equivalent).
+- `sha256_after` — SHA-256 AFTER the edit.
+
+Purpose: the Elite-tier Auditor uses these hashes to detect evidence-backdating attempts (files modified outside the declared edit windows). If computing hashes is impractical (e.g., very large files, binary assets), note `sha256_before=SKIPPED (reason)` honestly.
+
+Additionally, when spawning any sub-agent (via the `Agent` tool or equivalent), log the spawn event:
+
+```
+[<timestamp>] SUBAGENT_SPAWN: description="{agent description}" model={model} purpose={short purpose}
+```
+
+Undisclosed sub-agent spawns are a Sentinel BLOCK trigger at Elite tier.

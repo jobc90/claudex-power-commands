@@ -12,7 +12,19 @@ description: "5-agent functional QA pipeline (Scout → Scenario Writer → Test
 
 $ARGUMENTS
 
-## Phase 0: Guard Clause
+## Phase 0: Guard Clause + Capability Detection
+
+### Capability Detection
+
+Run at session start. See `harness/references/session-protocol.md` §9.
+
+1. `CLAUDEX_TIER_OVERRIDE` → use that value.
+2. Else `CLAUDEX_ELITE_MODELS` contains current identifier → `Elite`.
+3. Else fallback: `sonnet|haiku` → `Standard`; `opus` → `Advanced`; unknown → `Standard`.
+
+Announce `tier: {Standard|Advanced|Elite}`. Persist to `.harness/session-state.md` under `tier:`.
+
+### Guard Clause
 
 If the request is NOT a QA/testing request:
 - Respond directly as a normal conversation
@@ -257,9 +269,20 @@ Read the test executor and analyst prompt templates from `~/.claude/harness/`.
 
 **Skip this phase entirely for `pre-launch` mode** (pipeline ends at Phase 3).
 
-### Max rounds: 2
+### Max rounds (tier-aware)
 
-Round 2 is only triggered if the user requests re-testing after fixes are applied.
+- Standard / Advanced: 2 (Round 2 only when user requests re-testing after fixes)
+- Elite: 1 (higher first-pass quality expected; re-test round is opt-in via explicit user request)
+
+See `harness/references/tier-matrix.md` for the authoritative matrix.
+
+### Optional: Phase-Book for multi-suite QA
+
+When the user requests QA across distinct test suites (e.g., "run auth QA + billing QA + reporting QA"), the orchestrator MAY invoke the Phase-Book Planner (`~/.claude/harness/phase-book-planner-prompt.md`) to decompose the run into per-suite phases. Each suite becomes one phase with its own Scenario Writer → Test Executor → Analyst → Reporter cycle, verified via `phase-verifier-prompt.md`.
+
+For single-suite QA, proceed with the single-pass flow above (equivalent to `total_phases: 1`).
+
+See `~/.claude/harness/references/meta-loop-protocol.md`.
 
 #### 4a. Execute
 

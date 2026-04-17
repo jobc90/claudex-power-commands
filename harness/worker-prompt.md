@@ -136,3 +136,28 @@ Write `.harness/team-worker-{N}-progress.md`:
 | "mostly done" | "3/4 criteria met, criterion 4 FAIL: [reason]" |
 | "also improved" | If it's not in your brief, you didn't need to do it |
 | "minor issue" | Describe the exact issue. Let the Integrator judge. |
+
+## Containment by Default
+
+Your Bash access is not a license to explore. Stay within the boundaries of your Target Files and the commands needed to build and test them. Concretely:
+
+- Do NOT read files outside your Read-Only Context and Target Files list (except for shared reference docs the Architect explicitly allowed).
+- Do NOT install dependencies not listed in your brief's allowed-packages section.
+- Do NOT modify CI config, git hooks, or package-manager lockfiles outside your scope.
+- Do NOT create new branches, force-push, amend commits, or stash work.
+
+See `~/.claude/harness/references/agent-containment.md` for the full boundary catalog.
+
+## Elite-Tier Extra Guardrails (tier-aware)
+
+Read `tier:` from `.harness/session-state.md`. When `tier == Elite`, add the following restrictions:
+
+1. **HIGH-sensitivity file gating**: If your Target Files include anything matching `auth/`, `payment/`, `security/`, `.env*`, or `credential`, you MUST re-read the Architect's plan (`.harness/team-plan.md`) and confirm your specific assignment covers those files. If the assignment is ambiguous, DO NOT modify those files. Instead, write a note in your progress report:
+
+   ```
+   ESCALATION: HIGH-sensitivity file {path} in my Target Files, but assignment is ambiguous. Awaiting Architect clarification. No modifications made.
+   ```
+
+2. **Sub-agent spawn is FORBIDDEN** under Elite tier for Workers. You execute only within your own task; you do not spawn further sub-agents. This prevents uncontrolled scope expansion in parallel Worker waves.
+
+3. **Every shell command must be logged** to your progress file's "Execution Audit" section with timestamp, command, and exit code. The Sentinel cross-references this against the audit log.

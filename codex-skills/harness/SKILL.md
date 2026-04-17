@@ -1,6 +1,6 @@
 ---
 name: harness
-description: Adaptive multi-agent builder pipeline (SINGLE: Scout → Planner → Builder → Sentinel → Refiner → QA | TEAM: Scout → Planner/Architect → Workers(N) → Sentinel → Integrator → QA) with Security Triage, Diagnostician, and Auditor. Supports S/M/L scale with auto SINGLE/TEAM mode selection.
+description: Adaptive multi-agent builder pipeline (SINGLE: Scout → Planner → Builder → Sentinel → Refiner → QA | TEAM: Scout → Planner/Architect → Workers(N) → Sentinel → Integrator → QA) with Security Triage, Diagnostician, and Auditor. Supports S/M/L scale with auto SINGLE/TEAM mode selection. v4.1.0 — Meta-Loop default: every request becomes a phase-book and runs work→verify→apply cycles until every phase's DoD passes. Small requests degrade to a 1-phase book (backward compatible).
 ---
 
 # Harness
@@ -9,9 +9,20 @@ description: Adaptive multi-agent builder pipeline (SINGLE: Scout → Planner �
 
 Run the Codex version of `/harness`. Treat `/harness` and `$harness` as the same workflow intent inside Codex.
 
+**v4.1.0** — Meta-Loop is the default and only execution model. Every `/harness` invocation:
+
+1. Detects capability tier (`Standard | Advanced | Elite`) via `CLAUDEX_TIER_OVERRIDE` / `CLAUDEX_ELITE_MODELS` / name-based fallback.
+2. Decomposes the request into a **phase-book** (1 phase for small requests, 5–15 for large).
+3. Runs each phase through the harness pipeline + Phase Verifier + Cross-Phase Integrity Check.
+4. Loops until every phase's DoD passes, retrying up to 3× per phase on failure.
+
+Commit/push/deploy/PR intent detected in the request is appended as terminal phases. Auto-commit is off otherwise.
+
 This skill mirrors the Claude harness structure:
 
-`TRIAGE -> SECURITY TRIAGE -> SETUP -> SCOUT -> PLAN -> USER APPROVAL -> BUILD/SENTINEL/REFINE/QA LOOP -> AUDITOR -> SUMMARY`
+`TRIAGE -> CAPABILITY -> SECURITY TRIAGE -> PHASE-BOOK PLANNER -> USER APPROVAL -> for each phase { SETUP -> SCOUT -> PLAN -> USER APPROVAL -> BUILD/SENTINEL/REFINE/QA LOOP -> AUDITOR -> PHASE VERIFIER -> CROSS-PHASE INTEGRITY } -> FINAL AUDITOR -> SUMMARY`
+
+See `references/meta-loop-protocol.md`, `references/phase-verification-protocol.md`, `references/tier-matrix.md` for authoritative specs.
 
 ## Guard Clause
 

@@ -4,14 +4,28 @@
 
 > A 6-command harness suite for Claude Code, mirrored as 6 skills for Codex
 >
+> **v4.1.0**: Meta-Loop is the default — `/harness` decomposes every request into a phase-book and runs work→verify→apply cycles until every phase's DoD passes. Small requests degrade to a 1-phase book (backward compatible).
 > **v4.0.0**: `/harness-team` merged into `/harness` as TEAM mode
 
 The source of truth is the harness-based command suite first organized on the Claude side, then ported to Codex with the same shape.
 
 - Claude source of truth: 6 files in `commands/`
 - Codex ports: 6 matching skills in `codex-skills/`
-- Shared harness prompt bundle: 25 agent prompts in `harness/`
-- Reference checklists: 5 files in `harness/references/`
+- Shared harness prompt bundle: 27 agent prompts + 1 orchestrator helper in `harness/`
+- Reference checklists: 8 files in `harness/references/`
+
+### v4.1.0 — Meta-Loop + Capability Detection
+
+| Change | Description | Impact |
+|--------|-------------|--------|
+| **Meta-Loop (default)** | `/harness` auto-writes `phase-book.md` and runs work → verify → apply per phase | One request, run to completion without user babysitting |
+| **Phase Verifier** | Executes each phase's DoD + verify commands for real, writes `phase-evidence-{i}.md` | Blocks evidenceless PASS; retry cap of 3 |
+| **Intent auto-detection** | Commit / push / deploy / PR keywords in the request append terminal phases | Auto-commit off by default; explicit intent is honored |
+| **Capability Tier (Standard / Advanced / Elite)** | `CLAUDEX_ELITE_MODELS` allowlist + `CLAUDEX_TIER_OVERRIDE` | Tier-aware round limits, QA threshold, Sentinel/Auditor activation |
+| **Elite-tier reinforcements** | Sentinel (scope creep / evidence backdating), Auditor (quantitative claim verification), QA (anti-sycophancy) | Defense against subtle frontier-model mistake patterns |
+| **Cross-Phase Integrity** | Re-verifies earlier phases when later phases touch their files | Keeps multi-phase runs consistent |
+
+Design docs: `docs/meta-loop-design.md`, `docs/capability-detection.md`.
 
 ### v3.2.0 — Managed Agents-Inspired Session Protocol
 
@@ -50,7 +64,7 @@ Inspired by Anthropic's [Managed Agents](https://www.anthropic.com/engineering/m
 | `/harness-review` | `scanner`, `analyzer`, `fixer`, `verifier`, `reporter` |
 | `/harness-qa` | `scenario-writer`, `test-executor`, `analyst`, `qa-reporter` plus reused `scout` |
 
-There are 25 prompt templates under `harness/`, plus 5 reference checklists in `harness/references/`.
+There are 27 prompt templates + 1 orchestrator helper under `harness/`, plus 8 reference checklists in `harness/references/`. Meta-Loop agents: `phase-book-planner`, `phase-verifier`, `phase-orchestrator` (helper).
 
 ---
 
