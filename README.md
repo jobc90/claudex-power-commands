@@ -4,6 +4,7 @@
 
 > Claude Code용 harness commands와 Codex용 harness skills를 같은 구조로 맞춘 6종 세트
 >
+> **v4.2.0**: Completion Gate protocol — Reporter / QA Reporter / Integrator / Refiner / Auditor가 **완료 선언 직전 stale iteration artifact를 자동 스캔**. terminated 리소스 ID, "진행 중" 마커, version drift, step-status 모순을 **다른 단계가 통과해도 구조적으로 차단**. 원본 사고: 다층 감사 통과 후 사용자가 stale EC2 ID를 정리작업에서 발견 — 이 패턴을 시스템적으로 재발 방지.
 > **v4.1.0**: Meta-Loop is the default — `/harness` 가 요청을 phase-book으로 분해하고 모든 phase의 DoD가 통과할 때까지 work→verify→apply 루프를 자동으로 돌립니다. 작은 요청은 phase=1로 자연 퇴화 (하위 호환).
 > **v4.0.0**: `/harness-team` merged into `/harness` as TEAM mode
 
@@ -11,8 +12,24 @@
 
 - Claude Code 기준 진실: `commands/` 6개
 - Codex 포트: `codex-skills/` 6개
-- 하네스 프롬프트 번들: `harness/` 27개 에이전트 프롬프트 + 1개 orchestrator helper
-- 참조 체크리스트: `harness/references/` 8개
+- 하네스 프롬프트 번들: `harness/` 28개 에이전트 프롬프트 + 1개 orchestrator helper
+- 참조 체크리스트: `harness/references/` 9개 (v4.2.0에 `completion-gate-protocol.md` 추가)
+- 템플릿 스크립트: `harness/completion-gate-template.sh` (프로젝트에 `scripts/completion-gate.sh`로 복사)
+
+### v4.2.0 — Completion Gate Protocol
+
+"완료 선언 → 사용자가 stale 상태 발견" 실패 모드를 파이프라인 내 구조로 차단합니다.
+
+| 변화 | 설명 | 효과 |
+|------|------|------|
+| **Completion Gate** | 모든 finalizing agent (Reporter / QA Reporter / Integrator / Refiner / Auditor)가 `.harness/*-report.md` 작성 **전** stale artifact 스캔 실행 의무 | iteration artifact (terminated 리소스 ID, WIP 마커, version drift)를 구조적으로 차단 |
+| **Reference: `harness/references/completion-gate-protocol.md`** | 6개 스캔 카테고리 + inline bash + reconciliation workflow + integration points 정의 | 단일 진실 출처 — 모든 agent가 인용 |
+| **Template: `harness/completion-gate-template.sh`** | 프로젝트-agnostic 스캐너. `scripts/completion-gate.sh`로 복사해 프로젝트별 패턴 추가 가능 | 재사용 가능, project-specific customization |
+| **Attestation line 의무** | 모든 최종 리포트에 `Completion Gate: ✅/🟡/❌ …` 라인 포함 없으면 리포트 INVALID | Auditor가 위조/누락 감지 |
+| **Git action blocking** | `/harness-review --commit/--push/--pr` 는 gate PASS 선행 조건 | 리뷰 verdict가 PASS여도 stale 발견 시 git handoff 차단 |
+| **Integrator에서 Worker 리포트 cross-scan** | TEAM mode 병합 직전 Worker progress 리포트 간 stale 상호 참조 검사 | phantom bug 전파 차단 |
+
+공식 설계 문서: `harness/references/completion-gate-protocol.md`, CHANGELOG의 v4.2.0 섹션.
 
 ### v4.1.0 — Meta-Loop + Capability Detection
 
