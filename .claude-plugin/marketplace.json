@@ -5,15 +5,15 @@
     "url": "https://github.com/jobc90"
   },
   "metadata": {
-    "description": "7 harness commands for Claude Code and Codex: multi-agent build pipeline, documentation, code review, parallel build, QA testing, frontend design, and dashboard.",
-    "version": "3.1.0"
+    "description": "6 harness commands for Claude Code and Codex: multi-agent build pipeline, documentation, code review, QA testing, frontend design, and dashboard. v4.2.0 adds Completion Gate protocol preventing stale-iteration-artifact leaks at every pipeline-finalizing agent.",
+    "version": "4.2.0"
   },
   "plugins": [
     {
       "name": "claudex",
       "source": "./",
-      "description": "7 harness commands with 23 specialized agent prompts: /harness, /harness-docs, /harness-review, /harness-team, /harness-qa, /design, /claude-dashboard. Includes Diagnostician agent, Meta-Harness-inspired evidence traces, and artifact validation.",
-      "version": "3.1.0",
+      "description": "6 harness commands with 28 specialized agent prompts + 1 helper. v4.2.0 — Completion Gate protocol: Reporter/QA Reporter/Integrator/Refiner/Auditor run stale-artifact scan before declaring complete. v4.1.0 baseline — Meta-Loop default + capability tier detection. Commands: /harness (SINGLE/TEAM + Phase Verifier + Sentinel + Auditor), /harness-docs (5-agent documentation), /harness-review (5-agent code review + gate-gated git handoff), /harness-qa (Playwright QA), /design (3-dial design), /claude-dashboard (statusline).",
+      "version": "4.2.0",
       "category": "automation",
       "tags": [
         "harness",
@@ -22,7 +22,9 @@
         "parallel-build",
         "qa-testing",
         "documentation",
-        "frontend-design"
+        "frontend-design",
+        "completion-gate",
+        "iteration-hygiene"
       ]
     }
   ]
