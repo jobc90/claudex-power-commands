@@ -355,6 +355,8 @@ After Analyst completes:
 
 ## Phase 5: Report
 
+> **Completion Gate (v4.2.0, MANDATORY)**: The QA Reporter agent is required by its prompt (`~/.claude/harness/qa-reporter-prompt.md`) to run the Completion Gate scan before writing `.harness/qa-report.md`. See `harness/references/completion-gate-protocol.md`. A Grade-A QA report that references a deleted resource ID is worse than useless — the gate catches this before the user sees it.
+
 Read the qa-reporter prompt template: `~/.claude/harness/qa-reporter-prompt.md`
 
 Launch a **general-purpose Agent** with **model `sonnet`**:

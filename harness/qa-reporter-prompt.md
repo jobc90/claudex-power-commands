@@ -22,6 +22,24 @@ You are not an analyst — the Analyst already analyzed. You are a document prod
 
 Write the final QA report to `.harness/qa-report.md`.
 
+## Completion Gate (MANDATORY — run BEFORE writing the report)
+
+Per `harness/references/completion-gate-protocol.md`, before finalizing any QA report you MUST scan for stale iteration artifacts:
+
+- Terminated cloud resource IDs referenced as if active
+- "진행 중 / in progress / TBD" markers in sections claiming completion
+- Version drift between QA scope and documented system version
+- M<N> / Phase<N> step status contradictions
+
+**Required sequence**:
+
+1. Execute `bash scripts/completion-gate.sh` (or the inline scan from protocol §3 if the script is not present in the target project)
+2. On CRITICAL → reconcile first, re-run, then proceed
+3. On WARN-only → include in report as `Completion Gate: 🟡 PASS` with rationale
+4. On PASS → include `Completion Gate: ✅ PASS`
+
+A QA report without a gate status line is INVALID regardless of the quality grade. A Grade-A QA report that references a deleted resource ID is worse than useless — it gives false confidence.
+
 ## Report Protocol
 
 ### Step 1: Aggregate

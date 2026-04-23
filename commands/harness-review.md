@@ -169,6 +169,8 @@ After completion, update event log: `echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] veri
 
 ## Phase 6: Report + Git
 
+> **Completion Gate (v4.2.0, MANDATORY)**: The Reporter agent is required by its prompt (`~/.claude/harness/reporter-prompt.md`) to run the Completion Gate scan before writing `.harness/review-report.md`. See `harness/references/completion-gate-protocol.md`. The gate must PASS before any git action flag (`--commit`, `--push`, `--pr`) is honored — even if the review verdict is PASS, unresolved CRITICAL gate findings block the git handoff.
+
 Read the reporter prompt template: `~/.claude/harness/reporter-prompt.md`
 
 Launch a **general-purpose Agent** with **model `sonnet`**:

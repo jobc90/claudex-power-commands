@@ -20,6 +20,18 @@ Multiple Workers built different parts simultaneously. Each Worker thinks their 
 1. Apply integration fixes directly to the codebase
 2. Write your report to `.harness/team-integration-report.md`
 
+## Completion Gate (MANDATORY — run BEFORE closing the integration report)
+
+Per `harness/references/completion-gate-protocol.md`, merging parallel Worker outputs is a particularly high-risk moment for stale artifacts: each Worker may have written its progress report against an intermediate shared state (e.g., a branch reference that got force-pushed by a peer, IDs allocated in early draft that were superseded). Before closing the integration report:
+
+1. Run the gate — `bash scripts/completion-gate.sh` (or inline §3 scan)
+2. Additionally scan Worker progress reports themselves (`.harness/team-worker-*-progress.md`) for stale references to superseded commits / branches / IDs
+3. Cross-check that no two Workers' reports claim ownership of the same file at the same version (diff-level contradiction)
+4. On CRITICAL → reconcile (edit the stale report, or discard the obsolete Worker output), re-run, then finalize
+5. On clean → include `Completion Gate: ✅ PASS` in integration report
+
+The Integrator is the LAST line of defense before QA sees the merged result. A fabricated clean-merge on top of stale artifacts creates phantom bugs that the Diagnostician will misdiagnose in the next round.
+
 ## Integration Protocol
 
 ### Step 1: Collect Worker Status

@@ -20,6 +20,19 @@ You are the user's single point of contact. They don't want to read 4 separate r
 
 Write your report to `.harness/review-report.md` AND present a concise summary to the user.
 
+## Completion Gate (MANDATORY — run BEFORE writing the report)
+
+Per `harness/references/completion-gate-protocol.md`, stale iteration artifacts (terminated resource IDs, "진행 중" markers in supposedly-done sections, version drift, step-status contradictions) must be reconciled before any "complete / done / ready" declaration. Multi-layer audits historically failed to catch these because each checked cross-document consistency but not intra-document temporal consistency.
+
+**Required sequence**:
+
+1. **Run the gate**: if `scripts/completion-gate.sh` exists in the repo, `bash scripts/completion-gate.sh`. Otherwise execute the inline scan from `completion-gate-protocol.md` §3.
+2. **On CRITICAL** (terminated IDs, missing resources): reconcile affected files first (`grep -rl "<stale>" docs/ | edit`), re-run the gate, then proceed. Do NOT write the final report with unresolved CRITICAL.
+3. **On WARN-only** (benign WIP markers, expected version refs): include a `Completion Gate: 🟡 PASS with N warnings (reviewed)` line in the report with a 1-line rationale.
+4. **On clean PASS**: include `Completion Gate: ✅ PASS` in the report.
+
+The report is INVALID without a gate status line. A recommendation of "READY TO COMMIT" while a terminated resource ID is referenced in the artifact is a worse failure than "DO NOT COMMIT".
+
 ## Reporting Protocol
 
 ### Step 1: Aggregate

@@ -846,6 +846,25 @@ If `current_phase > total_phases`, set `status: complete` and proceed to Phase 5
 
 > Runs once, AFTER the Meta-Loop has completed all phases (`status: complete`) or has been paused. For paused runs, the summary reflects progress up to the pause point and points the user at the escalation evidence.
 
+### Pre-Summary Completion Gate (v4.2.0, MANDATORY)
+
+Before producing the user-facing Summary, run the Completion Gate scan per `harness/references/completion-gate-protocol.md`:
+
+```bash
+# Prefer project-local script if present, otherwise inline scan
+if [ -x scripts/completion-gate.sh ]; then
+  bash scripts/completion-gate.sh
+else
+  # Embed the inline scan from completion-gate-protocol.md §3
+  :
+fi
+```
+
+- **CRITICAL findings** (terminated resource IDs, missing resources referenced as active): reconcile first (`grep -rl "<stale>" docs/ | edit`), re-run, then summarize. Do NOT present a "PASS / Complete" summary with unresolved CRITICAL.
+- **Include a `Completion Gate: ✅/🟡/❌ …` line** in the Summary regardless of scale.
+
+This gate prevents the "Summary declares complete → user discovers stale artifact in minutes" failure mode. It is not optional.
+
 ### Scale S — Compact Report
 
 ```

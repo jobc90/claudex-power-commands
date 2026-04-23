@@ -6,6 +6,46 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 
 ---
 
+## [4.2.0] — 2026-04-23
+
+### Added — Completion Gate Protocol
+
+Prevents the "declare complete → user discovers stale state" failure mode by mandating a stale-iteration-artifact scan before any pipeline-finalizing agent outputs its final report.
+
+**Origin**: Real incident 2026-04-23. A multi-iteration provisioning workflow (4 resource attempts) left an obsolete resource ID in a status document. Multi-layer audits (dedicated plan audit + 5-agent code review) all passed because each checked *cross-document* consistency but none checked *intra-document temporal* consistency after iteration. The user caught the stale reference during final cleanup — exactly the "N-round rework" problem this protocol prevents.
+
+### New files
+- `harness/references/completion-gate-protocol.md` — canonical protocol: when to apply, what to scan (6 categories), inline bash scan, reconciliation workflow, integration points. Single source of truth; agent prompts cite this reference.
+- `harness/completion-gate-template.sh` — project-agnostic scanner script. Copy to `scripts/completion-gate.sh` in your project, customize for project-specific patterns.
+
+### Agent prompts updated (MANDATORY gate invocation)
+- `harness/reporter-prompt.md` — Reporter MUST run the gate before writing `.harness/review-report.md`. Report is INVALID without a `Completion Gate: ✅/🟡/❌ …` attestation line.
+- `harness/qa-reporter-prompt.md` — QA Reporter MUST run the gate before writing `.harness/qa-report.md`. A Grade-A QA report with a terminated-resource reference is worse than useless.
+- `harness/integrator-prompt.md` — Integrator (TEAM mode) MUST run the gate AND scan Worker progress reports for stale intermediate references before merging.
+- `harness/refiner-prompt.md` — Refiner gains secondary responsibility: reconcile Builder's intermediate iteration artifacts before QA sees them.
+- `harness/auditor-prompt.md` — Auditor now verifies the Reporter actually executed the gate (checks for attestation line) and independently re-runs the scan to catch fabricated PASS lines.
+
+### Commands updated (Phase integration)
+- `commands/harness.md` Phase 5 Summary — inline gate invocation snippet added. Gate must PASS before user-facing summary. Unresolved CRITICAL blocks "complete" declaration.
+- `commands/harness-review.md` Phase 6 Report + Git — gate PASS is required before any git action flag is honored. Gate failure blocks `--commit`/`--push`/`--pr` even if review verdict is PASS.
+- `commands/harness-qa.md` Phase 5 Report — gate invocation note added, delegated to QA Reporter agent.
+
+### Scan categories (protocol §2)
+1. Infrastructure resource IDs — live state cross-check via `aws ec2 describe-instances` (terminated = CRITICAL)
+2. Managed Agents / API artifacts — `sesn_*`, `vlt_*`, `agent_*` references
+3. WIP markers — Korean (진행 중, TBD, 추정) + English (in progress, TODO: update, <PLACEHOLDER>)
+4. Version reference drift — v1/v2/v3 outside history sections
+5. Step status contradictions — same step labeled "진행 중" in one file, "완료" in another
+6. Date / SHA / PR-number drift (optional)
+
+### Why it matters
+Single-pass audits (including dedicated review skills) catch *cross-document* stale references only. Iteration-artifact reconciliation requires *intra-document temporal* awareness — comparing what was written mid-iteration against the final successful state. This protocol adds that layer at every agent that produces a "done" declaration.
+
+### Codex mirror
+Codex-side SKILL.md files inherit the behavior through their shared agent prompt references. No Codex-specific changes required for v4.2.0.
+
+---
+
 ## [4.1.0] — 2026-04-17
 
 ### Added
