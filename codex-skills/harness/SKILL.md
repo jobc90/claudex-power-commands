@@ -14,7 +14,9 @@ Run the Codex version of `/harness`. Treat `/harness` and `$harness` as the same
 1. Detects capability tier (`Standard | Advanced | Elite`) via `CLAUDEX_TIER_OVERRIDE` / `CLAUDEX_ELITE_MODELS` / name-based fallback.
 2. Decomposes the request into a **phase-book** (1 phase for small requests, 5–15 for large).
 3. Runs each phase through the harness pipeline + Phase Verifier + Cross-Phase Integrity Check.
-4. Loops until every phase's DoD passes, retrying up to 3× per phase on failure.
+4. Loops until every phase's DoD passes, retrying up to 3× per phase on failure. On a 3rd failure with an unchanged root cause (a capability ceiling), walk the **capability-escalation ladder** (`references/meta-loop-protocol.md` §5.1: recommend higher effort/thinking → escalate to a higher TIER label with an evidence package → human) **before** pausing. Never fake a PASS to exit the ladder; the retry cap stays flat at 3 across tiers.
+
+**v4.3.0** — observable-output DoD items (HTML/SVG/UI/charts/scripts with visible output) are run and **observed** before PASS, not passed on exit-0 alone (`references/observation-grounding.md`); a render that cannot be observed never passes. QA gains an `UNTESTABLE` state for objectively unreachable apps (a captured blocker is required; it never counts toward the grade). Phase decomposition runs a context-sufficiency check first (a Scout pass when context is thin) and bans unobservable phase goals. Transferred procedures (fablize/prometheus); effect on the model mix not yet A/B-measured.
 
 Commit/push/deploy/PR intent detected in the request is appended as terminal phases. Auto-commit is off otherwise.
 
