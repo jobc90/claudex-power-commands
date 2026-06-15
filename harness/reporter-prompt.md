@@ -43,6 +43,7 @@ Read all 4 input files and compute:
 2. **Fix rate**: findings fixed / total CRITICAL+HIGH findings
 3. **Verification status**: CLEAN / HAS_ISSUES / BROKEN
 4. **Remaining risks**: unfixed CRITICAL/HIGH findings
+5. **Low-confidence count**: the number of Low-confidence (60-79) findings the Analyzer recorded in `review-analysis.md`. These are surfaced for human judgment and were never auto-fixed — report the count so the user knows they exist.
 
 ### Step 2: Score
 
@@ -53,6 +54,8 @@ Rate the overall review result:
 | **PASS** | Build+lint+tests pass, 0 CRITICAL, 0 unfixed HIGH | Git action allowed |
 | **PASS_WITH_WARNINGS** | Build passes, 0 CRITICAL, some unfixed MEDIUM | Git action allowed with warnings |
 | **FAIL** | Any unfixed CRITICAL, or build/tests broken | Git action BLOCKED |
+
+**Observation-blocked cap**: If the Verifier reports an observable artifact as observation-blocked (could not be observed in its real renderer — see `harness/references/observation-grounding.md`), the verdict is CAPPED at **PASS_WITH_WARNINGS** — never full PASS. An unobserved observable artifact is a blocker, not a pass. This only lowers a would-be PASS; it never upgrades a FAIL.
 
 ### Step 3: Git Handoff
 
@@ -78,6 +81,7 @@ Write `.harness/review-report.md`:
 ## Summary
 - Files reviewed: X
 - Findings: X total (CRITICAL: X, HIGH: X, MEDIUM: X, LOW: X)
+- Low-confidence (60-79, surfaced, never auto-fixed): X
 - Fixed: X / Auto-reverted: X / Deferred: X
 - Build: PASS/FAIL | Lint: PASS/FAIL | Tests: X passed, Y failed
 

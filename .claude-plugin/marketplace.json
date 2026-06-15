@@ -5,15 +5,15 @@
     "url": "https://github.com/jobc90"
   },
   "metadata": {
-    "description": "6 harness commands for Claude Code and Codex: multi-agent build pipeline, documentation, code review, QA testing, frontend design, and dashboard. v4.2.0 adds Completion Gate protocol preventing stale-iteration-artifact leaks at every pipeline-finalizing agent.",
-    "version": "4.2.0"
+    "description": "6 harness commands for Claude Code and Codex: multi-agent build pipeline, documentation, code review, QA testing, frontend design, and dashboard. v4.3.0 adds Observation Grounding (observe rendered/executable output, not just exit-0), a runtime Stop hook (first runtime-enforced completion entrance), and a capability-escalation ladder. Transferred procedures; effect on claudex's model mix not yet A/B-measured.",
+    "version": "4.3.0"
   },
   "plugins": [
     {
       "name": "claudex",
       "source": "./",
-      "description": "6 harness commands with 27 specialized agent prompts + 1 helper. v4.2.0 — Completion Gate protocol: Reporter/QA Reporter/Integrator/Refiner/Auditor run stale-artifact scan before declaring complete. v4.1.0 baseline — Meta-Loop default + capability tier detection. Commands: /harness (SINGLE/TEAM + Phase Verifier + Sentinel + Auditor), /harness-docs (5-agent documentation), /harness-review (5-agent code review + gate-gated git handoff), /harness-qa (Playwright QA), /design (3-dial design), /claude-dashboard (statusline).",
-      "version": "4.2.0",
+      "description": "6 harness commands with 27 specialized agent prompts + 1 helper. v4.3.0 — Observation Grounding + Capability Escalation: a runtime Stop hook (claudex's first runtime-enforced completion entrance), observe-the-rendered-output in the verify chain (exit-0 = well-formed, not correct), a §5.1 capability-escalation ladder at the 3-retry ceiling, context-first phase decomposition, QA UNTESTABLE state. Transferred procedures (origin: fablize/prometheus); effect not yet A/B-measured. v4.2.0 — Completion Gate protocol. Commands: /harness (SINGLE/TEAM + Phase Verifier + Sentinel + Auditor), /harness-docs, /harness-review, /harness-qa (Playwright), /design, /claude-dashboard.",
+      "version": "4.3.0",
       "category": "automation",
       "tags": [
         "harness",
@@ -24,7 +24,9 @@
         "documentation",
         "frontend-design",
         "completion-gate",
-        "iteration-hygiene"
+        "iteration-hygiene",
+        "observation-grounding",
+        "capability-escalation"
       ]
     }
   ]

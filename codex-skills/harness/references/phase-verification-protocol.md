@@ -112,6 +112,10 @@ Run each verify command in a fresh shell (not using cached output). Capture:
 
 If any command exits non-zero, verdict is **FAIL** regardless of DoD results.
 
+### Step 3.5 — Observable-output verification (flagged DoD items only)
+
+For any DoD item flagged `runtime-observation-required` (an observable render/executable artifact — HTML/SVG/UI/chart/script with visible output), exit 0 proves *well-formed*, not *correct*. Follow `observation-grounding.md`: run it in the real renderer, **observe** the actual output, record what you saw. Apply only to genuinely observable artifacts (trigger: "could this look/behave wrong only when it runs?") — unflagged items keep exit-code semantics unchanged. If the artifact is observable but cannot be observed (no renderer / app won't run), the item is **FAIL/blocked**, never PASS.
+
 ### Step 4 — Cross-phase invariant check
 
 For each invariant in the phase-book:
@@ -134,6 +138,7 @@ Any regression → verdict is **FAIL** with a clear regression tag.
 Verdict is PASS only when:
 - All DoD items PASS, AND
 - All verify commands exit 0 (or meet their documented success signal), AND
+- Every DoD item flagged `runtime-observation-required` was actually observed (not inferred from exit 0), AND
 - All cross-phase invariants HOLD, AND
 - No earlier phase regressed.
 
@@ -172,7 +177,7 @@ Standard and Advanced tiers skip step 1 but still perform step 2 on a best-effor
 ## Anti-Patterns — DO NOT
 
 - Do NOT mark PASS based on "the code looks correct."
-- Do NOT skip a verify command because "it passed last round."
+- Do NOT skip a verify command because "it passed last round." (This governs verify COMMANDS. It does NOT mean re-observing an unchanged, already-observed render — per `observation-grounding.md`, re-observe only after a change. The two rules are disjoint: always re-run commands; do not re-render unchanged output.)
 - Do NOT accept Builder's progress claims at face value — they are inputs, not evidence.
 - Do NOT suppress a FAIL because "it's a trivial issue." Trivial FAILs exist to surface integration gaps.
 - Do NOT run commands in a way that reuses cached results (`--no-cache` when possible).

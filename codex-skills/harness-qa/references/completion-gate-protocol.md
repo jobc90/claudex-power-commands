@@ -213,11 +213,22 @@ When the gate returns CRITICAL, the agent MUST:
    terminated EC2 ID → current active EC2 ID)
 3. Re-run the gate
 4. Only when gate returns PASS, produce the final report
-5. The final report MUST include a one-line attestation:
+5. The final report MUST include a one-line attestation **plus the raw
+   gate output** (verbatim exit code + status line, not only the
+   paraphrase) so the attestation and any embedded "gate evidence" agree
+   on what passed:
 
    ```
    Completion Gate: ✅ PASS (N artifacts scanned, 0 critical)
+   raw: $ <gate command>  → exit 0 | "✅ Completion Gate: PASS"
    ```
+
+   The qa-reporter's verbatim embed and this line MUST quote the same
+   literal status line.
+
+> **R4 efficiency**: do NOT re-run the gate scan over an UNCHANGED clean
+> artifact set. If the artifacts are byte-identical to a prior PASS this
+> session, cite that prior PASS (with its raw output) instead of re-scanning.
 
 ---
 

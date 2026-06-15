@@ -6,6 +6,30 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 
 ---
 
+## [4.3.0] — 2026-06-15
+
+### Added — Observation Grounding + Capability Escalation
+
+Transferred procedures from two sibling harness plugins (`fivetaku/fablize`, `tmdgusya/prometheus`). **Honest status:** these are procedures whose effect on claudex's model mix is **not yet A/B-measured**. The direction is sound (each closes a concrete gap below), but no validated-effectiveness claim is made — mirroring prometheus's own "not yet measured" posture.
+
+**The finding driving this release:** claudex's Meta-Loop / Phase Verifier / Completion Gate are *agent-self-enforced* — the "orchestrator" is the main agent following its own prompt persona, so every gate's entrance sits on agent compliance (the "soft entrance" prometheus diagnosed when it dropped goals.py). v4.3.0 adds claudex's first *runtime-enforced* entrance and sharpens the verify chain.
+
+### New files
+- `harness/references/observation-grounding.md` — the "run + observe rendered/executable output" discipline co-located with its anti-over-verification bound (one rule, not two). The `runtime-observation-required` flag is **optional**; absent = current exit-0 behavior (backward compatible).
+- `hooks/finish-the-work.sh` — a **Stop hook** (ported from fablize, MIT): claudex's first runtime-enforced completion entrance. Detects a turn ending in a promise of work ("next I'll run QA") without the work and re-engages. Deterministic, loop-guarded, excludes turns ending in a user question.
+- `docs/command-agent-update-plan-v4.3.md` — the design analysis (10 readers → synthesis → 3-lens adversarial critique) and the **anti-bloat ledger** (what was deliberately cut to honor fablize's own "ship only what's needed" discipline).
+
+### Changed
+- **Meta-Loop** (`meta-loop-protocol.md`): an honest "Enforcement boundary (soft entrance)" note; a **Phase 0.5 Context Sufficiency Check** (4 questions → Scout pass before decomposing); a good-vs-bad **decomposition worked example**; a **§5.1 Capability-escalation ladder** (recommend higher effort → higher TIER label + evidence package → human) at the 3-retry-on-unchanged-root-cause terminal. Escalation is by tier label only, never a model identifier. Retry cap stays flat at 3 across tiers.
+- **Verify chain** (`phase-verifier`, review `verifier`, `phase-verification-protocol`): observe `runtime-observation-required` artifacts before PASS/CLEAN — exit-0 proves well-formed, not correct. Producers tag the flag (Builder Render/Execute Observation Gate, Analyzer, Outliner `[RENDERABLE]`); observers honor it; never PASS an unobserved observable artifact.
+- **QA** (`qa-prompt`): a new `UNTESTABLE` state, tightly gated against the leniency bias (only with a captured blocker error; never counts toward the grade; routes to the §5.1 ladder — Fabrication Pattern 7). `qa-reporter` embeds the Completion Gate's raw output verbatim for Auditor diffing.
+- **Review** (`confidence-calibration`, `analyzer`, `reporter`): review-mode capture-then-filter (surface the 60-79 band in a Deferred tier, never silently drop; FIX thresholds unchanged). **Diagnostician**: restructured to enumerate 2-3 competing hypotheses before testing, reporting the rejected ones.
+- **`/claude-dashboard`**: validates `settings.json` is well-formed JSON after editing (a botched merge bricks the user config).
+- `hooks/hooks.json` registers the `Stop` hook; `harness/INDEX.md` registers `observation-grounding.md`; Codex mirrors synced.
+
+### Deliberately NOT shipped (anti-bloat ledger)
+Per fablize's "ship only what's needed" discipline: no per-prompt re-inlining of R3 (one shared reference, cited), no standalone anti-over-verification sections (it rides inside the R3 reference), no ~10 per-agent third-state variants (only QA `UNTESTABLE`), no tier-variant retry caps. See `docs/command-agent-update-plan-v4.3.md §5`.
+
 ## [4.2.0] — 2026-04-23
 
 ### Added — Completion Gate Protocol

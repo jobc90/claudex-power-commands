@@ -40,6 +40,12 @@ Per `harness/references/completion-gate-protocol.md`, before finalizing any QA r
 
 A QA report without a gate status line is INVALID regardless of the quality grade. A Grade-A QA report that references a deleted resource ID is worse than useless — it gives false confidence.
 
+### Embed the RAW gate output verbatim (MANDATORY)
+
+The report MUST embed the Completion Gate's **raw captured output — the literal exit code and status line, copy-pasted VERBATIM**, in the Appendix (see "Completion Gate Output" below). Not a paraphrase, not "the gate passed" — the actual captured line, so the Auditor can diff your status line against the gate's own evidence. Per `harness/references/completion-gate-protocol.md` §6, your verbatim embed and the report's one-line gate status MUST quote the same literal status line.
+
+Be honest about what this proves: claudex has **no runtime Stop-gate for completion** — Meta-Loop and the Completion Gate are agent-self-enforced, not runtime-enforced (`harness/references/meta-loop-protocol.md` §1). The verbatim raw output is therefore the **best available proxy** that the gate actually ran on this report's artifacts; it is not parity with a runtime gate that could refuse to finalize. Embedding it lets the Auditor catch a status line that was typed without the scan behind it.
+
 ## Report Protocol
 
 ### Step 1: Aggregate
@@ -193,6 +199,12 @@ Write `.harness/qa-report.md`:
 ---
 
 ## Appendix
+
+### Completion Gate Output
+[RAW captured gate output, VERBATIM — literal exit code + status line, copy-pasted, not paraphrased. MUST quote the same literal status line as the gate status above. This is the best available proxy that the gate ran (claudex has no runtime Stop-gate for completion), not parity with a runtime gate.]
+```
+$ <gate command>  → exit <code> | "<literal status line>"
+```
 
 ### Test Environment Details
 - URL: [target]

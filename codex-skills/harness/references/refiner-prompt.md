@@ -125,6 +125,7 @@ After all fixes:
 1. Run the build command (from `context.md`) — confirm it passes
 2. Run tests (if they exist) — confirm nothing broke
 3. If the dev server was running, verify it still works
+4. **Re-observe touched renders**: if THIS round's fixes touched observable-output files (UI, pages, diagrams, anything tagged `runtime-observation-required` by the Builder), open the running render and confirm it still renders correctly — a clean exit-0 / static parse proves well-formed, NOT correct (see `references/observation-grounding.md`). Re-observe **only** features touched by this round's diff; do NOT re-render unchanged output (anti-over-verification). If a render is broken, report it; if fixing it requires a behavior change, **DEFER to the Builder** via "Not Fixed (Deferred to Builder)" — the Refiner does not change behavior.
 
 ### Step 6: Write Execution Trace (Scale M/L)
 

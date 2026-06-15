@@ -182,6 +182,7 @@ Each row maps a Claude-side prompt to its Codex copy.
 | `references/tier-matrix.md` | `references/tier-matrix.md` |
 | `references/agent-containment.md` | `references/agent-containment.md` |
 | `references/session-protocol.md` | `references/session-protocol.md` |
+| `references/observation-grounding.md` | `references/observation-grounding.md` |
 
 ### /harness-review mirrors
 
@@ -192,6 +193,7 @@ Each row maps a Claude-side prompt to its Codex copy.
 | `fixer-prompt.md` | `fixer-prompt.md` |
 | `verifier-prompt.md` | `verifier-prompt.md` |
 | `reporter-prompt.md` | `reporter-prompt.md` |
+| `references/observation-grounding.md` | `references/observation-grounding.md` |
 
 ### /harness-docs mirrors
 
@@ -240,6 +242,7 @@ Located in `harness/references/`. Agents load these on demand for progressive di
 | `references/meta-loop-protocol.md` | Top-level orchestrator, Phase-Book Planner, Phase Verifier | Meta-Loop execution model (phase decomposition, verify/retry cycle, safety limits) |
 | `references/phase-verification-protocol.md` | Phase Verifier | Standard procedure for confirming phase DoD + verify commands + cross-phase invariants |
 | `references/tier-matrix.md` | Orchestrator and every tier-aware agent | Tier × Scale × Parameter reference (round limits, QA threshold, Sentinel/Auditor activation, Scale file thresholds) |
+| `references/observation-grounding.md` | Phase Verifier, review Verifier, Builder, Refiner, Analyzer, Reporter | Run+observe render/executable artifacts before "done" (R3) + anti-over-verification stop condition (R4); the optional `runtime-observation-required` flag |
 
 ---
 

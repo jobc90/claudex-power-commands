@@ -610,6 +610,7 @@ Launch a **general-purpose Agent** with **model `sonnet`**:
   - Scale S: `"QA_MODE: CODE_REVIEW. No Playwright. Verify via code review, build output, and test results."`
   - Scale M: `"QA_MODE: STANDARD. Use Playwright if the app has UI. Otherwise code review + build/test."` + "App URL: `{URL from progress.md}`" + `"Write evidence traces to .harness/traces/round-{N}-qa-evidence.md for FAIL/PARTIAL results."`
   - Scale L: `"QA_MODE: FULL. Playwright is MANDATORY."` + "App URL: `{URL from progress.md}`" + `"Write evidence traces to .harness/traces/round-{N}-qa-evidence.md for ALL results."`
+  - "DoD/spec items whose output is observable (HTML page, SVG, UI, chart, script stdout) and that the producer flagged `runtime-observation-required` must be **run and observed** per `harness/references/observation-grounding.md` — an `exit 0` or clean static parse alone does NOT satisfy them. Unflagged items keep current exit-code verification (the flag is optional and backward-compatible)."
 - **description**: "harness QA round {N}"
 - **model**: `sonnet`
 
@@ -815,7 +816,7 @@ Read `.harness/phase-evidence-{i}.md` frontmatter `verdict`:
 - **PASS** → continue to Cross-Phase Integrity Check below.
 - **FAIL**:
   1. Read `retry_attempt`.
-  2. If `retry_attempt >= 3`: set phase-book `status: paused`, escalate (see `meta-loop-protocol.md` §5), halt Meta-Loop.
+  2. If `retry_attempt >= 3` (3 identical FAILs with an unchanged Diagnostician root cause): this is a capability ceiling, not a procedure miss. Walk the **capability-escalation ladder** in `meta-loop-protocol.md` §5.1 in order (recommend higher effort/thinking mode → escalate to a higher TIER LABEL with an evidence package → human) BEFORE pausing. Only after the ladder is exhausted: set phase-book `status: paused`, escalate (see `meta-loop-protocol.md` §5), halt Meta-Loop. The retry cap stays flat at 3 regardless of tier.
   3. Otherwise: rename `.harness/phase-evidence-{i}.md` → `.harness/phase-evidence-{i}.md.prev`, launch the Diagnostician with the evidence as input, and re-run the current phase's internal pipeline (back to Phase 1 of this iteration).
 
 ### Cross-Phase Integrity Check
@@ -990,6 +991,7 @@ echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] summary | done | — | Pipeline complete,
 27. **Scale S/M always use SINGLE mode.** TEAM mode is only available for Scale L.
 28. **`--workers N` flag forces TEAM mode** regardless of Planner's recommendation. Max 5 workers.
 29. **TEAM mode follows `team-build-protocol.md` reference.** All team-specific logic lives there, not in this file.
+30. **Never mark a phase PASS or fabricate evidence to exit the capability-escalation ladder.** When the retry cap is hit on an unchanged root cause, escalate by TIER LABEL only — never a model identifier (see `meta-loop-protocol.md` §5.1). A capability ceiling reported honestly is a correct outcome; a faked pass is not.
 
 ## Cost Awareness
 

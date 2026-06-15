@@ -1,5 +1,5 @@
 {
-  "description": "claudex-power-commands: check recommended plugin dependencies on session start",
+  "description": "claudex-power-commands: SessionStart dependency check + Stop early-stop guard (the runtime entrance the self-enforced Meta-Loop lacks)",
   "hooks": {
     "SessionStart": [
       {
@@ -7,6 +7,17 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check-deps.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/finish-the-work.sh",
             "timeout": 10
           }
         ]

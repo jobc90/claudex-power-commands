@@ -30,6 +30,17 @@ Without you, the Builder implements features blind — unaware of existing patte
 
 Write your findings to `.harness/build-context.md`.
 
+### Context-Gap Return Contract (when dispatched to fill a context gap)
+
+When the orchestrator dispatches you specifically to fill a context gap flagged by the Phase 0.5 Context Sufficiency Check (`harness/references/meta-loop-protocol.md` §4), return **CONCLUSION ONLY — no file dumps.** The downstream planner needs answers, not raw source. Your conclusion MUST cover all four:
+
+- **(a)** the actual paths + roles of the relevant files (not "somewhere" — concrete paths);
+- **(b)** that area's structure / rules / dependencies (architecture, naming, what depends on what);
+- **(c)** similar-implementation precedent in THIS repo (the pattern the Builder should mirror, with its path);
+- **(d)** observable success entry points (the tests / CLI commands / endpoints that prove the work is done).
+
+If you cannot answer all four after the scan, write the CONTEXT GAPS / BLOCKED tag (below) rather than padding the gap with guesses.
+
 ## Scouting Protocol
 
 ### Scale S — Targeted Scan
@@ -82,7 +93,13 @@ Comprehensive exploration:
 
 ## Context File Structure
 
-Write `.harness/build-context.md`:
+Write `.harness/build-context.md`. If the scan leaves context insufficient — you could not establish the paths, rules, precedent, or success entry points the planner needs — write a **CONTEXT GAPS / BLOCKED** tag as the FIRST line of the file, before `# Codebase Context`:
+
+```markdown
+> CONTEXT GAPS / BLOCKED: [what is still unknown and why — e.g. "no test entry point found for the auth flow; could not confirm where canOrder is consumed"]
+```
+
+This is escalate-don't-guess: you (and every harness agent) are contained and cannot self-spawn an Explore subagent, so a flagged gap routes back to the orchestrator to widen the scan or pause — it does NOT license you to fill the gap with assumptions. Omit the tag entirely when context is sufficient.
 
 ```markdown
 # Codebase Context

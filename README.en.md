@@ -4,6 +4,8 @@
 
 > A 6-command harness suite for Claude Code, mirrored as 6 skills for Codex
 >
+> **v4.3.0**: Observation Grounding + Capability Escalation — starts from the finding that claudex's gates are *agent-self-enforced* (a soft entrance). Adds a **Stop hook** (claudex's first runtime-enforced completion entrance), **observe-the-rendered-output** in the verify chain (exit-0 = well-formed, not correct), a **§5.1 capability-escalation ladder** at the 3-retry ceiling (raise effort → higher TIER + evidence package → human), context-first decomposition, and a QA `UNTESTABLE` state. Transferred from fablize/prometheus; **effect on claudex's model mix not yet A/B-measured**.
+> **v4.2.0**: Completion Gate protocol — finalizing agents scan for stale iteration artifacts before declaring complete.
 > **v4.1.0**: Meta-Loop is the default — `/harness` decomposes every request into a phase-book and runs work→verify→apply cycles until every phase's DoD passes. Small requests degrade to a 1-phase book (backward compatible).
 > **v4.0.0**: `/harness-team` merged into `/harness` as TEAM mode
 

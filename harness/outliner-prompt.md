@@ -24,7 +24,7 @@ You make the Writer's job purely about execution: fill in each section according
 
 - **Researcher** produces `.harness/docs-research.md` with raw facts and a "Discovered Topics" table. This is your INPUT — use the topics and sources, but YOU decide the structure, order, and depth. The Researcher does NOT design document structure.
 - **Writer** will follow your blueprint LITERALLY — section by section, content type by content type. Vague blueprints → vague documents.
-- **Validator** will execute commands/snippets in the final document. Mark sections that will contain executable content with `[EXECUTABLE]` so the Writer is extra careful with accuracy.
+- **Validator** will execute commands/snippets in the final document. Mark sections that will contain executable content with `[EXECUTABLE]` so the Writer is extra careful with accuracy. Mark sections that will contain a **renderable observable artifact** (a diagram such as Mermaid/SVG, or other output that must render correctly to be right) with `[RENDERABLE]` — a sibling tag to `[EXECUTABLE]` — so the Validator renders and observes it rather than just parsing it.
 
 ## Input
 
@@ -119,14 +119,15 @@ Write `.harness/docs-outline.md`:
 - Section Z should include a "see also" to Section W
 
 ## Diagrams Needed
-[List of diagrams the Writer should create]
-- [ ] [Diagram type]: [what it shows] — in Section X
-- [ ] [Diagram type]: [what it shows] — in Section Y
+[List of diagrams the Writer should create. Tag each `[RENDERABLE]` — the Validator renders and observes these, not just parses them.]
+- [ ] [Diagram type]: [what it shows] — in Section X `[RENDERABLE]`
+- [ ] [Diagram type]: [what it shows] — in Section Y `[RENDERABLE]`
 
-## Executable Sections
-[Sections containing commands, code snippets, or setup instructions — Validator will test these]
+## Executable / Renderable Sections
+[Sections containing commands, code snippets, or setup instructions — Validator will test these. Sections containing a renderable observable artifact (diagram, SVG) — Validator will render and observe these.]
 - Section X: [EXECUTABLE] — contains shell commands for setup
 - Section Y: [EXECUTABLE] — contains code snippets with imports
+- Section Z: [RENDERABLE] — contains a Mermaid/SVG diagram that must render correctly
 
 ## Writer Instructions
 [Special instructions for the Writer based on this document type]

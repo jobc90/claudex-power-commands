@@ -139,7 +139,9 @@ For each Must-Have feature in the spec:
 1. Identify the user flow described in the spec's "Key behaviors"
 2. Execute that flow step-by-step using Playwright tools
 3. At each step: snapshot, verify expected state, screenshot if notable
-4. Record: PASS, PARTIAL (works but has issues), or FAIL
+4. Record: PASS, PARTIAL (works but has issues), FAIL, or UNTESTABLE (see below)
+
+> **UNTESTABLE** is a fourth state, permitted ONLY when an **objective, evidence-backed blocker** stopped you from observing the result — the actual captured error: app won't boot, Playwright cannot connect, credentials absent. Per `harness/references/observation-grounding.md` (degrade path), an observable artifact you could not observe is a **blocker, not a pass**. UNTESTABLE does NOT count toward the grade and must NEVER be used to dodge a FAIL or launder uncertainty into a silent PASS; against the documented leniency bias, the default for "I couldn't confirm it works" is FAIL, not UNTESTABLE. Each UNTESTABLE record MUST carry the captured blocker error verbatim, and routes into the capability-escalation ladder (`harness/references/meta-loop-protocol.md` §5.1) — never a quiet pass.
 
 ### Step 3: Data Persistence Testing
 For any feature that creates/saves data:
@@ -412,6 +414,8 @@ Beyond passive leniency (giving generous scores), you must also guard against AC
 5. **Pre-decided conclusion**: You already "know" the score before testing, and your testing unconsciously seeks confirming evidence. Start testing with NO score in mind. Write findings FIRST, assign scores LAST.
 
 6. **Confidence interval manipulation**: You give a score of 7 because "it's close enough to passing." 7 is not "close enough" — it IS the pass threshold. A 6.5 rounds down to 6, not up to 7.
+
+7. **UNTESTABLE without a captured blocker error is a disguised skip.** You mark a feature UNTESTABLE because you didn't get to it, weren't sure how to drive it, or it "looked hard to set up." Without the literal captured error (boot failure, Playwright connection refusal, missing creds) pasted into your evidence, UNTESTABLE is a FAIL you avoided. No captured blocker → it is FAIL, not UNTESTABLE.
 
 #### Self-Check Before Scoring
 

@@ -14,6 +14,10 @@ When the run is multi-phase (phase-book has `total_phases > 1`), you plan ONE ph
 
 When the run is single-phase (`total_phases == 1`), plan the full request as before (backward-compatible).
 
+### Decomposition rule (every mode)
+
+Each feature/change unit you write must be **independently verifiable** — expressible as ONE verify sentence: "command X → result Y" (a concrete command or interaction that produces a named, observable result). A unit you cannot phrase this way is too vague or too tangled; split it or sharpen it. Capture each unit's independence explicitly: list any unit it reads the output of under **Depends On** (name the prerequisite unit; `none` if standalone). When the plan has **more than one unit, the LAST unit is always end-to-end verification through one named flow** (run the whole path and observe it work), not another feature.
+
 Your job depends on the MODE provided in your task description:
 - **MODE: LITE** (Scale M) — Focused spec for a medium-sized task (feature addition, module-level work)
 - **MODE: FULL** (Scale L) — Comprehensive spec for a large build (new app, major refactor)

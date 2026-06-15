@@ -44,7 +44,7 @@ For EACH changed file, apply all 5 angles. Use `git diff <file>` to see exact ch
 | Error handling | Are errors handled consistently with existing patterns? |
 | Imports | Unused imports? Wrong import style? |
 
-**Confidence threshold**: Only report issues with confidence >= 80. See **Confidence Calibration Guide** below for scoring examples.
+**Confidence threshold**: Capture every candidate >= 60, then route >= 80 to Actionable and 60-79 to Low-confidence (see Findings Report Format and the **Confidence Calibration Guide** below for scoring examples).
 
 ### Angle 2: Simplification (from code-simplifier patterns)
 
@@ -110,6 +110,12 @@ grep -n "api[_-]?key\|password\|secret\|token\|private[_-]?key" <file>
 
 ## Findings Report Format
 
+Write findings TWO-TIER. Per `references/confidence-calibration.md` (review-mode capture-then-filter), CAPTURE every candidate >= 60 first, THEN split into two tiers by the report threshold:
+- **Actionable (>= 80)** — the Fixer's input. These are the findings the Fixer may act on.
+- **Low-confidence (60-79)** — surfaced for human judgment but NEVER auto-fixed. Demoted here, never silently dropped.
+
+For any finding whose evidence is an **observable-output diff** (a change that could look or behave wrong only when it runs — rendered UI, chart, animation, CLI stdout), tag it `runtime-observation-required` so the Verifier observes it rather than trusting a static parse. See `references/observation-grounding.md` for the flag (optional, backward-compatible: absence = current exit-0 behavior).
+
 Write `.harness/review-analysis.md`:
 
 ```markdown
@@ -117,11 +123,11 @@ Write `.harness/review-analysis.md`:
 
 ## Summary
 - Files analyzed: X
-- Total findings: X
+- Total findings: X (Actionable >= 80: X, Low-confidence 60-79: X)
 - By severity: CRITICAL: X, HIGH: X, MEDIUM: X, LOW: X
 - By angle: Quality: X, Simplification: X, Error: X, Type: X, Security: X
 
-## Findings
+## Findings (Actionable — confidence >= 80, Fixer input)
 
 ### Finding 1: [descriptive title]
 - **File**: `[path:line]`
@@ -131,8 +137,20 @@ Write `.harness/review-analysis.md`:
 - **Issue**: [specific description — what's wrong]
 - **Evidence**: [code snippet or diff excerpt]
 - **Fix**: [concrete suggestion — what to change]
+- **Flags**: [runtime-observation-required — ONLY if the evidence is an observable-output diff; omit otherwise]
 
 ### Finding 2: ...
+
+## Low-confidence Findings (60-79 — surfaced, NEVER auto-fixed)
+[Demoted candidates. Same fields as above. The Fixer does NOT act on these; they are for human judgment.]
+
+### Finding L1: [descriptive title]
+- **File**: `[path:line]`
+- **Angle**: [...]
+- **Confidence**: [60-79]
+- **Issue**: [...]
+- **Evidence**: [...]
+- **Why deferred**: [what would need to be confirmed to raise confidence to >= 80]
 
 ## Files Without Findings
 [List of reviewed files where all 5 angles passed — brief note for each]
@@ -154,15 +172,15 @@ Write `.harness/review-analysis.md`:
 
 1. **Every angle, every file.** Don't skip an angle because the file "doesn't seem relevant." Auth logic can have type issues. UI components can have security issues.
 2. **Evidence is mandatory.** "This function is too complex" → REJECTED. "Function `processOrder` at `src/orders.ts:42` is 78 lines with 6 levels of nesting (exceeds 50-line/4-level limits from CLAUDE.md)" → ACCEPTED.
-3. **Confidence filtering.** Only report findings with confidence >= 80. Below that, you're guessing. Use the Calibration Guide.
+3. **Confidence filtering (capture-then-filter).** Capture every candidate >= 60, then split: >= 80 → Actionable (Fixer input); 60-79 → Low-confidence (surfaced, never auto-fixed); < 60 → drop. Below 60 you're guessing. Use the Calibration Guide.
 4. **Severity is objective.** CRITICAL = data loss, security breach, system crash. HIGH = incorrect behavior, significant UX degradation. MEDIUM = code quality, maintainability. LOW = style, minor improvement.
 
 ## Confidence Calibration
 
-Read `references/confidence-calibration.md` for the full scoring table with examples. Key thresholds:
-- **>= 80**: Report the finding (Analyzer threshold)
-- **70-79**: Probable but below reporting threshold — investigate further or skip
-- **< 70**: Never report
+Read `references/confidence-calibration.md` for the full scoring table with examples and the review-mode capture-then-filter rule. Key thresholds:
+- **>= 80**: Actionable tier (Fixer input)
+- **60-79**: Low-confidence tier — surfaced for human judgment, never auto-fixed
+- **< 60**: Drop (speculative)
 
 **Quick rule**: If you need "probably" or "seems like" to describe the issue, your confidence is below 80.
 5. **Security findings are never LOW.** If it's a real security issue, it's at minimum MEDIUM.

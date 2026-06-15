@@ -53,7 +53,10 @@ A Builder who ignores context.md deserves every QA failure they get.
    - Use Claude API with tool_use for structured agent interactions
 7. **Git commit** after each major feature with descriptive messages.
 8. **Start the dev server** in background when done.
-9. **Self-test before handoff**: Open the running app yourself. Navigate through the core user flows. Click buttons, fill forms, verify data persists. Fix any obvious issues you find BEFORE handing off to QA. This self-test is mandatory — the QA agent will catch what you miss, but you should catch the obvious issues first.
+9. **Render/Execute Observation Gate (before handoff)**: Open the running app yourself. Navigate through the core user flows. Click buttons, fill forms, verify data persists. Fix any obvious issues you find BEFORE handing off to QA. This gate is mandatory — the QA agent will catch what you miss, but you should catch the obvious issues first.
+   - **Scope**: P0/P1 functional output only — features whose result is genuinely observable when the app runs. Apply the trigger test from `~/.claude/harness/references/observation-grounding.md`: "could this look wrong or behave wrong in a way that only shows when it runs?" If yes, observe it. Do NOT force observation onto non-observable work (pure logic with its own tests, config, internal utilities) — that is the heavy-process-on-small-tasks anti-pattern.
+   - **Tag for downstream**: for each observable feature you confirm, tag the corresponding DoD item / artifact `runtime-observation-required` in your `.harness` output so the Refiner and QA re-observe it instead of trusting exit-0. (Absence of the tag = current exit-code behavior — leave non-observable items untagged.)
+   - **One clean observation is enough** — don't re-render the same unchanged state. See `observation-grounding.md` for the full run+observe loop and its stop condition.
 10. **Update `.harness/build-progress.md`**.
 
 ### Scale-Specific Execution Priority (CRITICAL)
@@ -237,6 +240,7 @@ Log these events under a `## Builder Actions` header:
 [TIMESTAMP] CMD: npm run dev → started on :3000
 [TIMESTAMP] DEP_INSTALL: zod@3.23.0, @tanstack/react-query@5.60.0
 [TIMESTAMP] ERROR_RESOLVED: missing module → created src/lib/auth.ts
+[TIMESTAMP] OBSERVE: login flow → rendered, submitted, redirected to /dashboard, session persisted on refresh
 ```
 
 **What to log:**
@@ -245,6 +249,7 @@ Log these events under a `## Builder Actions` header:
 - `CMD`: command → exit code [→ ERROR: message if failed]
 - `DEP_INSTALL`: package@version list
 - `ERROR_RESOLVED`: what error, how fixed
+- `OBSERVE`: `<feature> → <what you actually saw>` — one line per P0/P1 observable feature you confirmed at the Render/Execute Observation Gate. Record the observed result, not "should work" (see `references/observation-grounding.md`).
 
 **Why**: This log is read by the Diagnostician if your round fails. Accurate logging = faster diagnosis = fewer rounds. Without this, the Diagnostician must reverse-engineer what you did from code diffs, wasting an entire analysis pass.
 

@@ -21,6 +21,12 @@ A request that would have fit in a single pass under the pre-Meta-Loop design ge
 
 This is the compatibility guarantee: **small requests are unchanged; large requests unlock phase decomposition.**
 
+### Enforcement boundary (soft entrance)
+
+Meta-Loop is **agent-self-enforced, not runtime-enforced.** The "orchestrator" is the main agent executing this protocol as its own persona — there is no external runtime that forces a phase to be verified or a gate to be run. Every gate here (Phase Verifier verdict, retry cap, Completion Gate scan) has its **entrance on agent compliance**: it fires only if the agent chooses to run it. This raises the probability of disciplined completion but does **not** guarantee it.
+
+Consequence for the agent: **"I ran the Phase Verifier" is not proof the gate fired** — the proof is the `phase-evidence-{i}.md` artifact with captured exit codes. Do not treat the existence of a gate as a substitute for walking through it. The only **runtime-enforced** entrances claudex has are its hooks (`hooks/hooks.json`): the `SessionStart` dependency check, and the `Stop` early-stop guard that catches a turn ending in a promise of work ("next I'll run QA") without the work.
+
 ---
 
 ## 2. When Meta-Loop Activates
@@ -97,6 +103,24 @@ commit_push_intent: none   # none | commit | commit+push | commit+push+deploy | 
 {exact sentence that becomes true when every phase passes verification}
 ```
 
+### Phase quality — good vs bad decomposition (required reading for the planner)
+
+The value of decomposition is forcing **HOW** to split, not just splitting. Each phase's DoD must carry a **specific path + observable evidence** pair. Unobservable goals ("analyze the error", "clean up", "improve X") are banned — they let the verifier fool itself on vagueness, and self-deception sets in.
+
+> Request: "Fix the login error"
+
+**❌ Bad** (guessing without context — each phase unverifiable):
+- Phase 1: analyze the error
+- Phase 2: fix the error
+- Phase 3: verify
+
+**✅ Good** (after a Scout pass identified `auth/login.ts:42`, the error log, and the test pattern):
+- Phase 1: write a reproduction script → `node repro.js` prints the same error log
+- Phase 2: fix the cause at `auth/login.ts:42` → `npm test auth/login` passes
+- Phase 3: end-to-end verification → re-running `repro.js` shows no error AND full `npm test` passes
+
+Every phase has a path + a command + an expected result; the last phase is always end-to-end verification, not another feature. If you cannot yet write a phase this concretely, context is insufficient — run Phase 0.5 (§4) first. (Adapted from prometheus SKILL.md §1-D.)
+
 ### Intent-driven terminal phases
 
 If the phase-book-planner detects commit/push/deploy/PR intent in the user's request, it appends corresponding terminal phases to the book:
@@ -117,6 +141,10 @@ The detected value is recorded in the `commit_push_intent` frontmatter field. **
   │
   ▼
 Phase 0    Triage (Capability tier + Scale + Security triage)
+  │
+  ▼
+Phase 0.5  Context Sufficiency Check (see §4 below)
+  │         → 4 questions; any "I don't know" → Scout pass FIRST
   │
   ▼
 Phase 0.7  Phase-Book Planner
@@ -142,7 +170,8 @@ Phase 0.7  Phase-Book Planner
 │         PASS → phase-book.md current_phase += 1 → next phase    │
 │         FAIL → Diagnostician root-cause → same phase retry      │
 │                (retry cap: 3)                                   │
-│                after 3 failures → status: paused, escalate      │
+│                after 3 failures with unchanged root cause →     │
+│                capability-escalation ladder (§5.1), then pause  │
 │    e. Cross-Phase Integrity Check:                              │
 │         If this phase touched files owned by earlier phases,    │
 │         re-execute the earlier phase's verify commands.         │
@@ -158,6 +187,17 @@ Exit
 ```
 
 No user gate exists between phases after initial approval. The orchestrator runs the loop to completion, pausing only for (a) 3-retry failure, (b) cross-phase regression, or (c) explicit Sentinel BLOCK that cannot be resolved by Diagnostician.
+
+### Phase 0.5 — Context Sufficiency Check (before phase-book planning)
+
+Decomposition quality depends on context. Decomposing without it produces phases built on guesses, and a wrong guess sends the whole task the wrong way. Before the Phase-Book Planner draws phase boundaries, self-diagnose — **if even one answer is "I don't know," context is insufficient:**
+
+1. Do you know the specific **codebase area** (files / modules / functions) this task touches — actual paths, not "somewhere"?
+2. Do you know that area's **current structure and rules** (architecture, naming, dependencies)?
+3. Do you know each phase's **success condition in observable form** — not "it works" but "this command / test produces this result"?
+4. (Research tasks) Have you surveyed the **existing known approaches**?
+
+If anything is lacking, **do not guess** — run a **Scout pass first** (claudex agents are contained and cannot self-spawn an Explore subagent; the orchestrator dispatches Scout). Scout returns **conclusion only (no file dumps)**: (a) actual paths + roles of relevant files, (b) structure / rules / dependencies, (c) similar-implementation precedent in this repo, (d) observable success entry points (tests, CLI, endpoints). After Scout returns, **re-check the 4 questions; if still short, narrow scope and re-scout once.** Block phase-book finalization until the check passes. (Adapted from prometheus SKILL.md §1.)
 
 ---
 
@@ -195,6 +235,16 @@ Recommended next step:
   2. {option B}
   3. abort
 ```
+
+### 5.1 Capability-escalation ladder (before the user pause)
+
+Three identical FAILs with an **unchanged** Diagnostician root cause signals a **capability ceiling, not a procedure miss** — the harness cannot fill it, but it can throw more capability at it before giving up. When the retry cap is hit this way, walk the ladder **in order** (it does not reset the retry counter; it is the action taken AT the cap):
+
+1. **Recommend the user raise effort/thinking mode.** Adaptive thinking scales with difficulty; a higher mode pushes the current model toward its own ceiling. The agent **cannot set this itself** — it recommends (e.g. "this phase hit the retry cap on an unchanged root cause; consider `/effort xhigh` and resume").
+2. **Escalate to a higher tier with an evidence package.** If the user continues, hand off in a fresh session to a higher capability **tier** — referenced by **tier label only, never a model identifier** (`tier-matrix.md` naming-neutrality) — with: the phase-book entry, the last `diagnosis-round-{N}.md`, the failing verify-command output, and `phase-evidence-{i}.md`.
+3. **Human.** If still blocked, report the limit honestly and name where a human must step in (escalation format above).
+
+**Never mark a phase PASS, fabricate evidence, or downgrade the DoD to exit the ladder.** A capability ceiling reported honestly is a correct outcome; a faked pass is not. This ladder is the **single source** for capability escalation — `tier-matrix.md` holds only tier-conditional parameters and cross-references here; `commands/harness.md` Phase 4-verify routes its retry≥3 terminal here. The phase retry cap itself stays **flat at 3 across all tiers** (§6); only this ladder's reach, not the cap, varies by what the user opts into.
 
 ---
 

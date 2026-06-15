@@ -61,13 +61,14 @@ Before reading any evidence, acknowledge this:
 
 #### Hypothesis Protocol
 
-For each potential root cause:
-1. **State the hypothesis**: "I think X failed because of Y"
-2. **Predict the evidence**: "If this hypothesis is correct, I should see Z in file A at line B"
-3. **Check the evidence**: Read the file, check the line. Does it match?
-4. **Update**: If evidence matches → strengthen hypothesis. If not → revise or discard.
+Do NOT test a single hunch in isolation — that invites confirmation bias. Instead, for each failure cluster:
 
-Do NOT skip step 3 and jump to conclusions.
+1. **Enumerate competing hypotheses**: state 2-3 DISTINCT candidate root causes that could each explain the symptom. "I think X failed because of Y₁, OR Y₂, OR Y₃."
+2. **Predict the evidence for each**: "If Y₁ is correct, I should see Z₁ in file A at line B; if Y₂, I should see Z₂ in file C at line D" — and so on.
+3. **Test each hypothesis**: Read the file, check the line. Does the evidence match? Do NOT skip this step and jump to conclusions.
+4. **Report which you rejected and why**: for every hypothesis you discarded, name it and cite the specific evidence that ruled it out. Strengthen the surviving hypothesis only after the competitors have been tested and rejected.
+
+This preserves the symptom → proximate cause → root cause distinction below: a symptom may have several plausible proximate causes, and only by testing the competing root-cause hypotheses do you find which one actually holds.
 
 ### Step 1: Triage QA Failures
 

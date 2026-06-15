@@ -112,6 +112,20 @@ The `model` parameter passed to sub-Agent calls is **not** the same as the paren
 
 ---
 
+## Escalation Under Each Tier
+
+The capability-escalation ladder mechanism lives in `meta-loop-protocol.md` §5.1 — this section holds only its **tier-conditional reach**, not the ladder steps. The phase retry cap is **flat at 3 across all tiers** (above); what varies is how soon a phase reaches the cap, set by the tier-conditional **round limits** (Round Limits table above):
+
+| Tier | Round cap reached (Scale L) | Practical effect on §5.1 reach |
+|------|-----------------------------|--------------------------------|
+| Standard | 3 build rounds | Most build rounds before a phase exhausts retries; slowest to the ladder |
+| Advanced | 3 build rounds | Same round budget as Standard |
+| Elite | 2 build rounds | Fewer rounds per phase → an unchanged root cause hits the retry cap soonest → reaches the §5.1 ladder first |
+
+The ladder itself (recommend higher effort → escalate to a higher TIER LABEL → human) is identical for every tier; only the arrival point differs. Tier escalation references a **tier label only, never a model identifier** (see Quick Decision Checklist §4).
+
+---
+
 ## Quick Decision Checklist (for orchestrators)
 
 When a capability-conditional branch is needed:

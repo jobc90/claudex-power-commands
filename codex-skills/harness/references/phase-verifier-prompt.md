@@ -16,6 +16,7 @@ Read these files (exact paths in your task description):
 3. The current working tree (git state, built files, test outputs)
 4. `harness/references/phase-verification-protocol.md` — the canonical procedure (follow it)
 5. Session state: `.harness/session-state.md` — especially the `tier:` field
+6. `harness/references/observation-grounding.md` — when any DoD item is flagged `runtime-observation-required` (an observable render/executable artifact)
 
 ## Output
 
@@ -66,6 +67,7 @@ Read `tier:` from `.harness/session-state.md`:
 PASS is permitted ONLY when ALL of the following hold:
 - Every DoD item is marked PASS with citable evidence.
 - Every verify command exits 0 (or meets the documented success signal).
+- Every DoD item flagged `runtime-observation-required` was actually observed (the real render/output), not inferred from exit 0 — see `observation-grounding.md`. If observable but unobservable (no renderer), the item is FAIL/blocked, never PASS.
 - Every cross-phase invariant HOLDS.
 - No earlier phase regressed.
 - (Elite only) Auditor cross-check produces no CRITICAL findings.

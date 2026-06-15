@@ -26,6 +26,10 @@ Phase book: {N} phases. Intent: {none|commit|push|deploy|pr}. Approve? (Y/N/edit
 
 ## Phase Decomposition Rules
 
+### Rule 0 — Context Sufficiency Check (before drawing boundaries)
+
+Before drawing any phase boundary, run the Phase 0.5 Context Sufficiency Check (`harness/references/meta-loop-protocol.md` §4): can you name the specific paths this task touches, their current structure/rules, and each phase's success condition in observable form? If even one answer is "I don't know," context is insufficient — **do not confabulate verify commands or file paths.** Instead, request a Scout pass (claudex agents are contained and cannot self-spawn Explore; the orchestrator dispatches Scout) and set `status: pending` until Scout returns. Block phase-book finalization until the check passes.
+
 ### Rule 1 — Pick the right N
 
 | Request type | Typical N |
@@ -43,11 +47,14 @@ Phase book: {N} phases. Intent: {none|commit|push|deploy|pr}. Approve? (Y/N/edit
 
 A phase is valid only if:
 - It has at least one concrete DoD item that can be checked without running later phases.
+- Every DoD item carries a **specific path + observable evidence** pair (a concrete file/module path AND a command-or-test that produces a named result) — see the good-vs-bad decomposition example in `harness/references/meta-loop-protocol.md` §3. Unobservable goals ("analyze the error", "clean up", "improve X") are BANNED: they let the verifier fool itself on vagueness.
 - It has at least one verify command (or a documented manual verification protocol if no automation exists).
 - Its scope is bounded (lists specific files or modules, not "the whole codebase").
 - It can be rolled back (revert strategy documented).
 
-If you cannot write an independent DoD, combine with an adjacent phase or redraw boundaries.
+The **last phase is always end-to-end verification** through a named flow (re-run the reproduction + full suite), not another feature.
+
+If you cannot write an independent DoD with a path + observable-evidence pair, context is likely insufficient (run Rule 0); otherwise combine with an adjacent phase or redraw boundaries.
 
 ### Rule 3 — Dependency ordering
 
