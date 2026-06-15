@@ -161,13 +161,11 @@ git clone https://github.com/jobc90/claudex-power-commands.git
 # 2. Skill 디렉토리 생성
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
 
-# 3. 6개 스킬 복사
-cp -R claudex-power-commands/codex-skills/harness "${CODEX_HOME:-$HOME/.codex}/skills/"
-cp -R claudex-power-commands/codex-skills/harness-docs "${CODEX_HOME:-$HOME/.codex}/skills/"
-cp -R claudex-power-commands/codex-skills/harness-review "${CODEX_HOME:-$HOME/.codex}/skills/"
-cp -R claudex-power-commands/codex-skills/harness-qa "${CODEX_HOME:-$HOME/.codex}/skills/"
-cp -R claudex-power-commands/codex-skills/design "${CODEX_HOME:-$HOME/.codex}/skills/"
-cp -R claudex-power-commands/codex-skills/claude-dashboard "${CODEX_HOME:-$HOME/.codex}/skills/"
+# 3. 6개 스킬 동기화
+for skill in harness harness-docs harness-review harness-qa design claude-dashboard; do
+  rsync -a --delete "claudex-power-commands/codex-skills/$skill/" "${CODEX_HOME:-$HOME/.codex}/skills/$skill/"
+done
+rm -rf "${CODEX_HOME:-$HOME/.codex}/skills/harness-team"
 
 # 4. 확인
 # 새 Codex 세션에서 $harness $harness-docs $harness-review $harness-qa $design $claude-dashboard 를 호출하면 된다

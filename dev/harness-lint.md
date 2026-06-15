@@ -80,12 +80,12 @@ for f in researcher-prompt.md outliner-prompt.md writer-prompt.md reviewer-promp
   fi
 done
 
-# harness-team pipeline
+# harness TEAM mode (merged into the harness skill)
 for f in scout-prompt.md architect-prompt.md worker-prompt.md integrator-prompt.md qa-prompt.md diagnostician-prompt.md; do
-  if diff -q "harness/$f" "codex-skills/harness-team/references/$f" > /dev/null 2>&1; then
+  if diff -q "harness/$f" "codex-skills/harness/references/$f" > /dev/null 2>&1; then
     echo "PASS: harness/$f (team)"
   else
-    echo "DRIFT: harness/$f vs codex-skills/harness-team/references/$f"
+    echo "DRIFT: harness/$f vs codex-skills/harness/references/$f"
   fi
 done
 
@@ -152,7 +152,7 @@ Launch a **general-purpose Agent**:
   - "Mechanical check results: [paste Phase 1 output]"
   - "Project directory: `{cwd}`"
   - "Read all prompt files in `harness/` and all command files in `commands/`"
-  - "Also read Codex SKILL.md files: `codex-skills/harness/SKILL.md`, `codex-skills/harness-team/SKILL.md`, `codex-skills/harness-qa/SKILL.md`, `codex-skills/harness-docs/SKILL.md`, `codex-skills/harness-review/SKILL.md`"
+  - "Also read Codex SKILL.md files: `codex-skills/harness/SKILL.md`, `codex-skills/harness-qa/SKILL.md`, `codex-skills/harness-docs/SKILL.md`, `codex-skills/harness-review/SKILL.md`"
   - "Write your report to terminal output (do not create files)"
 - **description**: "harness linter"
 

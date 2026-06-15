@@ -144,13 +144,11 @@ git clone https://github.com/jobc90/claudex-power-commands.git
 # 2. Create the skill directory
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
 
-# 3. Copy the 6 skills
-cp -R claudex-power-commands/codex-skills/harness "${CODEX_HOME:-$HOME/.codex}/skills/"
-cp -R claudex-power-commands/codex-skills/harness-docs "${CODEX_HOME:-$HOME/.codex}/skills/"
-cp -R claudex-power-commands/codex-skills/harness-review "${CODEX_HOME:-$HOME/.codex}/skills/"
-cp -R claudex-power-commands/codex-skills/harness-qa "${CODEX_HOME:-$HOME/.codex}/skills/"
-cp -R claudex-power-commands/codex-skills/design "${CODEX_HOME:-$HOME/.codex}/skills/"
-cp -R claudex-power-commands/codex-skills/claude-dashboard "${CODEX_HOME:-$HOME/.codex}/skills/"
+# 3. Sync the 6 skills
+for skill in harness harness-docs harness-review harness-qa design claude-dashboard; do
+  rsync -a --delete "claudex-power-commands/codex-skills/$skill/" "${CODEX_HOME:-$HOME/.codex}/skills/$skill/"
+done
+rm -rf "${CODEX_HOME:-$HOME/.codex}/skills/harness-team"
 
 # 4. Verify
 # In a new Codex session, invoke $harness $harness-docs $harness-review $harness-qa $design $claude-dashboard

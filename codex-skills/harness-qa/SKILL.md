@@ -1,6 +1,6 @@
 ---
 name: harness-qa
-description: Functional QA harness for `/harness-qa` or `$harness-qa` requests. 5-agent pipeline (Scout → Scenario Writer → Test Executor → Analyst → Reporter) with 8 test modes. v4.1.0 — tier-aware round limits (Standard/Advanced: 2, Elite: 1) and optional Meta-Loop phase-book decomposition for multi-suite runs.
+description: "Functional QA harness for `/harness-qa` or `$harness-qa` requests. 5-agent pipeline (Scout → Scenario Writer → Test Executor → Analyst → Reporter) with 8 test modes. v4.1.0 — tier-aware round limits (Standard/Advanced: 2, Elite: 1) and optional Meta-Loop phase-book decomposition for multi-suite runs."
 ---
 
 # Harness QA (v2)

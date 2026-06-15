@@ -16,3 +16,14 @@ Reference plan: `tasks/plan-opus-47-upgrade.md`.
 - [x] Phase 4 — Agent 프롬프트 Elite-tier 대응 강화: sentinel (scope creep, evidence backdating, hook bypass 확장), auditor (quantitative claim verification, phase boundary integrity), qa (anti-sycophancy), builder (SHA-256 audit, subagent spawn log), worker (containment + Elite HIGH gating), refiner (hook bypass self-check).
 - [x] Phase 5 — Codex Mirror 동기화: 6 SKILL.md에 Meta-Loop + tier-aware 반영. 모든 references mirror cp 동기화.
 - [x] Phase 6 — 문서 + 버전 범프 v4.1.0: plugin.json version + description, README.md / README.en.md What's New v4.1.0, CHANGELOG.md, docs/meta-loop-design.md, docs/capability-detection.md 신규. docs/mythos-harness-improvement-plan.md → docs/harness-hardening-plan-v3.md (git mv). .gitignore 신규 (.harness/, .playwright-mcp/).
+
+## 2026-04-24 — Codex skill install sync
+
+- [x] Codex 전역 `AGENTS.md`에서 제거된 `superpower` 라우터가 다시 발견되지 않도록 활성 skill discovery 경로에서 `superpower`와 `superpowers` symlink를 비활성화.
+- [x] `codex-skills/AGENTS.md` 생성: 6개 Codex skill source of truth, `/harness-team` 병합 상태, sync/verify 절차 기록.
+- [x] `codex-skills/{harness,harness-docs,harness-review,harness-qa,design,claude-dashboard}`를 `/Users/jobc/.codex/skills`로 `rsync --delete` 동기화.
+- [x] 소스에 없는 stale `/Users/jobc/.codex/skills/harness-team` 제거.
+- [x] README / README.en Codex 설치 절차를 `cp -R`에서 `rsync --delete`로 갱신하고 stale `harness-team` 제거 절차 추가.
+- [x] `dev/harness-lint.md`의 stale `codex-skills/harness-team` 참조를 `harness` TEAM mode mirror로 갱신.
+- [x] Verification: `diff -qr` 기준 6개 source/installed skill 차이 없음, installed file counts 일치, stale `harness-team` 없음.
+- [x] `harness` / `harness-qa`가 Codex 앱에 보이지 않던 원인 수정: YAML frontmatter `description` 안의 `colon + space` 값을 quoted string으로 변경 후 재동기화.

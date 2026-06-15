@@ -1,6 +1,6 @@
 ---
 name: harness
-description: Adaptive multi-agent builder pipeline (SINGLE: Scout → Planner → Builder → Sentinel → Refiner → QA | TEAM: Scout → Planner/Architect → Workers(N) → Sentinel → Integrator → QA) with Security Triage, Diagnostician, and Auditor. Supports S/M/L scale with auto SINGLE/TEAM mode selection. v4.1.0 — Meta-Loop default: every request becomes a phase-book and runs work→verify→apply cycles until every phase's DoD passes. Small requests degrade to a 1-phase book (backward compatible).
+description: "Adaptive multi-agent builder pipeline (SINGLE: Scout → Planner → Builder → Sentinel → Refiner → QA | TEAM: Scout → Planner/Architect → Workers(N) → Sentinel → Integrator → QA) with Security Triage, Diagnostician, and Auditor. Supports S/M/L scale with auto SINGLE/TEAM mode selection. v4.1.0 — Meta-Loop default: every request becomes a phase-book and runs work→verify→apply cycles until every phase's DoD passes. Small requests degrade to a 1-phase book (backward compatible)."
 ---
 
 # Harness
