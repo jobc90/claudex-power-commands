@@ -12,7 +12,7 @@
     {
       "name": "claudex",
       "source": "./",
-      "description": "6 harness commands with 28 specialized agent prompts + 1 helper. v4.2.0 — Completion Gate protocol: Reporter/QA Reporter/Integrator/Refiner/Auditor run stale-artifact scan before declaring complete. v4.1.0 baseline — Meta-Loop default + capability tier detection. Commands: /harness (SINGLE/TEAM + Phase Verifier + Sentinel + Auditor), /harness-docs (5-agent documentation), /harness-review (5-agent code review + gate-gated git handoff), /harness-qa (Playwright QA), /design (3-dial design), /claude-dashboard (statusline).",
+      "description": "6 harness commands with 27 specialized agent prompts + 1 helper. v4.2.0 — Completion Gate protocol: Reporter/QA Reporter/Integrator/Refiner/Auditor run stale-artifact scan before declaring complete. v4.1.0 baseline — Meta-Loop default + capability tier detection. Commands: /harness (SINGLE/TEAM + Phase Verifier + Sentinel + Auditor), /harness-docs (5-agent documentation), /harness-review (5-agent code review + gate-gated git handoff), /harness-qa (Playwright QA), /design (3-dial design), /claude-dashboard (statusline).",
       "version": "4.2.0",
       "category": "automation",
       "tags": [

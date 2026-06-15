@@ -4,3 +4,6 @@
 .playwright-mcp/
 .DS_Store
 node_modules/
+
+# Local reference PDFs — this is a prompt/markdown plugin; never commit binaries
+*.pdf

@@ -12,7 +12,7 @@
 
 - Claude Code 기준 진실: `commands/` 6개
 - Codex 포트: `codex-skills/` 6개
-- 하네스 프롬프트 번들: `harness/` 28개 에이전트 프롬프트 + 1개 orchestrator helper
+- 하네스 프롬프트 번들: `harness/` 27개 에이전트 프롬프트 + 1개 orchestrator helper
 - 참조 체크리스트: `harness/references/` 9개 (v4.2.0에 `completion-gate-protocol.md` 추가)
 - 템플릿 스크립트: `harness/completion-gate-template.sh` (프로젝트에 `scripts/completion-gate.sh`로 복사)
 

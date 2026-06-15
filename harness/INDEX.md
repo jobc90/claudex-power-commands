@@ -1,6 +1,7 @@
 # Harness Agent Index
 
 > 27개 에이전트 프롬프트 + 1개 orchestrator helper, 4개 파이프라인, 6개 커맨드의 교차참조 맵.
+> ⚠️ 카운트 주의: 디스크의 `harness/*-prompt.md`는 **29개**다. 그중 `phase-orchestrator-prompt.md`는 helper, `linter-prompt.md`는 dev 전용 `/harness-lint` 도구(`dev/harness-lint.md`) 프롬프트로 **사용자 파이프라인 에이전트가 아니다**. 사용자 대상 = 27 에이전트 (+1 helper). 공개 문서(plugin.json·marketplace.json·README) 표기는 "27 + 1 helper"로 통일.
 > **v4.1.0**: Meta-Loop is the default execution model for `/harness`. Phase-Book Planner, Phase Verifier, and Phase Orchestrator reference added.
 > **v4.0.0**: `/harness-team` merged into `/harness` as TEAM mode.
 > Lint(`/harness-lint`)가 이 파일을 기준으로 일관성을 검증합니다.
