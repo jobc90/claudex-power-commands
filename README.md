@@ -14,8 +14,22 @@
 - Claude Code 기준 진실: `commands/` 6개
 - Codex 포트: `codex-skills/` 6개
 - 하네스 프롬프트 번들: `harness/` 27개 에이전트 프롬프트 + 1개 orchestrator helper
-- 참조 체크리스트: `harness/references/` 9개 (v4.2.0에 `completion-gate-protocol.md` 추가)
+- 참조 체크리스트: `harness/references/` 11개 (v4.3.0에 `observation-grounding.md` 추가)
 - 템플릿 스크립트: `harness/completion-gate-template.sh` (프로젝트에 `scripts/completion-gate.sh`로 복사)
+
+### v4.3.0 — Observation Grounding + Capability Escalation
+
+claudex의 게이트는 사실 **agent-self-enforced(soft entrance)** — orchestrator가 곧 자기 프롬프트를 따르는 메인 에이전트라는 발견에서 출발. claudex의 첫 **런타임 강제 entrance**를 추가하고 verify chain을 벼립니다. fablize/prometheus에서 이식한 절차로, **claudex 모델 믹스에서의 효과는 아직 A/B 미측정**.
+
+| 변화 | 설명 | 효과 |
+|------|------|------|
+| **Stop hook** (`hooks/finish-the-work.sh`) | 약속-무행동 종료("다음엔 QA 실행")를 결정적으로 감지해 재engage. loop-guard + 질문-종료 예외 | claudex 첫 런타임 완료 entrance — self-enforced Meta-Loop가 구조적으로 못 주는 보장 |
+| **Observation Grounding** (`harness/references/observation-grounding.md`) | render/exec 산출물을 PASS 전 **observe** (exit-0 = well-formed ≠ correct). optional `runtime-observation-required` flag(absent=기존동작), R4 과잉검증 방지 동봉 | verify chain의 exit-0 누수 차단, producer↔observer 연결 |
+| **§5.1 Capability-escalation ladder** | 3-retry 천장(불변 root cause)에서 effort↑ 권고 → 상위 TIER+증거패키지 → 사람. TIER label만, retry cap flat 3 | dead-end을 침묵 pause 대신 모델 천장까지 밀어붙인 뒤 정직하게 escalate |
+| **Phase 0.5 컨텍스트 체크 + 분해 worked-example** | 분해 전 4문항 충분성 진단(부족 시 Scout) + good/bad phase 예시, 관측불가 목표 금지 | 추측 분해로 작업 전체가 틀어지는 것 방지 |
+| **QA `UNTESTABLE`** | 객관적 blocker(앱 부팅 실패/Playwright 연결 불가/creds 없음) 캡처 시에만 허용, grade 미반영, §5.1로 라우팅 | 도달 불가 앱에서 날조 PASS/FAIL 차단 ("Fabrication Pattern 7") |
+
+설계·anti-bloat ledger: `docs/command-agent-update-plan-v4.3.md`. 측정 설계: `docs/v4.3.0-ab-measurement-design.md`. CHANGELOG의 v4.3.0 섹션.
 
 ### v4.2.0 — Completion Gate Protocol
 

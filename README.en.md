@@ -66,7 +66,7 @@ Inspired by Anthropic's [Managed Agents](https://www.anthropic.com/engineering/m
 | `/harness-review` | `scanner`, `analyzer`, `fixer`, `verifier`, `reporter` |
 | `/harness-qa` | `scenario-writer`, `test-executor`, `analyst`, `qa-reporter` plus reused `scout` |
 
-There are 27 prompt templates + 1 orchestrator helper under `harness/`, plus 8 reference checklists in `harness/references/`. Meta-Loop agents: `phase-book-planner`, `phase-verifier`, `phase-orchestrator` (helper).
+There are 27 prompt templates + 1 orchestrator helper under `harness/`, plus 11 reference checklists in `harness/references/`. Meta-Loop agents: `phase-book-planner`, `phase-verifier`, `phase-orchestrator` (helper).
 
 ---
 
