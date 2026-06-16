@@ -1,19 +1,29 @@
-# observation-grounding A/B results — M1 (render-leak) §7 minimal first pass
-# run: 2026-06-16, blind mechanism-level A/B (verify-chain isolated, not full /harness), model=sonnet, effort inherited session=xhigh
-# fixture-02 defect was statically visible (caught by both); fixture-03 EXCLUDED (build-fidelity failure, defect did not manifest)
-# held-out fixtures (03, null-02) are documented stubs by the SAME author -> held-out remains a stub split (design §3 needs an independent author)
+# observation-grounding A/B (M1 render-leak) -- rounds 1+2, corrected splits
+# 2026-06-16 blind mechanism-level A/B (verify-chain ON vs OFF). model=sonnet effort=xhigh. evidence_pointer r1=/tmp/harness-eval r2=/tmp/harness-eval2
+# in-author = fixtures authored by the scorer's author; held-out = INDEPENDENT author (round 2, blind to scorer+fixtures)
+# EXCLUDED rows (blank primary): fixture-02/heldout-02 weak (statically derivable); fixture-03 builds (fidelity/intent); heldout-03 (marginal). score.py ignores blank primary.
 model,effort,condition,fixture,split,primary_metric,fp_metric,verdict,evidence_pointer,notes
-sonnet,xhigh,OFF,fixture-01-svg-overflow,in-author,escape,,PASS,/tmp/harness-eval/fixture-01-svg-overflow,"static XML parse only; SVG well-formed -> PASS, clip not seen (render-leak escape)"
-sonnet,xhigh,ON,fixture-01-svg-overflow,in-author,caught,,FAIL,/tmp/harness-eval/fixture-01-svg-overflow/out.png,rsvg-convert render observed; SEASON RANK arched label clipped off 200x200 viewport + wreath tips overflow
-sonnet,xhigh,OFF,fixture-02-overlay-covers-board,in-author,caught,,FAIL,/tmp/harness-eval/fixture-02-overlay-covers-board,defect statically visible in code (.hidden vs .hide class mismatch); OFF caught it by reading source -- NOT a pure runtime-only defect
-sonnet,xhigh,ON,fixture-02-overlay-covers-board,in-author,caught,,FAIL,/tmp/harness-eval/fixture-02-overlay-covers-board,"playwright drove Got-it click; overlay persists (display:flex), intercepts clicks, board unplayable"
-sonnet,xhigh,OFF,fixture-04-cli-exit0-stacktrace,in-author,escape,,PASS,/tmp/harness-eval/fixture-04-cli-exit0-stacktrace,"exit-0 gate only, stdout/stderr content not read -> PASS (escape)"
-sonnet,xhigh,ON,fixture-04-cli-exit0-stacktrace,in-author,caught,,FAIL,/tmp/harness-eval/fixture-04-cli-exit0-stacktrace,executed + read output; words:undefined and a stack trace on stderr despite exit 0
-sonnet,xhigh,OFF,fixture-05-chart-offcanvas,in-author,escape,,PASS,/tmp/harness-eval/fixture-05-chart-offcanvas,"canvas drew, no console error; pixels not inspected -> PASS (escape)"
-sonnet,xhigh,ON,fixture-05-chart-offcanvas,in-author,caught,,FAIL,/tmp/harness-eval/fixture-05-chart-offcanvas,"playwright render observed; value-95 bar overflows top of 400x300 canvas, label missing (yMax hardcoded 50)"
-sonnet,xhigh,OFF,null-01-pure-sort-logic,in-author,,,PASS,/tmp/harness-eval/null-01-pure-sort-logic,null fixture (pure sort logic); static read
-sonnet,xhigh,ON,null-01-pure-sort-logic,in-author,,none,PASS,/tmp/harness-eval/null-01-pure-sort-logic,grounded via node --test 8/8; correctly did NOT force a render on pure logic (no FP)
-sonnet,xhigh,OFF,fixture-03-clipped-svg-icon,held-out,,,PASS,/tmp/harness-eval/fixture-03-clipped-svg-icon,"EXCLUDED build-fidelity failure: seeded grid overflow did not manifest (12 tiles fit, ~3px overage); invalid render-leak test this run"
-sonnet,xhigh,ON,fixture-03-clipped-svg-icon,held-out,,,PASS,/tmp/harness-eval/fixture-03-clipped-svg-icon,"EXCLUDED: ON rendered, measured 13px clearance / all 12 tiles visible -- no real defect present (build failure, NOT an ON miss); rebuild with a stronger overflow"
-sonnet,xhigh,OFF,null-02-config-merge,held-out,,,PASS,/tmp/harness-eval/null-02-config-merge,null fixture (deep-merge); static read
-sonnet,xhigh,ON,null-02-config-merge,held-out,,none,PASS,/tmp/harness-eval/null-02-config-merge,grounded via node --test 25/25; correctly did NOT force a render (no FP)
+sonnet,xhigh,OFF,fixture-01-svg-overflow,in-author,escape,,PASS,r1,static parse only; SVG clip not seen (escape)
+sonnet,xhigh,ON,fixture-01-svg-overflow,in-author,caught,,FAIL,r1,rsvg render; SEASON RANK label clipped off viewBox
+sonnet,xhigh,OFF,fixture-02-overlay-covers-board,in-author,caught,,FAIL,r1,defect STATICALLY visible (.hidden vs .hide); OFF caught by reading source -- weak render-leak fixture
+sonnet,xhigh,ON,fixture-02-overlay-covers-board,in-author,caught,,FAIL,r1,"playwright drove Got-it; overlay persists, blocks board"
+sonnet,xhigh,OFF,fixture-04-cli-exit0-stacktrace,in-author,escape,,PASS,r1,exit-0 gate only; stdout not read (escape)
+sonnet,xhigh,ON,fixture-04-cli-exit0-stacktrace,in-author,caught,,FAIL,r1,executed+read; words:undefined + stack trace on exit 0
+sonnet,xhigh,OFF,fixture-05-chart-offcanvas,in-author,escape,,PASS,r1,no render; canvas drew (escape)
+sonnet,xhigh,ON,fixture-05-chart-offcanvas,in-author,caught,,FAIL,r1,"playwright render; 95-bar overflows canvas top, label missing"
+sonnet,xhigh,OFF,null-01-pure-sort-logic,in-author,,,PASS,r1,null; static
+sonnet,xhigh,ON,null-01-pure-sort-logic,in-author,,none,PASS,r1,grounded via node --test 8/8; no render forced (no FP)
+sonnet,xhigh,OFF,null-02-config-merge,in-author,,,PASS,r1,null (relabel held-out->in-author: same author); static
+sonnet,xhigh,ON,null-02-config-merge,in-author,,none,PASS,r1,grounded via node --test 25/25; no render forced (no FP)
+sonnet,xhigh,OFF,fixture-03-r1,in-author,,,PASS,r1,EXCLUDED build-fidelity failure r1: seeded overflow did not manifest
+sonnet,xhigh,ON,fixture-03-r1,in-author,,,PASS,r1,EXCLUDED build-fidelity failure r1: no real defect present
+sonnet,xhigh,OFF,fixture-03-rebuilt,in-author,,,PASS,r2,EXCLUDED r2: static parse only
+sonnet,xhigh,ON,fixture-03-rebuilt,in-author,,,PASS,r2,"EXCLUDED r2 KEY FINDING: ON OBSERVED the clip (row3 24px cut, row4 hidden, screenshot confirmed) but verdict=PASS -- neutral intent omitted 'all 12 visible' success criterion. observation != verdict; needs explicit DoD (validates P0-5)"
+sonnet,xhigh,OFF,heldout-01-svg,held-out,escape,,PASS,r2,static parse only; symbol-viewBox clip not seen (escape)
+sonnet,xhigh,ON,heldout-01-svg,held-out,caught,,FAIL,r2,rsvg render; April bar entirely clipped by symbol viewBox offset -- genuinely render-only
+sonnet,xhigh,OFF,heldout-02-canvas,held-out,caught,,FAIL,r2,defect STATICALLY derived (chartHeight omits MARGIN_BOTTOM); capable OFF agent caught via arithmetic
+sonnet,xhigh,ON,heldout-02-canvas,held-out,caught,,FAIL,r2,playwright render+pixel sample; tallest bars overflow canvas top
+sonnet,xhigh,OFF,heldout-04-cli,held-out,escape,,PASS,r2,exit-0 only; output not read (escape)
+sonnet,xhigh,ON,heldout-04-cli,held-out,caught,,FAIL,r2,executed+read stdout; garbled/wrong output on exit 0
+sonnet,xhigh,OFF,heldout-03-csslayout,held-out,,,PASS,r2,EXCLUDED: marginal scale(1.05) clip too subtle to manifest
+sonnet,xhigh,ON,heldout-03-csslayout,held-out,,,PASS,r2,"EXCLUDED: rendered, cards visually fine -- ~few-px scale clip did not produce a clear symptom"
