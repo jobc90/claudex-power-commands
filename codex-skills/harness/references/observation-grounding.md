@@ -17,6 +17,10 @@ A producing agent MAY tag a DoD item / finding / artifact `runtime-observation-r
 2. **OBSERVE THE OUTPUT** — read the screenshot, the console, the actual layout. A produced-but-unobserved screenshot is **not** observation. `exit 0` / a clean static parse proves **well-formed, NOT correct** — different claims.
 3. **FIX what the observation reveals, then re-run.**
 
+## Observation needs a success criterion
+
+Observation surfaces what the artifact *does* — it does **not** by itself define what *correct* is. A run that renders and accurately describes the output can still emit PASS on a real defect if it was never told the success criterion. (Measured 2026-06-16: an agent rendered a fixed-height card, precisely observed that the bottom rows were clipped off the canvas, and still passed it — its brief omitted "all N items must be visible," so it rationalized the clip as `overflow:hidden` working as intended.) **Pair every observation with the item's explicit success criterion / DoD** — artifact path + observable evidence + the pass condition. Observation *plus* an explicit criterion catches the defect; observation alone may rationalize it away.
+
 ## Stop condition (anti-over-verification)
 
 **One clean observation of the rendered output is enough.** Do NOT re-render the same **unchanged** state to accumulate confidence — it wastes tokens without changing the output. Re-render ONLY after you change something: each defect gets one fix and one re-check, and you stop again once that check is clean. The goal is **"I saw it work," not "I checked it N times."** On re-verification rounds, re-observe **only** the features touched by this round's diff.

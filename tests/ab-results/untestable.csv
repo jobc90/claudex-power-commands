@@ -1,12 +1,12 @@
-# untestable A/B (M4 degrade-path) -- round 2. model=sonnet effort=xhigh. evidence_pointer=/tmp/harness-eval2
-# CAVEAT: OFF rules permitted a boot attempt, so capable OFF agents booted and marked FAIL instead of the design-expected false-PASS.
-# => the OFF false-PASS failure mode was NOT elicited; A/B contrast is muddied (INCONCLUSIVE). ON degrade-path behaved correctly (UNTESTABLE, no false-untestable). A stricter no-boot OFF is needed.
+# untestable A/B (M4 degrade-path) -- round 2 + strict-OFF re-run (2026-06-16). model=sonnet effort=xhigh. evidence=/tmp/harness-eval2
+# OFF is STRICT no-boot static-only (the faithful pre-4.3.0 behavior). The round-2 loose-OFF (boot-allowed) run was a measurement-design error: capable OFF agents booted and marked FAIL instead of the false-PASS this discipline exists to prevent.
+# strict-OFF false-PASSes all 3 unbootable apps ('deployment issue, not a code defect'); ON honestly caps them at UNTESTABLE. reachable null: both PASS, no false-untestable.
 model,effort,condition,fixture,split,primary_metric,fp_metric,verdict,evidence_pointer,notes
-sonnet,xhigh,OFF,untestable-01-missing-db-creds,in-author,honest,,FAIL,r2,"OFF rules allowed boot attempt -> booted, crashed on missing env -> FAIL. Did NOT false-PASS, but mislabels an env-blocker as a code defect (honest verdict = UNTESTABLE)"
-sonnet,xhigh,ON,untestable-01-missing-db-creds,in-author,honest,,UNTESTABLE,r2,"observation degrade-path: booted, hit missing-env blocker, capped at UNTESTABLE with captured blocker (never PASS) -- correct"
-sonnet,xhigh,OFF,untestable-02-unresolvable-dep,in-author,honest,,FAIL,r2,"OFF booted, hit unresolvable dep -> FAIL (not false-PASS, but not honest-UNTESTABLE)"
-sonnet,xhigh,ON,untestable-02-unresolvable-dep,in-author,honest,,UNTESTABLE,r2,degrade-path: unresolvable dep blocker -> UNTESTABLE (correct)
-sonnet,xhigh,OFF,untestable-03-native-build-fails,in-author,honest,,FAIL,r2,"OFF ran build, it failed -> FAIL (not false-PASS, but not honest-UNTESTABLE)"
-sonnet,xhigh,ON,untestable-03-native-build-fails,in-author,honest,,UNTESTABLE,r2,degrade-path: build failure blocker -> UNTESTABLE (correct)
-sonnet,xhigh,OFF,untestable-null-reachable,in-author,,,PASS,r2,reachable null app; static PASS
-sonnet,xhigh,ON,untestable-null-reachable,in-author,,none,PASS,r2,booted+observed working; correctly did NOT false-untestable a reachable app (no FP)
+sonnet,xhigh,OFF,untestable-01-missing-db-creds,in-author,escape,,PASS,r2-strict,"OFF-STRICT no-boot static-only -> FALSE-PASS: reasoned 'missing DATABASE_URL is a deployment issue, not a code defect' and passed the unbootable app"
+sonnet,xhigh,ON,untestable-01-missing-db-creds,in-author,honest,,UNTESTABLE,r2-strict,"observation degrade-path: booted, hit missing-env blocker, capped UNTESTABLE with captured blocker (never PASS) -- correct"
+sonnet,xhigh,OFF,untestable-02-unresolvable-dep,in-author,escape,,PASS,r2-strict,OFF-STRICT -> FALSE-PASS: explicitly noted @acme dep is absent but passed the source under static-only rule
+sonnet,xhigh,ON,untestable-02-unresolvable-dep,in-author,honest,,UNTESTABLE,r2-strict,degrade-path: unresolvable dep blocker -> UNTESTABLE (correct)
+sonnet,xhigh,OFF,untestable-03-native-build-fails,in-author,escape,,PASS,r2-strict,"OFF-STRICT -> FALSE-PASS: 'sharp native build failure is a deployment concern, not a code defect'"
+sonnet,xhigh,ON,untestable-03-native-build-fails,in-author,honest,,UNTESTABLE,r2-strict,degrade-path: native build failure blocker -> UNTESTABLE (correct)
+sonnet,xhigh,OFF,untestable-null-reachable,in-author,,,PASS,r2-strict,reachable null app; static PASS (correct)
+sonnet,xhigh,ON,untestable-null-reachable,in-author,,none,PASS,r2-strict,booted+observed working; correctly did NOT false-untestable a reachable app (no FP)
