@@ -74,7 +74,7 @@
 | 6 | conductor/`--quick` 모드: Phase-0 모드선택 fork(trivial 수정은 Meta-Loop 우회) | mod-cmd | P1 | M | Conductor vs Orchestrator p31–33 |
 | 7 | Curator 단계(승인 게이트): 학습 규칙을 타깃 AGENTS.md에 dedup 누적 | new-agent | P1 | M | AGENTS.md "add a rule" p15,43–45 |
 | 8 | Release-gate: 프롬프트 수정은 fixture 점수 통과 없이 출하 불가 | process | P1 | M | Eval gate p14 |
-| 9 | 중복 가드레일 블록을 `references/agent-discipline.md`로 추출 | new-ref | P1 | M | progressive disclosure p15–18 |
+| 9 | ~~중복 가드레일 블록 추출~~ — **취소(전제 반박)**: 8개 블록이 전부 agent-specific(고유 해시 8) | — | ~~P1~~ | — | 검증으로 반박 |
 | 10 | 범용 체크리스트 4종을 portable Claude Code Skill로 패키징 + Codex 미러 단일화 | new-ref | P1 | M | Agent Skills p17–18 |
 | 11 | golden-task trajectory-eval 하니스(`dev/harness-eval.md` + `tests/golden/`) | new-ref | P1 | L | Trajectory eval p44 |
 | 12 | `references/context-budget.md` + 에이전트별 token/cost 로깅 | new-ref | P2 | M | Context=financial lever p40–42 |
@@ -128,7 +128,7 @@
 - **#6 conductor/`--quick`**: `/harness` 내부의 얇은 Phase-0 fork(플래그 + 분기, 기본 OFF, 새 파이프라인/에이전트 0). 1줄 수정에 ~5에이전트를 지불하는 문제 해소. 기존 Non-Build EXIT 절을 확장. **dual-mode 정체성을 완성**(현재 orchestrator 절반만 구현).
 - **#7 Curator(승인 게이트)**: Diagnostician이 이미 검출하는 Cumulative Patterns를 타깃 repo의 AGENTS.md에 dedup 누적(show-then-append 승인 필수 — containment 준수). Scout가 다음 run에 fast-path prior로 읽음. stateless → 누적 학습.
 - **#8 Release-gate**: `harness/*-prompt.md`/`commands/*.md` 변경 시 §7 fixture 실행, 사전등록 임계 이하 회귀면 버전 bump 차단. **P0-1에 하드 의존.**
-- **#9 가드레일 중복 추출**: Banned Expressions·Rationalizations를 `references/agent-discipline.md` 단일 출처로, 각 프롬프트는 고유 행 + 포인터만.
+- **#9 가드레일 중복 추출 — 취소(전제 반박, 2026-06-16)**: 실행 전 검증으로 확인 — "Banned Expressions"(8 프롬프트)·"Common Rationalizations"(10 프롬프트)는 **헤딩/포맷만 공유하고 내용은 전부 에이전트별 고유**(8개 distinct 해시; scout=증거 규율 `"seems to use"→"uses (file:line)"`, planner=명세 규율 `"should work"→정확한 테스트가능 동작`). 단일 출처로 추출하면 에이전트별 가드레일을 파괴함. 감사(synthesis)가 "포맷 공유"를 "내용 중복"으로 오판. **실행하지 않음.** (교훈: refactor 전 중복 실측 필수.)
 - **#10 범용 체크리스트 4종 Skill화**: `.harness` 결합이 없는 4개(security·error-handling·confidence-calibration·observation-grounding)만 `skills/*/SKILL.md` + plugin.json `skills` 키로. **7개 파이프라인 결합 reference는 절대 건드리지 않음**(충돌). Codex 미러 단일화.
 - **#11 golden-task trajectory-eval(L)**: §7 fixture를 재사용 가능한 시나리오로 일반화(known-good build, 심은 persistence 버그를 QA가 FAIL해야, 조작된 claim을 Auditor가 잡아야, 도달 불가 앱을 UNTESTABLE로). release-gate가 강제하는 영속 회귀 스위트. P0-1이 방법을 입증한 뒤 진행.
 
