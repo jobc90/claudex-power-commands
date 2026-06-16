@@ -102,12 +102,21 @@ After each agent completes, the orchestrator runs:
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] {agent}:{round} | {status} | {output_file} | {one-line summary}" >> .harness/session-events.md
 ```
 
+**Latency field (optional, backward-compatible)**: the orchestrator MAY record each agent's dispatch time and, on completion, insert a `dur={seconds}s` field before the summary:
+
+```bash
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] {agent}:{round} | {status} | {output_file} | dur={N}s | {one-line summary}" >> .harness/session-events.md
+```
+
+Consumers tolerate its absence — the Trajectory Reporter renders `dur: n/a` when it is missing, and adding it never changes existing parsing. This is the cheap enabler for end-of-run latency metering.
+
 ### Consumers
 
 | Consumer | Purpose |
 |----------|---------|
 | Diagnostician | Read event log to detect patterns across rounds (e.g., same module failing twice) |
 | Session Resume | Read event log to determine exact re-entry point |
+| Trajectory Reporter | Synthesize the timeline + `dur=` latencies + QA score trend into `.harness/trajectory-report.md` at end of run |
 | User | Quick overview of what happened in the pipeline |
 
 ---
@@ -193,6 +202,7 @@ Optimized for the Claude Code subscription environment. Use the `model` paramete
 | **Test Executor** | `sonnet` | Playwright-based systematic testing |
 | **Analyst** | `sonnet` | Results classification |
 | **QA Reporter** | `sonnet` | Report generation |
+| **Trajectory Reporter** | `sonnet` | Synthesis of existing telemetry, no new analysis |
 
 ### How to Apply
 

@@ -54,7 +54,7 @@ echo "## Codex Mirror Sync Check"
 echo ""
 
 # harness pipeline
-for f in scout-prompt.md planner-prompt.md builder-prompt.md refiner-prompt.md qa-prompt.md diagnostician-prompt.md; do
+for f in scout-prompt.md planner-prompt.md builder-prompt.md refiner-prompt.md qa-prompt.md diagnostician-prompt.md trajectory-reporter-prompt.md curator-prompt.md; do
   if diff -q "harness/$f" "codex-skills/harness/references/$f" > /dev/null 2>&1; then
     echo "PASS: harness/$f"
   else
@@ -115,7 +115,7 @@ for f in scout-prompt.md planner-prompt.md builder-prompt.md refiner-prompt.md \
          outliner-prompt.md writer-prompt.md reviewer-prompt.md validator-prompt.md \
          architect-prompt.md worker-prompt.md integrator-prompt.md \
          scenario-writer-prompt.md test-executor-prompt.md analyst-prompt.md \
-         qa-reporter-prompt.md; do
+         qa-reporter-prompt.md trajectory-reporter-prompt.md curator-prompt.md; do
   if [ -f "harness/$f" ]; then
     echo "PASS: harness/$f"
   else

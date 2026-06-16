@@ -598,6 +598,18 @@ After Auditor completes:
 
 Update event log.
 
+## Phase 4-report. Trajectory Report
+
+Synthesize the whole run's telemetry into one artifact. Load `references/trajectory-reporter-prompt.md`.
+
+Spawn a fresh subagent (model: `sonnet`, `fork_context` false):
+- session events: `.harness_codex/session-events.md`
+- execution logs: `.harness_codex/traces/round-{1..N}-execution-log.md`
+- QA feedback: `.harness_codex/build-round-{1..N}-feedback.md`; diagnoses `.harness_codex/diagnosis-round-{1..N}.md` (if any); auditor `.harness_codex/auditor-report.md` (if any); history `.harness_codex/build-history.md`; session state `.harness_codex/session-state.md`
+- output: `.harness_codex/trajectory-report.md`
+
+It only synthesizes existing telemetry — no new analysis; note any missing input and continue. Update event log.
+
 ## Phase 5. Summary
 
 ### Scale S — Compact Report
@@ -610,6 +622,7 @@ Update event log.
 **Refiner**: [issues found/fixed]
 **Verification**: [build/test results]
 **Remaining**: [issues if any, otherwise "None"]
+**Residual Risk / 인간 확인 필요**: [hand-verify spots from the QA report — UNTESTABLE/RENDER_UNCHECKED, <70 deferrals, Diagnostician LIKELY/HYPOTHESIS, Integrator RISKY — or "none flagged"]
 ```
 
 ### Scale M — Standard Report
@@ -638,6 +651,9 @@ Update event log.
 
 ### Integrity
 **Integrity**: {HIGH/MEDIUM/LOW} (from Auditor, if active; otherwise "N/A — Auditor inactive")
+
+### Residual Risk / 인간 확인 필요
+[Ranked hand-verify spots from the QA Reporter — Diagnostician LIKELY/HYPOTHESIS, QA UNTESTABLE/RENDER_UNCHECKED, <70 deferrals, Integrator RISKY. "none flagged" if empty. See `.harness_codex/trajectory-report.md` for the timeline.]
 ```
 
 ### Scale L — Full Report
@@ -668,15 +684,30 @@ Update event log.
 ### Integrity
 **Integrity**: {HIGH/MEDIUM/LOW} (from Auditor, if active; otherwise "N/A — Auditor inactive")
 
+### Residual Risk / 인간 확인 필요
+[Ranked hand-verify spots from the QA Reporter — Diagnostician LIKELY/HYPOTHESIS, QA UNTESTABLE/RENDER_UNCHECKED, <70 deferrals, Integrator RISKY. "none flagged" if empty.]
+
 ### Artifacts
 - Context: `.harness_codex/build-context.md`
 - Spec: `.harness_codex/build-spec.md`
 - Refiner: `.harness_codex/build-refiner-report.md`
 - Final QA: `.harness_codex/build-round-{N}-feedback.md`
 - Progress: `.harness_codex/build-progress.md`
+- Trajectory: `.harness_codex/trajectory-report.md`
 ```
 
 After presenting the Summary, finalize session state (set status to COMPLETED) and write final event log entry.
+
+## Phase 5.5. Curator (optional, approval-gated)
+
+After the Summary, capture durable learnings so future runs on this project don't repeat caught mistakes. Skip when there is nothing to learn (Scale S single clean round, or no diagnoses/auditor findings). Load `references/curator-prompt.md`.
+
+Spawn a fresh subagent (model: `sonnet`, `fork_context` false):
+- diagnoses: `.harness_codex/diagnosis-round-{1..N}.md`; auditor `.harness_codex/auditor-report.md` (if any); QA feedback `.harness_codex/build-round-{1..N}-feedback.md`; history `.harness_codex/build-history.md`
+- existing rules: read the target project's `AGENTS.md` and `CLAUDE.md` (dedup against them)
+- output: PROPOSAL ONLY to `.harness_codex/curator-proposal.md` — the agent MUST NOT edit `AGENTS.md`/`CLAUDE.md`/any project file
+
+Then the orchestrator (not the agent): read the proposal; if it proposes rules, SHOW them and ask the user for approval; ONLY on approval append the deduped rules to `./AGENTS.md` under `## Learned Rules (harness)`. The agent never edits the user repo. Update event log.
 
 ## Execution Rules
 

@@ -26,6 +26,8 @@ Without you, the Builder implements features blind — unaware of existing patte
 
 **MANDATORY**: Read `.harness/build-prompt.md` first to understand the user's intent. Without knowing what will be built, you cannot determine which files are "relevant."
 
+**MANDATORY (priors)**: If the project root has an `AGENTS.md` or `CLAUDE.md`, read it. A `## Learned Rules (harness)` section in `AGENTS.md` records pitfalls and conventions distilled from previous harness runs on this project (the Curator's output) — treat it as high-priority prior context and surface those rules to the Planner/Builder so this run does not repeat known mistakes.
+
 ## Output
 
 Write your findings to `.harness/build-context.md`.

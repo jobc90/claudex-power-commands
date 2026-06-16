@@ -1,13 +1,15 @@
 # Harness Agent Index
 
-> 27개 에이전트 프롬프트 + 1개 orchestrator helper, 4개 파이프라인, 6개 커맨드의 교차참조 맵.
-> ⚠️ 카운트 주의: 디스크의 `harness/*-prompt.md`는 **29개**다. 그중 `phase-orchestrator-prompt.md`는 helper, `linter-prompt.md`는 dev 전용 `/harness-lint` 도구(`dev/harness-lint.md`) 프롬프트로 **사용자 파이프라인 에이전트가 아니다**. 사용자 대상 = 27 에이전트 (+1 helper). 공개 문서(plugin.json·marketplace.json·README) 표기는 "27 + 1 helper"로 통일.
+> 29개 에이전트 프롬프트 + 1개 orchestrator helper, 4개 파이프라인, 6개 커맨드의 교차참조 맵.
+> ⚠️ 카운트 주의: 디스크의 `harness/*-prompt.md`는 **31개**다. 그중 `phase-orchestrator-prompt.md`는 helper, `linter-prompt.md`는 dev 전용 `/harness-lint` 도구(`dev/harness-lint.md`) 프롬프트로 **사용자 파이프라인 에이전트가 아니다**. 사용자 대상 = 29 에이전트 (+1 helper). 공개 문서(plugin.json·marketplace.json·README) 표기는 "29 + 1 helper"로 통일.
+> **Whitepaper-alignment P0** (`docs/whitepaper-alignment-plan.md`): Trajectory Reporter agent added (end-of-run telemetry synthesis). Landed alongside: deterministic guard hooks (`hooks/guard-bash.sh`·`guard-commit.sh`), Builder/Refiner DoD-Check tables, Summary "Residual Risk" section, and eval scaffolding under `tests/` + `dev/harness-eval.md`.
+> **Whitepaper-alignment P1** (eval-independent): Curator agent added (approval-gated learned-rules → target `AGENTS.md`); Conductor mode (`/harness --quick`) for trivial single-file edits. P1 #9 (guardrail-dedup refactor) and #10 (mirror collapse) deferred until the eval can catch regressions.
 > **v4.1.0**: Meta-Loop is the default execution model for `/harness`. Phase-Book Planner, Phase Verifier, and Phase Orchestrator reference added.
 > **v4.0.0**: `/harness-team` merged into `/harness` as TEAM mode.
 > Lint(`/harness-lint`)가 이 파일을 기준으로 일관성을 검증합니다.
 > 프롬프트 추가/수정 시 이 Index도 함께 업데이트하세요.
 
-## Agent Catalog (27 prompts + 1 helper)
+## Agent Catalog (29 prompts + 1 helper)
 
 ### /harness Pipeline — SINGLE Mode: Scout → Planner → Builder → Refiner → QA → Diagnostician → Auditor
 
@@ -20,8 +22,14 @@
 | 5 | QA | `qa-prompt.md` | `build-spec.md`, `build-refiner-report.md` | `build-round-{N}-feedback.md`, `traces/round-{N}-qa-evidence.md`² |
 | 6 | Diagnostician | `diagnostician-prompt.md` | `build-round-{N}-feedback.md`, `traces/round-{N}-qa-evidence.md`, `snapshot-round-{N}.md`, `build-progress.md`, `build-context.md`, `diagnosis-round-{N-1}.md`¹, `build-history.md`¹ | `diagnosis-round-{N}.md` |
 | 25 | Auditor | `auditor-prompt.md` | `build-progress.md`, `build-refiner-report.md`, `build-round-{1..N}-feedback.md`, `traces/round-{1..N}-execution-log.md`, `sentinel-report-round-{1..N}.md`³, `build-spec.md`, `build-history.md` | `auditor-report.md` |
+| 28 | Trajectory Reporter | `trajectory-reporter-prompt.md` | `session-events.md`, `traces/round-{1..N}-execution-log.md`, `build-round-{1..N}-feedback.md`, `diagnosis-round-{1..N}.md`¹, `auditor-report.md`³, `build-history.md`, `session-state.md` | `trajectory-report.md` |
+| 29 | Curator | `curator-prompt.md` | `diagnosis-round-{1..N}.md`¹, `auditor-report.md`³, `build-round-{1..N}-feedback.md`, `build-history.md`, target `AGENTS.md`/`CLAUDE.md` | `curator-proposal.md` (proposal only) |
 
-¹ Round 2+ only  ² Scale M/L only  ³ If sentinel was active
+¹ Round 2+ only  ² Scale M/L only  ³ If active (sentinel/auditor)
+
+Curator runs ONCE per run at Phase 5.5 (after Trajectory Reporter, approval-gated). It writes ONLY a proposal to `.harness/`; the orchestrator appends approved rules to the target project's `AGENTS.md` after explicit user approval — the agent never edits the user repo.
+
+Trajectory Reporter runs ONCE per run at the start of Phase 5 (after all phases, before Summary) — pure synthesis of existing telemetry, no new analysis.
 
 ### /harness Pipeline — TEAM Mode Agents: Scout → Architect → Workers(N) → [Sentinel] → Integrator → QA → Diagnostician → [Auditor]
 
@@ -122,6 +130,10 @@ build-prompt.md (user request)
   └────────────────────────────────────────────────────────┘
      ↓
 [Auditor] → auditor-report.md (conditional: auditor_active)
+     ↓
+[Trajectory Reporter] → trajectory-report.md (end-of-run telemetry synthesis)
+     ↓
+[Curator] → curator-proposal.md (optional; approval-gated AGENTS.md append by orchestrator)
 ```
 
 ### /harness Artifact Flow (TEAM Mode)
@@ -151,6 +163,8 @@ team-prompt.md (user request)
   └────────────────────────────────────────────────────────┘
      ↓
 [Auditor] → auditor-report.md (conditional: auditor_active)
+     ↓
+[Trajectory Reporter] → trajectory-report.md (end-of-run telemetry synthesis)
 ```
 
 ---
@@ -174,6 +188,8 @@ Each row maps a Claude-side prompt to its Codex copy.
 | `worker-prompt.md` | `worker-prompt.md` |
 | `integrator-prompt.md` | `integrator-prompt.md` |
 | `auditor-prompt.md` | `auditor-prompt.md` |
+| `trajectory-reporter-prompt.md` | `trajectory-reporter-prompt.md` |
+| `curator-prompt.md` | `curator-prompt.md` |
 | `phase-book-planner-prompt.md` | `phase-book-planner-prompt.md` |
 | `phase-verifier-prompt.md` | `phase-verifier-prompt.md` |
 | `phase-orchestrator-prompt.md` | `phase-orchestrator-prompt.md` |

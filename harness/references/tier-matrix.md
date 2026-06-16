@@ -134,3 +134,9 @@ When a capability-conditional branch is needed:
 2. Consult this matrix for the parameter in question.
 3. If the matrix does not cover the parameter, apply tier-neutral defaults.
 4. Never expose the underlying model identifier to the user; reference the tier label only.
+
+---
+
+## Conductor Mode (`--quick`)
+
+Conductor mode (the `/harness --quick` fork — a direct single-agent edit with no Meta-Loop) is **tier-neutral**: it spawns no sub-agents, so the tier-conditional tables above (round limits, QA threshold, Sentinel/Auditor activation, file thresholds) do not apply. The one capability rule that DOES apply: Conductor mode is permitted only for trivial, single-file, non-security edits regardless of tier — security-sensitive or multi-file work always falls back to Orchestrator mode and its full tier-aware pipeline.

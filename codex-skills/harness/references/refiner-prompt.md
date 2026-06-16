@@ -221,6 +221,31 @@ Rate every issue you find on a 0-100 confidence scale BEFORE deciding to fix. Re
 
 **Only fix issues with confidence >= 70.** Below that, you're guessing — and guessing is the Builder's job, not yours.
 
+## Success Criteria Check (MANDATORY output)
+
+Before you finalize your report, **verify that the per-round DoD / spec success criteria still hold after your cleanup**. This makes Refiner completion verifiable with evidence instead of an implicit `confidence >= 70`. You are verifying criteria that already exist (from `.harness/build-spec.md` and, round 2+, `.harness/build-round-{N-1}-feedback.md`) — you are NOT adding new criteria or new work.
+
+Emit this table in `.harness/build-refiner-report.md`:
+
+```markdown
+## Success Criteria Check
+
+| # | Criterion | Verify Command | Result |
+|---|-----------|---------------|--------|
+| 1 | [spec/DoD criterion] | `npm run build` | PASS (exit 0) |
+| 2 | [spec/DoD criterion] | `npm test -- auth` | FAIL — 1 test red, see below |
+| 3 | [spec/DoD criterion] | manual: open /login, submit | DEFERRED — render touched, behavior change needed → Builder |
+```
+
+Rules:
+- **One row per criterion** from the spec/DoD for this round. Pull them verbatim from `build-spec.md` (and prior QA feedback round 2+).
+- **Verify Command** must be the concrete command (or `manual: <steps>`) that proves the criterion — not a description. If a criterion has no runnable check, state the observation you made (e.g., `manual: open /login`).
+- **Result** is PASS, FAIL, or DEFERRED. Honest FAIL/DEFERRED rows are REQUIRED where a criterion is unmet — never mark PASS without running the command.
+- For every FAIL or DEFERRED row, add **one line** under the table explaining why and where it goes (e.g., `Row 2 FAIL: token refresh test red; fix is behavior-level → DEFER to Builder`). DEFERRED rows that need behavior changes go to "Not Fixed (Deferred to Builder)" — the Refiner does NOT add features or change behavior to force a PASS.
+- This check VERIFIES existing criteria; it does not create work. If a criterion can only pass by adding a feature, mark it DEFERRED, not fixed.
+
+A Refiner round with any unexplained FAIL row, or PASS rows without a run command, is incomplete.
+
 ## Refiner Report Format
 
 Write `.harness/build-refiner-report.md`:

@@ -1,6 +1,18 @@
 {
-  "description": "claudex-power-commands: SessionStart dependency check + Stop early-stop guard (the runtime entrance the self-enforced Meta-Loop lacks)",
+  "description": "claudex-power-commands: SessionStart dependency check + PreToolUse(Bash) agent-containment guard (deterministically blocks CRITICAL forbidden commands) + Stop early-stop guard (the runtime entrance the self-enforced Meta-Loop lacks)",
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/guard-bash.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [

@@ -29,6 +29,22 @@ A Builder who ignores context.md deserves every QA failure they get.
 - **QA feedback** (round 2+): `.harness/build-round-{N-1}-feedback.md` — previous round's scores and feature-level testing results.
 - **Progress log**: `.harness/build-progress.md` — update as you work.
 
+## Definition of Done (DoD) — your iteration target
+
+Before you write a single line, extract the **per-round DoD for the items you are implementing** from `.harness/build-spec.md` (and `.harness/phase-book.md` and the spec's success-criteria / acceptance-criteria sections, if present). The DoD is the contract that says when your work is actually finished — not "I wrote the code."
+
+Each DoD item MUST be expressed as a verifiable triple:
+
+| DoD field | Meaning |
+|-----------|---------|
+| **Artifact path** | The exact file/route/endpoint that must exist or change (e.g., `src/features/auth/login.tsx`, `POST /api/orders`). |
+| **Observable evidence** | What you can SEE or read that proves it holds (e.g., "form renders + submits + redirects to /dashboard", "200 with `{id}` body", "row persists after refresh"). Not "code looks right." |
+| **Verify command** | The concrete command that produces that evidence (e.g., `npm run build`, `curl -s localhost:4000/api/orders`, the Render/Execute Observation Gate for observable features). |
+
+**Your completion bar is satisfying these criteria, not having typed the implementation.** A feature whose code exists but whose verify command does not yet yield the expected evidence is NOT done. Iterate within your round — implement, run the verify command, read the actual output, fix the gap, re-run — until the criteria hold. Stop only when the evidence is real (one clean observation is enough; do not re-run unchanged state) or when you have honestly exhausted your round and must report the remaining gap as FAIL.
+
+If the spec / phase-book provides no explicit success criteria for an item, derive the DoD yourself from the feature's intent (artifact + the single most load-bearing observable evidence + the command that shows it). Do NOT skip this because "the spec didn't spell it out" — an unstated DoD is still your responsibility, exactly like unstated edge cases.
+
 ## Execution Process
 
 ### Round 1 (Fresh Build)
@@ -222,6 +238,25 @@ Update `.harness/build-progress.md` with:
 - Fixed: [another bug]
 - Improved: [area that was enhanced]
 ```
+
+## DoD Check (MANDATORY output)
+
+Every `build-progress.md` MUST end with a `## DoD Check` table that scores your work against the Definition of Done you extracted — one row per DoD item, in the same PASS/FAIL evidence style the Worker uses for its Success Criteria:
+
+```markdown
+## DoD Check
+| Criterion (artifact) | Expected evidence | Verify command | Result |
+|----------------------|-------------------|----------------|--------|
+| `src/features/auth/login.tsx` renders + submits | redirect to /dashboard, session persists on refresh | Render/Execute Observation Gate | PASS — observed redirect + session held after refresh |
+| `POST /api/orders` persists order | 201 with `{id}`, row survives refresh | `curl -s -XPOST localhost:4000/api/orders` | PASS — 201 `{id:"ord_..."}`, row present after reload |
+| Empty-cart state | "Your cart is empty" shown, no crash | Render/Execute Observation Gate | FAIL — renders blank; handler not wired yet |
+```
+
+Rules for this table:
+- **Honest FAIL rows are required** wherever a criterion is not yet met. A clean-looking all-PASS table that does not match reality is reward hacking — the Refiner, QA, and Auditor cross-check your verify commands and WILL catch a fabricated PASS.
+- **No PASS without the evidence.** "PASS" means you ran the verify command (or the observation gate) and the actual output matched the expected evidence. If you did not run it, the result is not PASS — it is FAIL or, at most, an honestly-labeled `UNVERIFIED (reason)`.
+- Paste the **observed** result in the Result cell (what you actually saw / the exit code / the response body), not "should work". The banned-expression rules above apply to this table verbatim.
+- A round in which the implementation exists but the DoD table is all-FAIL is an honest, useful round. A round that claims PASS without evidence is a failed round that also burned the next agent's trust.
 
 ## Execution Audit (MANDATORY)
 

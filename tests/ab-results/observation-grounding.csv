@@ -1,0 +1,5 @@
+model,effort,condition,fixture,split,primary_metric,fp_metric,verdict,evidence_pointer,notes
+# HEADER-ONLY SKELETON — no measured data. Run the paired A/B pass (dev/harness-eval.md) and append one row per (fixture x condition). Do NOT fabricate rows.
+# Columns (design §4.5): model+effort MANDATORY (results do not port across model families). condition=ON|OFF. split=in-author|held-out. primary_metric=render-leak escape (render fixtures: escape|caught). fp_metric=demanded-observation-on-null (null fixtures: fp|none; blank for render fixtures). verdict=final harness verdict (PASS|FAIL|PASS_WITH_WARNINGS|RENDER_UNCHECKED|...). evidence_pointer=path/anchor to the transcript or screenshot. notes=free text.
+# EXAMPLE (illustrative only — DELETE before real data; this line is commented so score.py ignores it):
+# claude-opus-4-8[1m],high,ON,fixture-01-svg-overflow,in-author,caught,,PASS_WITH_WARNINGS,traces/m1-01-ON.md,saw laurel tips clipped at canvas edge

@@ -12,6 +12,7 @@ description: "Adaptive multi-agent builder pipeline (SINGLE: Scout → Planner �
 
 - First argument: task description (required)
 - `--workers N`: Force TEAM mode with N parallel workers (default 3, max 5). Only applicable to Scale L.
+- `--quick`: Conductor mode — a real-time, single-agent direct edit for a trivial single-file fix; bypasses the Meta-Loop (no phase-book, sub-agents, or approval gates). Refused for security-sensitive, multi-file, or Scale M/L work. See "Conductor Mode" in Phase 0.
 
 ## User Request
 
@@ -45,6 +46,19 @@ Persist the tier to `.harness/session-state.md` under a `tier:` field so all dow
 If the request is a question, audit, or configuration change (not a build/fix/implement request):
 - Respond directly as a normal conversation
 - Do NOT execute any harness phases
+
+### Conductor Mode (`--quick`)
+
+Default is **Orchestrator mode** — the full Meta-Loop below (async, multi-agent, phase-book, approval gates). For a trivial, single-file, low-risk edit, **Conductor mode** trades that ceremony for speed: the whitepaper's real-time, in-the-loop mode. A one-line fix should not pay a ~5-agent, 2-gate pipeline.
+
+**Enter Conductor mode when** `--quick` is passed explicitly, OR the request is unambiguously a single-file, ≤~20-line, non-security edit AND you offer it: **"이건 trivial해 보입니다 — `--quick`(Conductor) 모드로 바로 처리할까요? (Y/n)"**. When unsure, default to Orchestrator.
+
+**Conductor path** (no phase-book, no sub-agents, no approval gates, no `.harness/` ceremony):
+1. Make the edit directly with Edit/Write.
+2. Run the project's build/test/lint for the touched file(s). If the artifact has an observable output (HTML/SVG/UI/chart/script stdout), observe it per `harness/references/observation-grounding.md` — `exit 0` alone is not enough.
+3. Show the diff + verification result and stop. If verification fails twice, **escalate to Orchestrator mode** (re-run as the full pipeline).
+
+**Hard limit**: Conductor mode is for exploration / prototyping / trivial fixes only. Anything touching `auth/`, `payment/`, `security/`, `.env`, or `credential`, anything multi-file, or any Scale M/L request MUST use Orchestrator mode — refuse `--quick` for those and say why. This is the "know where to draw the line per task" skill: conductor for speed, orchestrator for production rigor.
 
 ### Scale Classification
 
@@ -211,7 +225,7 @@ This is the **only user gate** in the Meta-Loop. After approval, the loop runs t
   +-------------------------------------------------------------------+
   |
   +- Phase ∞-*: Commit / Push / Deploy / PR (intent-gated, terminal)
-  +- Phase ∞:   Final Auditor + Summary
+  +- Phase ∞:   Trajectory Report + Final Auditor + Summary
 ```
 
 The phase-internal pipeline (Phase 1–Phase 4-audit) is unchanged for single-phase books. For multi-phase books it runs once per phase. All per-phase artifact paths are prefixed with `.harness/phase-{i}/` when `total_phases > 1`; when `total_phases == 1`, artifacts live directly under `.harness/` (backward compatibility).
@@ -503,6 +517,7 @@ Launch a **general-purpose Agent** (Scale S/M: **model `sonnet`**; Scale L: inhe
     - "**SECONDARY** (reference): `.harness/build-spec.md` — the spec."
     - "**ON-DEMAND** (only if diagnosis is insufficient): `.harness/build-history.md`, `.harness/traces/round-{N-1}-qa-evidence.md`, `.harness/traces/round-{N-1}-execution-log.md`"
     - "Fix ROOT CAUSES from the diagnosis. Do not re-investigate from scratch."
+  - "Definition of Done: extract the per-round DoD (artifact path + observable evidence + verify command) from `.harness/build-spec.md` (Success Criteria) and `.harness/phase-book.md` if present. Satisfying these — not 'code written' — is completion; emit the mandatory DoD Check PASS/FAIL table in build-progress.md (see builder prompt)."
   - "Write your progress to `.harness/build-progress.md`."
   - "Write your execution audit to `.harness/traces/round-{N}-execution-log.md` (see Execution Audit in builder prompt)."
   - Scale M/L only: "Start the dev server in background and note the URL in progress.md."
@@ -579,6 +594,7 @@ Launch a **general-purpose Agent** with **model `sonnet`**:
   - "Scale: {S/M/L}"
   - "Round: {N}"
   - If N > 1: "Previous QA feedback: `.harness/build-round-{N-1}-feedback.md`"
+  - "Success Criteria Check: after cleanup, verify the per-round DoD / spec Success Criteria from `.harness/build-spec.md` still hold; emit the mandatory Success Criteria Check PASS/FAIL/DEFERRED table in build-refiner-report.md (see refiner prompt)."
   - "Apply fixes directly to the code. Write your report to `.harness/build-refiner-report.md`."
   - "Append your refinement actions to `.harness/traces/round-{N}-execution-log.md` under a '## Refiner Actions' header."
   - Scale M/L: "Also write execution trace to `.harness/traces/round-{N}-refiner-trace.md` (build/test results after your fixes)."
@@ -847,6 +863,25 @@ If `current_phase > total_phases`, set `status: complete` and proceed to Phase 5
 
 > Runs once, AFTER the Meta-Loop has completed all phases (`status: complete`) or has been paused. For paused runs, the summary reflects progress up to the pause point and points the user at the escalation evidence.
 
+### Trajectory Report (run once, before Summary)
+
+Synthesize the whole run's telemetry into one human-readable artifact. Read the agent prompt: `~/.claude/harness/trajectory-reporter-prompt.md`.
+
+Launch a **general-purpose Agent** with **model `sonnet`**:
+- **prompt**: The trajectory-reporter prompt + context:
+  - "Session events: `.harness/session-events.md`. Execution logs: `.harness/traces/round-{1..N}-execution-log.md`."
+  - "QA feedback: `.harness/build-round-{1..N}-feedback.md`. Diagnoses: `.harness/diagnosis-round-{1..N}.md` (if any). Auditor: `.harness/auditor-report.md` (if any). History: `.harness/build-history.md`. Session state: `.harness/session-state.md`."
+  - "Write the report to `.harness/trajectory-report.md`. Do NOT re-analyze or re-verify — synthesize existing artifacts only; note any missing input and continue."
+- **description**: "harness trajectory reporter"
+- **model**: `sonnet`
+
+After it completes, append to the event log:
+```bash
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] trajectory-reporter | done | trajectory-report.md | run telemetry synthesized" >> .harness/session-events.md
+```
+
+`.harness/trajectory-report.md` (timeline / score-trend / health signal) and the Summary's "Residual Risk" section (below) are complementary — the report holds the run telemetry, the Summary surfaces the hand-verify list. Neither duplicates the other.
+
 ### Pre-Summary Completion Gate (v4.2.0, MANDATORY)
 
 Before producing the user-facing Summary, run the Completion Gate scan per `harness/references/completion-gate-protocol.md`:
@@ -876,6 +911,7 @@ This gate prevents the "Summary declares complete → user discovers stale artif
 **Refiner**: [issues found/fixed]
 **Verification**: [build/test results]
 **Remaining**: [issues if any, otherwise "None"]
+**Residual Risk / 인간 확인 필요**: [ranked hand-verify spots from the QA report — UNTESTABLE/RENDER_UNCHECKED, <70 deferrals, Diagnostician LIKELY/HYPOTHESIS, Integrator RISKY — or "none flagged"]
 **Next**: Run `/harness-review` to review and commit, or `/harness-review --commit` to auto-commit.
 ```
 
@@ -905,6 +941,9 @@ This gate prevents the "Summary declares complete → user discovers stale artif
 
 ### Integrity
 **Integrity**: {HIGH/MEDIUM/LOW} (from Auditor, if active; otherwise "N/A — Auditor inactive")
+
+### Residual Risk / 인간 확인 필요
+[Ranked "top N spots to verify by hand" from the QA Reporter — Diagnostician LIKELY/HYPOTHESIS, QA UNTESTABLE/RENDER_UNCHECKED, <70 Refiner/Integrator deferrals, Integrator RISKY merges. Print "none flagged" if empty. See `.harness/trajectory-report.md` for the run timeline.]
 
 ### Next Step
 Run `/harness-review` to review and commit, or `/harness-review --pr` to create a PR.
@@ -938,12 +977,16 @@ Run `/harness-review` to review and commit, or `/harness-review --pr` to create 
 ### Integrity
 **Integrity**: {HIGH/MEDIUM/LOW} (from Auditor, if active; otherwise "N/A — Auditor inactive")
 
+### Residual Risk / 인간 확인 필요
+[Ranked "top N spots to verify by hand" from the QA Reporter — Diagnostician LIKELY/HYPOTHESIS, QA UNTESTABLE/RENDER_UNCHECKED, <70 Refiner/Integrator deferrals, Integrator RISKY merges. Print "none flagged" if empty.]
+
 ### Artifacts
 - Context: `.harness/build-context.md`
 - Spec: `.harness/build-spec.md`
 - Refiner: `.harness/build-refiner-report.md`
 - Final QA: `.harness/build-round-{N}-feedback.md`
 - Progress: `.harness/build-progress.md`
+- Trajectory: `.harness/trajectory-report.md`
 - Git log: `git log --oneline`
 
 ### Next Step
@@ -957,6 +1000,26 @@ sed -i '' 's/phase: .*/phase: 5/' .harness/session-state.md
 sed -i '' "s/last_completed_at: .*/last_completed_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)/" .harness/session-state.md
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] summary | done | — | Pipeline complete, status: {PASS/PARTIAL}" >> .harness/session-events.md
 ```
+
+### Phase 5.5: Curator (optional, approval-gated)
+
+After the Summary, capture durable learnings so future runs on this project don't repeat caught mistakes (the whitepaper's "add a rule every time the agent does something it should not do again"). **Skip** when there is nothing to learn from — Scale S with a single clean round, or no Diagnostician/Auditor findings.
+
+Load `~/.claude/harness/curator-prompt.md`. Launch a **general-purpose Agent** with **model `sonnet`**:
+- **prompt**: The curator prompt + context:
+  - "Diagnoses: `.harness/diagnosis-round-{1..N}.md`. Auditor: `.harness/auditor-report.md` (if any). QA feedback: `.harness/build-round-{1..N}-feedback.md`. History: `.harness/build-history.md`."
+  - "Existing rules: read the target project's `AGENTS.md` and `CLAUDE.md` at the project root if present, and DEDUP against them."
+  - "Write a PROPOSAL ONLY to `.harness/curator-proposal.md`. You MUST NOT edit `AGENTS.md`, `CLAUDE.md`, or any project file — the orchestrator appends after the user approves."
+- **description**: "harness curator"
+- **model**: `sonnet`
+
+Then the orchestrator (NOT the agent) handles persistence:
+1. Read `.harness/curator-proposal.md`. If it is "No new rules — nothing to propose.", skip silently.
+2. Otherwise SHOW the proposed rules verbatim and ask: **"이 학습 규칙을 프로젝트 AGENTS.md에 추가할까요? (Y / N / 편집)"**
+3. ONLY on **Y**: the orchestrator appends the approved (deduped) rules to `./AGENTS.md` under a `## Learned Rules (harness)` section (create the file/section if absent). On **N**: skip. On **편집**: let the user adjust, then append.
+4. Append to the event log: `[ts] curator | done | curator-proposal.md | {K} rules proposed, {M} applied`.
+
+**Containment**: the Curator agent never writes to the user's repo — it writes only the proposal to `.harness/`. The orchestrator performs the `AGENTS.md` append, and ONLY after explicit user approval. `./AGENTS.md` is a non-ignored, persistent home, so the Scout reads its `Learned Rules` section as a fast-path prior on the next run.
 
 ---
 
@@ -992,6 +1055,10 @@ echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] summary | done | — | Pipeline complete,
 28. **`--workers N` flag forces TEAM mode** regardless of Planner's recommendation. Max 5 workers.
 29. **TEAM mode follows `team-build-protocol.md` reference.** All team-specific logic lives there, not in this file.
 30. **Never mark a phase PASS or fabricate evidence to exit the capability-escalation ladder.** When the retry cap is hit on an unchanged root cause, escalate by TIER LABEL only — never a model identifier (see `meta-loop-protocol.md` §5.1). A capability ceiling reported honestly is a correct outcome; a faked pass is not.
+31. **Trajectory Reporter runs ONCE at the start of Phase 5** (after all phases complete, before the Summary). It only synthesizes existing `.harness/` telemetry into `.harness/trajectory-report.md` — no new analysis or verification.
+32. **The Summary surfaces Residual Risk.** Every Scale's Summary includes a "Residual Risk / 인간 확인 필요" section consolidating the human-judgment signals the pipeline already computed (UNTESTABLE, <70 deferrals, LIKELY/HYPOTHESIS, RISKY merges); print "none flagged" when empty rather than omitting it.
+33. **`--quick` = Conductor mode.** A thin fork that bypasses the Meta-Loop for a trivial single-file edit (direct edit + verify, no sub-agents / phase-book / gates). Refuse `--quick` for security-sensitive, multi-file, or Scale M/L work — those require Orchestrator mode.
+34. **The Curator proposes, the orchestrator writes, the user approves.** The Curator agent writes ONLY `.harness/curator-proposal.md` and never edits the project repo. Learned rules reach `AGENTS.md` only via an orchestrator append after explicit user approval (show-then-append, deduped).
 
 ## Cost Awareness
 
@@ -1003,5 +1070,7 @@ echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] summary | done | — | Pipeline complete,
 | L (TEAM, 3 workers) | 25-50 min | 12-18 (scout + planner + architect + [W0 + W1-3 + sentinel×3 + integrator + QA + diagnostician] × 1-2) |
 
 **Note**: Diagnostician adds ~2-5 min per round but saves 10-20 min of Builder investigation time in subsequent rounds (Meta-Harness principle: causal diagnosis > summary-based guessing).
+
+**Note**: The Trajectory Reporter adds one short synthesis call per run (no extra rounds); it reads only existing telemetry and degrades gracefully when an input is missing.
 
 **Security overhead**: When Security Triage is HIGH, add 1-2 agent calls per round (Sentinel check + potential Builder retry on BLOCK). MEDIUM adds 0-1 (Sentinel only on Scale L). LOW adds 0.
