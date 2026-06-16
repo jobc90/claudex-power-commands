@@ -179,3 +179,27 @@
 화이트페이퍼의 "set the bar at the eval, not the demo"는 **이 계획에도 적용된다.** P0-1(eval)을 먼저 세우는 이유: 이후 P0-3·P0-5 같은 프롬프트 변경이 QA/Auditor의 결함 검출력을 떨어뜨렸는지 fixture로 측정할 수 있어야 한다. **"개선했다"는 demo가 아니라 KEEP/CUT 판정으로 증명한다.** 이 계획의 성공 기준 자체가 `tests/ab-results/*.csv`의 회귀 없는 점수다.
 
 > 다음 단계: 이 계획서를 검토 후, P0 항목을 `/harness`(또는 직접)로 실행할지 결정. P0-1(eval 실행)을 먼저 세우는 것을 권장 — 나머지의 신뢰성을 게이트하기 때문. [높음]
+
+---
+
+## 11. 실행 후 검증 결과 (2026-06-16)
+
+이 계획을 실제로 실행한 결과. **각 항목은 실행 전 전제를 검증**했고(=#9의 교훈), 그 결과 P2 tail의 여러 항목이 "감사(synthesis)의 과대 진단"으로 판명됐다.
+
+### 완료 (커밋됨, 6커밋 — 브랜치 `feat/whitepaper-alignment-p0-p1`)
+- **P0 전부**(1–5): eval 스캐폴딩·Trajectory Reporter·Residual-Risk·결정론적 가드 훅(guard-bash/commit)·Builder/Refiner DoD.
+- **P1 #6 Conductor `--quick`**, **#7 Curator**(승인 게이트 학습 → 타깃 AGENTS.md).
+- **eval 캠페인 (3라운드)**: observation-grounding이 **in-author KEEP(+6)·독립저자 held-out KEEP(+4)·M4 strict-OFF KEEP(+6)**, FP 0. caveat: mechanism-level(full-pipeline 아님)·render-geometry/execution-output 집중·sonnet/xhigh 한정. CHANGELOG·`observation-grounding.md`·`tests/ab-results/` 기록.
+- **#11 golden 회귀 그물**: `tests/golden/` 4 시나리오 + `golden-score.py`(regression→exit 1), baseline 4/4. = #8 게이트의 실체.
+
+### 취소 — 검증으로 전제 반박
+- **#9 가드레일 중복 추출**: 8개 "Banned Expressions" 블록이 전부 **고유**(distinct 해시 8). 에이전트별 고유 규율이지 중복 아님. 추출하면 가드레일 파괴.
+- **#14 Sentinel 기계검사 훅 이관**: Sentinel의 CRITICAL 검사는 **Codex의 유일 enforcement**(Codex엔 PreToolUse 없음) + Claude defense-in-depth → 제거 불가. 계층 분담 노트는 **이미 P0-4에서 agent-containment.md에 추가됨**. → 실질 완료, 별도 행동 불필요.
+- **#10 "Codex 미러 단일화"**: 4종 체크리스트를 단일 스킬 출처로 모으면 내용 복제 또는 16개 path 소비처 재배선(위험) 필요. 안전한 부분(frontmatter)만으론 가치 미미. → 보류.
+
+### 보류 — 저가치 polish/governance (코어 아님)
+- **#8 release-gate**: golden-score.py + dev/harness-eval.md로 **수동 게이트는 이미 제공**. "매 커밋 자동" 버전은 에이전트 재생 비용상 git pre-commit엔 부적합 → 수동 게이트가 올바른 형태.
+- **#12 context-budget**, **#13 Auditor efficiency**: governance polish. 라우팅은 이미 강함.
+
+### 바텀라인
+**고가치 코어(P0 + 측정 + 회귀 그물)는 완료·검증됨.** P2 tail은 감사 과대 진단으로 대부분 불필요/부적절. 권장 다음 단계는 **새 항목 추가가 아니라 브랜치 검토·push/병합**(consolidation).
