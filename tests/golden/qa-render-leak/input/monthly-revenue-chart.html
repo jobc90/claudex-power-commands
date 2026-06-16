@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monthly Revenue Chart</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, sans-serif;
+      background: #f5f5f5;
+    }
+    h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #222;
+      margin: 0 0 12px;
+    }
+    .chart-container {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 16px;
+      display: inline-block;
+    }
+    svg {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="chart-container">
+    <h1>Monthly Revenue (Q1–Q2 2026)</h1>
+    <!--
+      Canvas: 400 × 300 px viewBox.
+      Data: [42, 67, 55, 88, 73, 61]  (six months: Jan–Jun)
+      Success criterion: all six bars AND their value labels
+      must be FULLY visible inside the 400×300 canvas.
+    -->
+    <svg
+      id="chart"
+      width="400"
+      height="300"
+      viewBox="0 0 400 300"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="Monthly Revenue Bar Chart"
+    >
+      <!-- Y-axis background grid lines (decorative, correct) -->
+      <line x1="48" y1="20"  x2="390" y2="20"  stroke="#eee" stroke-width="1"/>
+      <line x1="48" y1="75"  x2="390" y2="75"  stroke="#eee" stroke-width="1"/>
+      <line x1="48" y1="130" x2="390" y2="130" stroke="#eee" stroke-width="1"/>
+      <line x1="48" y1="185" x2="390" y2="185" stroke="#eee" stroke-width="1"/>
+      <line x1="48" y1="240" x2="390" y2="240" stroke="#eee" stroke-width="1"/>
+
+      <!-- Y-axis labels (correct, inside canvas) -->
+      <text x="40" y="24"  text-anchor="end" font-size="10" fill="#888">100</text>
+      <text x="40" y="79"  text-anchor="end" font-size="10" fill="#888">75</text>
+      <text x="40" y="134" text-anchor="end" font-size="10" fill="#888">50</text>
+      <text x="40" y="189" text-anchor="end" font-size="10" fill="#888">25</text>
+      <text x="40" y="244" text-anchor="end" font-size="10" fill="#888">0</text>
+
+      <!-- Y-axis line -->
+      <line x1="48" y1="20" x2="48" y2="248" stroke="#ccc" stroke-width="1"/>
+      <!-- X-axis baseline -->
+      <line x1="48" y1="248" x2="390" y2="248" stroke="#ccc" stroke-width="1"/>
+
+      <!--
+        SEEDED DEFECT (render-geometry, NOT a code typo):
+        The plot area is x: 48..390 → usable width = 342 px for 6 bars.
+        Correct bar stride = 342 / 6 = 57 px.
+        The bar x positions are computed with a stride of 48 px instead of 57 px,
+        which is plausible-looking (it happens to equal the left margin value).
+        With stride=48 and a group width of 36 px:
+          bar1: x=56  (visible)
+          bar2: x=104 (visible)
+          bar3: x=152 (visible)
+          bar4: x=200 (visible)
+          bar5: x=248 (visible)
+          bar6: x=296 (visible)
+        Wait — that still fits. Let me use a wider bar and tighter logic.
+
+        ACTUAL DEFECT IMPLEMENTATION:
+        barWidth = 52 px, stride = 68 px, startX = 56.
+        bar1 x=56   (56..108)   — visible, within [48..390]
+        bar2 x=124  (124..176)  — visible
+        bar3 x=192  (192..244)  — visible
+        bar4 x=260  (260..312)  — visible
+        bar5 x=328  (328..380)  — visible
+        bar6 x=396  (396..448)  — OUTSIDE viewBox (x>390), bar is CLIPPED or INVISIBLE
+
+        The label for bar6 is at x=422, also outside the viewBox.
+        Static parse / XML lint: exit 0, no errors, perfectly well-formed SVG.
+        Rendering: bar6 (June, value 61) is absent from the canvas.
+      -->
+
+      <!-- Bar 1 — January 42 -->
+      <!-- barH = (42/100) * 220 = 92.4 px; y = 248 - 92 = 156 -->
+      <rect x="56"  y="156" width="52" height="92"  fill="#4f80e1" rx="3"/>
+      <text x="82"  y="148" text-anchor="middle" font-size="11" font-weight="600" fill="#4f80e1">42</text>
+      <text x="82"  y="263" text-anchor="middle" font-size="10" fill="#666">Jan</text>
+
+      <!-- Bar 2 — February 67 -->
+      <!-- barH = (67/100) * 220 = 147.4; y = 248 - 147 = 101 -->
+      <rect x="124" y="101" width="52" height="147" fill="#4f80e1" rx="3"/>
+      <text x="150" y="93"  text-anchor="middle" font-size="11" font-weight="600" fill="#4f80e1">67</text>
+      <text x="150" y="263" text-anchor="middle" font-size="10" fill="#666">Feb</text>
+
+      <!-- Bar 3 — March 55 -->
+      <!-- barH = (55/100) * 220 = 121; y = 248 - 121 = 127 -->
+      <rect x="192" y="127" width="52" height="121" fill="#4f80e1" rx="3"/>
+      <text x="218" y="119" text-anchor="middle" font-size="11" font-weight="600" fill="#4f80e1">55</text>
+      <text x="218" y="263" text-anchor="middle" font-size="10" fill="#666">Mar</text>
+
+      <!-- Bar 4 — April 88 -->
+      <!-- barH = (88/100) * 220 = 193.6; y = 248 - 194 = 54 -->
+      <rect x="260" y="54"  width="52" height="194" fill="#e16450" rx="3"/>
+      <text x="286" y="46"  text-anchor="middle" font-size="11" font-weight="600" fill="#e16450">88</text>
+      <text x="286" y="263" text-anchor="middle" font-size="10" fill="#666">Apr</text>
+
+      <!-- Bar 5 — May 73 -->
+      <!-- barH = (73/100) * 220 = 160.6; y = 248 - 161 = 87 -->
+      <rect x="328" y="87"  width="52" height="161" fill="#4f80e1" rx="3"/>
+      <text x="354" y="79"  text-anchor="middle" font-size="11" font-weight="600" fill="#4f80e1">73</text>
+      <text x="354" y="263" text-anchor="middle" font-size="10" fill="#666">May</text>
+
+      <!-- Bar 6 — June 61  ← DEFECT: x=396 places bar outside viewBox -->
+      <!-- barH = (61/100) * 220 = 134.2; y = 248 - 134 = 114 -->
+      <!-- x=396 means the bar rect starts at 396, entirely past the right edge (390) of the usable area -->
+      <!-- The SVG is well-formed; SVG simply clips content outside the viewport. No error is thrown. -->
+      <rect x="396" y="114" width="52" height="134" fill="#4f80e1" rx="3"/>
+      <text x="422" y="106" text-anchor="middle" font-size="11" font-weight="600" fill="#4f80e1">61</text>
+      <text x="422" y="263" text-anchor="middle" font-size="10" fill="#666">Jun</text>
+
+    </svg>
+  </div>
+</body>
+</html>

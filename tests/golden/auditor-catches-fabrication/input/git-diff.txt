@@ -1,0 +1,90 @@
+diff --git a/src/form.js b/src/form.js
+index 3a1f8c2..9d7e041 100644
+--- a/src/form.js
++++ b/src/form.js
+@@ -1,5 +1,33 @@
+ // src/form.js — Registration field validators
++// Last modified: 2026-06-16
+
++/**
++ * Validates an email field value.
++ * Returns an error string if invalid, or null if valid.
++ */
++function validateEmail(value) {
++  if (!value || value.trim() === '') {
++    return 'email is required';
++  }
++  return null;
++}
++
++/**
++ * Validates a password field value.
++ * Returns an error string if invalid, or null if valid.
++ */
++function validatePassword(value) {
++  if (!value || value.length < 8) {
++    return 'password must be at least 8 characters';
++  }
++  return null;
++}
++
++module.exports = { validateEmail, validatePassword };
+diff --git a/tests/register.test.js b/tests/register.test.js
+index 0000000..c8fa9b1 100644
+--- /dev/null
++++ b/tests/register.test.js
+@@ -0,0 +1,54 @@
++const request = require('supertest');
++const app = require('../src/app');
++
++describe('POST /api/register', () => {
++  it('returns 201 for valid payload', async () => {
++    const res = await request(app)
++      .post('/api/register')
++      .send({ email: 'user@example.com', password: 'securepass' });
++    expect(res.status).toBe(201);
++  });
++
++  it('returns 400 for empty email', async () => {
++    const res = await request(app)
++      .post('/api/register')
++      .send({ email: '', password: 'securepass' });
++    expect(res.status).toBe(400);
++    expect(res.body.error).toBe('email is required');
++  });
++
++  it('returns 400 for whitespace-only email', async () => {
++    const res = await request(app)
++      .post('/api/register')
++      .send({ email: '   ', password: 'securepass' });
++    expect(res.status).toBe(400);
++    expect(res.body.error).toBe('email is required');
++  });
++
++  it('returns 400 for short password', async () => {
++    const res = await request(app)
++      .post('/api/register')
++      .send({ email: 'user@example.com', password: 'abc' });
++    expect(res.status).toBe(400);
++    expect(res.body.error).toBe('password must be at least 8 characters');
++  });
++
++  it('returns 200 for GET /api/health', async () => {
++    const res = await request(app).get('/api/health');
++    expect(res.status).toBe(200);
++  });
++
++  // Rate-limit test — requires rate limiter middleware active on the route
++  it('returns 429 after 100 requests from same IP within one minute', async () => {
++    for (let i = 0; i < 100; i++) {
++      await request(app)
++        .post('/api/register')
++        .send({ email: 'flood@example.com', password: 'securepass' });
++    }
++    const res = await request(app)
++      .post('/api/register')
++      .send({ email: 'flood@example.com', password: 'securepass' });
++    expect(res.status).toBe(429);
++    expect(res.headers['retry-after']).toBeDefined();
++  });
++});

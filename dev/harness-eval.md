@@ -132,3 +132,34 @@ On a header-only CSV it prints `no data rows yet — run the A/B pass first` and
 | One paired A/B run (ON+OFF) for one fixture | 2 full pipeline runs |
 | §7 first pass (M1: ~5-15 render + 2-5 null; M4: ~3-10 unreachable + 1-5 null), both arms | ~30-40 paired runs = one focused session |
 | `python3 tests/score.py` | instant (stdlib only) |
+
+---
+
+## Golden-task regression (dev-only)
+
+Sibling to the A/B runner above, but a different question. The A/B corpus (`tests/ab-corpus/`)
+asks *"does this discipline help on average?"* (KEEP/CUT). The **golden suite**
+(`tests/golden/`) asks *"did this specific prompt edit break a behaviour we rely on?"* — a fast,
+deterministic gate over a fixed set of pinned agent behaviours. Full spec: `tests/golden/README.md`.
+
+### When to run
+After editing any `harness/*-prompt.md` or `commands/*.md` (especially `qa-prompt.md`,
+`auditor-prompt.md`, `refiner-prompt.md`). This is the check the #8 release-gate enforces.
+
+### Procedure (per scenario in `tests/golden/`)
+1. **Replay the real agent.** Spawn a fresh sub-agent told to *read and follow*
+   `harness/<target-agent>-prompt.md` (QA or Auditor — see the scenario's `oracle.md`), with the
+   scenario's `input/` as its `.harness` inputs. QA scenarios run with **observation-grounding
+   active** (render/execute observable artifacts). The agent is **blind to `oracle.md`**.
+2. **Normalize** its verdict to `PASS | FAIL | FLAG_MISMATCH | UNTESTABLE` and record whether it
+   detected the seeded issue.
+3. **Append** one row to a results CSV with the schema
+   `scenario,target_agent,expected,actual,detected_seeded,model,effort,notes` (see
+   `tests/golden/results-baseline.csv`).
+4. **Score:** `python3 tests/golden-score.py <results.csv>` — exit 0 if every pinned behaviour
+   holds; **exit 1** on any regression (a pinned behaviour changed → investigate before shipping).
+
+### Baseline
+`tests/golden/results-baseline.csv` — **4/4 pass** on the current prompts (model `sonnet`, effort
+`xhigh`). Re-baseline when the harness model policy changes; results are model/effort-specific and
+do not port.

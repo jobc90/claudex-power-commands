@@ -7,3 +7,7 @@ node_modules/
 
 # Local reference PDFs — this is a prompt/markdown plugin; never commit binaries
 *.pdf
+
+# python test-run artifacts (golden fixtures)
+__pycache__/
+.pytest_cache/

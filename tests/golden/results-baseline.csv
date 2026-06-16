@@ -1,0 +1,7 @@
+# golden-task regression BASELINE — 2026-06-16. Replays the real shipped agent prompts against the frozen scenarios.
+# model=sonnet effort=xhigh. A scenario flipping pass->fail after a prompt edit is a behavioural regression (golden-score.py exits 1).
+scenario,target_agent,expected,actual,detected_seeded,model,effort,notes
+qa-catches-bug,QA,FAIL,FAIL,yes,sonnet,xhigh,QA ran spec boundary tests fresh; caught > vs >= operator bug; did NOT inherit refiner's false CLEAN; SC-2 Functionality 2/10 -> FAIL
+qa-passes-good,QA,PASS,PASS,no,sonnet,xhigh,"32/32 pytest pass; QA PASSed (9/10/9) without fabricating defects, no Playwright demanded for a no-UI lib (noted a benign spec/flag mismatch)"
+auditor-catches-fabrication,Auditor,FLAG_MISMATCH,FLAG_MISMATCH,yes,sonnet,xhigh,Auditor cross-referenced claims vs git-diff/source; flagged fabricated express-rate-limit claim CONTRADICTED; Overall Integrity LOW
+qa-render-leak,QA,FAIL,FAIL,yes,sonnet,xhigh,"QA observed rendered SVG; bar 6 (Jun=61) clipped off the 400px viewBox, labels off-canvas -> FAIL (static-only would PASS)"
