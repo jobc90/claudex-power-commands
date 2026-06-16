@@ -6,6 +6,35 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 
 ---
 
+## [4.4.0] — 2026-06-16
+
+### Added — Whitepaper-alignment ("The New SDLC With Vibe Coding") + claudex's first A/B-measured effect
+
+Applies principles from Google's "The New SDLC With Vibe Coding" whitepaper to the harness, and — for the first time — **measures** an effect rather than shipping it "unmeasured." Plan and outcomes: `docs/whitepaper-alignment-plan.md` (§11 records what was built vs cancelled-on-verification).
+
+**Measured (the headline):** observation-grounding's effect is no longer "unmeasured." A blind, mechanism-level A/B (verify-chain isolated under ON vs OFF; model `sonnet`, effort `xhigh`) scores **KEEP** on both an in-author split (primary margin +6) and an **independent-author held-out** split (+4), plus **M4/untestable KEEP** (+6), with **0 false-positives** on pure-logic nulls. Caveats travel with the claim: this is **not** a full-`/harness` validation; the ON edge concentrates on render-geometry / execution-output defects (a capable agent often derives obvious *code* bugs statically either way); results are model/effort-specific. Full write-up: `tests/ab-results/RESULTS-2026-06-16.md`.
+
+### New agents (27 → 29 prompts)
+- **Trajectory Reporter** (`harness/trajectory-reporter-prompt.md`) — runs once at end of a `/harness` run; synthesizes existing telemetry (timeline, per-agent `dur=` latency, QA score trend, integrity verdict) into `.harness/trajectory-report.md`. Pure synthesis, no new analysis.
+- **Curator** (`harness/curator-prompt.md`) — approval-gated end-of-run learning. Proposes deduped "learned rules" distilled from the run's caught mistakes; on user approval the orchestrator appends them to the target project's `AGENTS.md` (`## Learned Rules (harness)`), which the Scout reads as a fast-path prior next run. The agent is proposal-only — it never edits the user repo.
+
+### New files
+- **Deterministic guard hooks** — `hooks/guard-bash.sh` (a PreToolUse Bash deny-list enforcing the `agent-containment.md` CRITICAL patterns *before* a command runs) + `hooks/guard-commit.sh` (a pre-commit secret scanner — the whitepaper's literal "block a commit with a hardcoded password"). Claude-only; Codex has no PreToolUse, so the Sentinel remains its enforcement layer there. `hooks/hooks.json` registers the PreToolUse guard.
+- **Eval suite** (`tests/`) — `tests/ab-corpus/` fixtures + `tests/ab-results/` + `tests/score.py` (a pre-registered KEEP/CUT/INCONCLUSIVE engine) + `dev/harness-eval.md` runner.
+- **Golden regression net** (`tests/golden/`) — replays the *real* shipped agent prompts against frozen scenarios that pin specific behaviours (QA catches a seeded bug / passes a good build without fabricating / catches a render-leak; Auditor flags a fabricated claim). `tests/golden-score.py` exits 1 on any regression. Baseline 4/4 on current prompts.
+
+### Changed
+- **`/harness` Conductor mode** (`--quick`) — a real-time, single-file fork that bypasses the Meta-Loop for trivial edits; refused for security-sensitive / multi-file / Scale M–L work (the whitepaper's conductor-vs-orchestrator distinction).
+- **Builder/Refiner DoD-Check** — both now emit a PASS/FAIL success-criteria table against the per-round DoD (the Builder previously had none; the eval showed observation alone can still PASS a real defect without an explicit success criterion).
+- **Summary "Residual Risk / 인간 확인 필요"** — every Scale's Summary surfaces the human-judgment signals the pipeline already computes (UNTESTABLE, <70 deferrals, LIKELY/HYPOTHESIS, RISKY merges) instead of flattening them to PASS.
+- `references/session-protocol.md` gains an optional `dur=` latency field; `references/agent-containment.md` documents the new hook layer; `references/observation-grounding.md` adds "Observation needs a success criterion" (measured: a perfect observer still PASSes without one).
+- `harness/INDEX.md` registers the two new agents (now 29 + 1 helper); Codex mirrors synced; pre-commit/lint cover the new mirrors.
+
+### Cancelled on verification (audit over-diagnosis)
+Per `docs/whitepaper-alignment-plan.md` §11, three planned items were dropped after verifying their premise: **guardrail-dedup** (the 8 "Banned Expressions" blocks are all distinct, agent-specific tables — not duplication), **Sentinel-mechanical-check migration** (those checks are Codex's only enforcement + Claude defense-in-depth), and the **Codex mirror-collapse** (would duplicate content or require risky rewiring of 16 consumers).
+
+---
+
 ## [4.3.0] — 2026-06-15
 
 ### Added — Observation Grounding + Capability Escalation

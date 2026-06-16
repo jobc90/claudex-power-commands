@@ -5,15 +5,15 @@
     "url": "https://github.com/jobc90"
   },
   "metadata": {
-    "description": "6 harness commands for Claude Code and Codex: multi-agent build pipeline, documentation, code review, QA testing, frontend design, and dashboard. v4.3.0 adds Observation Grounding (observe rendered/executable output, not just exit-0), a runtime Stop hook (first runtime-enforced completion entrance), and a capability-escalation ladder. Transferred procedures; effect on claudex's model mix not yet A/B-measured.",
-    "version": "4.3.0"
+    "description": "6 harness commands for Claude Code and Codex: multi-agent build pipeline, documentation, code review, QA testing, frontend design, and dashboard. v4.4.0 adds whitepaper-alignment: observation-grounding is now A/B-measured KEEP on both an in-author and an independent-author held-out split (+ M4 untestable KEEP), plus Conductor mode, a Curator agent (learned-rules → AGENTS.md), deterministic guard hooks, and an eval + golden-regression suite. v4.3.0 added Observation Grounding (observe rendered/executable output, not just exit-0), a runtime Stop hook, and a capability-escalation ladder.",
+    "version": "4.4.0"
   },
   "plugins": [
     {
       "name": "claudex",
       "source": "./",
-      "description": "6 harness commands with 27 specialized agent prompts + 1 helper. v4.3.0 — Observation Grounding + Capability Escalation: a runtime Stop hook (claudex's first runtime-enforced completion entrance), observe-the-rendered-output in the verify chain (exit-0 = well-formed, not correct), a §5.1 capability-escalation ladder at the 3-retry ceiling, context-first phase decomposition, QA UNTESTABLE state. Transferred procedures (origin: fablize/prometheus); effect not yet A/B-measured. v4.2.0 — Completion Gate protocol. Commands: /harness (SINGLE/TEAM + Phase Verifier + Sentinel + Auditor), /harness-docs, /harness-review, /harness-qa (Playwright), /design, /claude-dashboard.",
-      "version": "4.3.0",
+      "description": "6 harness commands with 29 specialized agent prompts + 1 helper. v4.4.0 — Whitepaper-alignment (measured): observation-grounding A/B-measured KEEP (both an in-author and an independent-author held-out split) + M4 untestable KEEP, 0 false-positives; Conductor mode (/harness --quick); a Curator agent (learned-rules → AGENTS.md); a Trajectory Reporter; deterministic PreToolUse/commit guard hooks; Builder/Refiner DoD-Check; Summary Residual-Risk; an eval + golden-regression suite under tests/. v4.3.0 — Observation Grounding + Capability Escalation: a runtime Stop hook (claudex's first runtime-enforced completion entrance), observe-the-rendered-output in the verify chain (exit-0 = well-formed, not correct), a §5.1 capability-escalation ladder at the 3-retry ceiling, context-first phase decomposition, QA UNTESTABLE state. Transferred procedures (origin: fablize/prometheus); effect not yet A/B-measured. v4.2.0 — Completion Gate protocol. Commands: /harness (SINGLE/TEAM + Phase Verifier + Sentinel + Auditor), /harness-docs, /harness-review, /harness-qa (Playwright), /design, /claude-dashboard.",
+      "version": "4.4.0",
       "category": "automation",
       "tags": [
         "harness",

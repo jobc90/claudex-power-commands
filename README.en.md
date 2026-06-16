@@ -4,6 +4,7 @@
 
 > A 6-command harness suite for Claude Code, mirrored as 6 skills for Codex
 >
+> **v4.4.0**: Whitepaper-alignment (measured) — observation-grounding is now **A/B-measured KEEP** on both an in-author and an independent-author held-out split (+ M4 untestable KEEP, 0 false-positives). Adds Conductor mode (`/harness --quick`), a Curator agent (approval-gated learned-rules → AGENTS.md), a Trajectory Reporter, deterministic guard hooks (PreToolUse/commit), Builder/Refiner DoD-Check, Summary Residual-Risk, and an eval + golden-regression suite (`tests/`). Write-up: `tests/ab-results/RESULTS-2026-06-16.md`.
 > **v4.3.0**: Observation Grounding + Capability Escalation — starts from the finding that claudex's gates are *agent-self-enforced* (a soft entrance). Adds a **Stop hook** (claudex's first runtime-enforced completion entrance), **observe-the-rendered-output** in the verify chain (exit-0 = well-formed, not correct), a **§5.1 capability-escalation ladder** at the 3-retry ceiling (raise effort → higher TIER + evidence package → human), context-first decomposition, and a QA `UNTESTABLE` state. Transferred from fablize/prometheus; **effect on claudex's model mix not yet A/B-measured**.
 > **v4.2.0**: Completion Gate protocol — finalizing agents scan for stale iteration artifacts before declaring complete.
 > **v4.1.0**: Meta-Loop is the default — `/harness` decomposes every request into a phase-book and runs work→verify→apply cycles until every phase's DoD passes. Small requests degrade to a 1-phase book (backward compatible).
@@ -13,8 +14,8 @@ The source of truth is the harness-based command suite first organized on the Cl
 
 - Claude source of truth: 6 files in `commands/`
 - Codex ports: 6 matching skills in `codex-skills/`
-- Shared harness prompt bundle: 27 agent prompts + 1 orchestrator helper in `harness/`
-- Reference checklists: 8 files in `harness/references/`
+- Shared harness prompt bundle: 29 agent prompts + 1 orchestrator helper in `harness/`
+- Reference checklists: 11 files in `harness/references/`
 
 ### v4.1.0 — Meta-Loop + Capability Detection
 
@@ -66,7 +67,7 @@ Inspired by Anthropic's [Managed Agents](https://www.anthropic.com/engineering/m
 | `/harness-review` | `scanner`, `analyzer`, `fixer`, `verifier`, `reporter` |
 | `/harness-qa` | `scenario-writer`, `test-executor`, `analyst`, `qa-reporter` plus reused `scout` |
 
-There are 27 prompt templates + 1 orchestrator helper under `harness/`, plus 11 reference checklists in `harness/references/`. Meta-Loop agents: `phase-book-planner`, `phase-verifier`, `phase-orchestrator` (helper).
+There are 29 prompt templates + 1 orchestrator helper under `harness/`, plus 11 reference checklists in `harness/references/`. Meta-Loop agents: `phase-book-planner`, `phase-verifier`, `phase-orchestrator` (helper).
 
 ---
 

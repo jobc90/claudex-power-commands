@@ -4,6 +4,7 @@
 
 > Claude Code용 harness commands와 Codex용 harness skills를 같은 구조로 맞춘 6종 세트
 >
+> **v4.4.0**: Whitepaper-alignment (측정됨) — observation-grounding이 in-author + 독립저자 held-out **양 split KEEP**(+ M4 KEEP, FP 0)로 **A/B 측정 완료**. Conductor 모드(`/harness --quick`), Curator 에이전트(승인 게이트 학습규칙 → AGENTS.md), Trajectory Reporter, 결정론적 가드 훅(PreToolUse/commit), Builder/Refiner DoD-Check, Summary Residual-Risk, eval + golden 회귀 스위트(`tests/`). 측정: `tests/ab-results/RESULTS-2026-06-16.md`.
 > **v4.3.0**: Observation Grounding + Capability Escalation — claudex의 게이트는 사실 **agent-self-enforced(soft entrance)**라는 발견에서 출발. **Stop hook**(claudex 첫 런타임 완료 entrance) + verify-chain의 **observe-rendered-output**(exit-0은 well-formed일 뿐 correct 아님) + 3-retry 천장의 **§5.1 capability-escalation ladder**(effort↑ → 상위 TIER + 증거패키지 → 사람) + context-first 분해 + QA `UNTESTABLE`. fablize/prometheus에서 이식한 절차로, **claudex 모델 믹스에서의 효과는 아직 A/B 미측정**.
 > **v4.2.0**: Completion Gate protocol — Reporter / QA Reporter / Integrator / Refiner / Auditor가 **완료 선언 직전 stale iteration artifact를 자동 스캔**. terminated 리소스 ID, "진행 중" 마커, version drift, step-status 모순을 **다른 단계가 통과해도 구조적으로 차단**. 원본 사고: 다층 감사 통과 후 사용자가 stale EC2 ID를 정리작업에서 발견 — 이 패턴을 시스템적으로 재발 방지.
 > **v4.1.0**: Meta-Loop is the default — `/harness` 가 요청을 phase-book으로 분해하고 모든 phase의 DoD가 통과할 때까지 work→verify→apply 루프를 자동으로 돌립니다. 작은 요청은 phase=1로 자연 퇴화 (하위 호환).
@@ -13,7 +14,7 @@
 
 - Claude Code 기준 진실: `commands/` 6개
 - Codex 포트: `codex-skills/` 6개
-- 하네스 프롬프트 번들: `harness/` 27개 에이전트 프롬프트 + 1개 orchestrator helper
+- 하네스 프롬프트 번들: `harness/` 29개 에이전트 프롬프트 + 1개 orchestrator helper
 - 참조 체크리스트: `harness/references/` 11개 (v4.3.0에 `observation-grounding.md` 추가)
 - 템플릿 스크립트: `harness/completion-gate-template.sh` (프로젝트에 `scripts/completion-gate.sh`로 복사)
 
@@ -96,7 +97,7 @@ Anthropic의 [Managed Agents](https://www.anthropic.com/engineering/managed-agen
 | `/harness-review` | `scanner`, `analyzer`, `fixer`, `verifier`, `reporter` |
 | `/harness-qa` | `scenario-writer`, `test-executor`, `analyst`, `qa-reporter` + `scout` 재사용 |
 
-총 27개 에이전트 프롬프트 + 1개 orchestrator helper + INDEX가 `harness/` 아래에 들어 있습니다. Meta-Loop 에이전트: `phase-book-planner`, `phase-verifier`, `phase-orchestrator` (helper).
+총 29개 에이전트 프롬프트 + 1개 orchestrator helper + INDEX가 `harness/` 아래에 들어 있습니다. Meta-Loop 에이전트: `phase-book-planner`, `phase-verifier`, `phase-orchestrator` (helper).
 
 ---
 
