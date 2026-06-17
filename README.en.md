@@ -115,7 +115,7 @@ Use $claude-dashboard to configure the statusline.
 
 ### Codex Port Principles
 
-- Keep the same 6 names as the Claude commands.
+- Keep the same 7 names as the Claude commands.
 - Keep the same harness pipelines and agent roles.
 - Bundle the needed prompt templates under `codex-skills/*/references/`.
 - Use `design` as the shared design controller for `$harness`.
@@ -152,7 +152,7 @@ git clone https://github.com/jobc90/claudex-power-commands.git
 # 2. Create the skill directory
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
 
-# 3. Sync the 6 skills
+# 3. Sync the 7 skills
 for skill in harness harness-docs harness-review harness-qa harness-think design claude-dashboard; do
   rsync -a --delete "claudex-power-commands/codex-skills/$skill/" "${CODEX_HOME:-$HOME/.codex}/skills/$skill/"
 done
@@ -224,7 +224,7 @@ claudex-power-commands/
 
 ## Notes
 
-- `commands/` and `codex-skills/` now share the same 6-command set.
+- `commands/` and `codex-skills/` now share the same 7-command set.
 - Each Codex skill includes its own bundled `references/` prompt templates.
 - `claude-dashboard` is still a Claude Code setup skill even when invoked from Codex because it edits `~/.claude/settings.json`.
 

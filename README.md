@@ -145,7 +145,7 @@ Use $claude-dashboard to configure the statusline.
 
 ### Codex 포트 원칙
 
-- Claude 커맨드와 동일한 6개 이름으로 맞춘다.
+- Claude 커맨드와 동일한 7개 이름으로 맞춘다.
 - 각 Codex 스킬은 대응하는 Claude 커맨드의 하네스 파이프라인을 그대로 따른다.
 - 에이전트 프롬프트는 `codex-skills/*/references/` 에 번들링한다.
 - `design` 은 `$harness` 와 함께 동작하는 디자인 컨트롤러다.
@@ -182,7 +182,7 @@ git clone https://github.com/jobc90/claudex-power-commands.git
 # 2. Skill 디렉토리 생성
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
 
-# 3. 6개 스킬 동기화
+# 3. 7개 스킬 동기화
 for skill in harness harness-docs harness-review harness-qa harness-think design claude-dashboard; do
   rsync -a --delete "claudex-power-commands/codex-skills/$skill/" "${CODEX_HOME:-$HOME/.codex}/skills/$skill/"
 done
@@ -265,14 +265,14 @@ claudex-power-commands/
 |------|------|
 | `dev/harness-lint.md` | 프롬프트 교차참조, Codex 미러 동기화, 파이프라인 구조 검증 |
 | `harness/linter-prompt.md` | Lint 에이전트 프롬프트 |
-| `harness/INDEX.md` | 25 에이전트 교차참조 맵 |
+| `harness/INDEX.md` | 29 에이전트 교차참조 맵 |
 | `hooks/pre-commit-lint.sh` | 커밋 시 자동 미러 동기화 체크 |
 
 ---
 
 ## Notes
 
-- `commands/` 와 `codex-skills/` 는 이제 같은 6개 세트를 공유합니다.
+- `commands/` 와 `codex-skills/` 는 이제 같은 7개 세트를 공유합니다.
 - Codex 포트는 각 스킬 내부에 필요한 `references/` 프롬프트를 포함합니다.
 - `claude-dashboard` 는 Codex에서 실행하더라도 `~/.claude/settings.json` 을 수정하는 설정 스킬입니다.
 

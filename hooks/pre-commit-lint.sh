@@ -59,6 +59,9 @@ for f in scout-prompt.md scenario-writer-prompt.md test-executor-prompt.md analy
   [ -f "harness/$f" ] && check_mirror "harness/$f" "codex-skills/harness-qa/references/$f"
 done
 
+# harness-think (reference-only skill — no prompts, one reference mirror)
+[ -f "harness/references/think-grounding.md" ] && check_mirror "harness/references/think-grounding.md" "codex-skills/harness-think/references/think-grounding.md"
+
 # --- Check 2: Required Files Exist ---
 echo ""
 echo "## Required Files"
@@ -76,7 +79,7 @@ for f in scout-prompt.md planner-prompt.md builder-prompt.md refiner-prompt.md \
   fi
 done
 
-for f in harness.md harness-docs.md harness-review.md harness-qa.md design.md claude-dashboard.md; do
+for f in harness.md harness-docs.md harness-review.md harness-qa.md harness-think.md design.md claude-dashboard.md; do
   if [ ! -f "commands/$f" ]; then
     echo "  MISSING: commands/$f"
     ((ERRORS++)) || true
