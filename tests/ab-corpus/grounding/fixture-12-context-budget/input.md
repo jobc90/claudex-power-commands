@@ -1,0 +1,1 @@
+화이트페이퍼가 "context = financial lever"라고 하니까, claudex에 `references/context-budget.md`를 만들어서 에이전트별(per-role) 토큰/비용 읽기 예산을 정하고, statusline의 비용 계측을 파이프라인에 연결해서 각 에이전트가 얼마나 컨텍스트/토큰을 쓰는지 per-agent로 로깅하자. 예산 초과 시 자동으로 더 싼 모델로 라우팅하면 비용도 아낄 수 있을 것 같다. 지금 구현하려면 statusline을 어떻게 파이프라인에 연결하는 게 좋을까?

@@ -1,0 +1,1 @@
+claudex의 Sentinel 에이전트가 하는 검사 중 순수 regex로 잡을 수 있는 기계적(mechanical) CRITICAL 검사들(catastrophic deletion, history destruction, credential hunting 등)을 이제 결정론적 훅으로 이관하자. 그러면 Sentinel은 판단(scope creep, 부정직 진척주장, prompt-injection 의미검사)만 맡고, 기계 검사는 훅이 담당하니 중복이 사라진다. Sentinel에서 이 기계 검사 항목들을 제거하고 훅으로 옮기려면 어떻게 진행하면 좋을까?

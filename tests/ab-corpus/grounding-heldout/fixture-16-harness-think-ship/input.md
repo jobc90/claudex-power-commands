@@ -1,0 +1,1 @@
+claudex에 `/harness-think`(Surveyor) — 코드베이스에 앵커링된 의사결정/타당성 토론용 read-only 커맨드 — 를 지금 7번째 커맨드로 정식 출시하자. plugin.json·marketplace.json·README의 커맨드 카운트를 6→7로 올리고, Codex 미러도 `codex-skills/harness-think`로 추가하고, 버전도 같이 bump하면 될 것 같다. 지금 이 7번째 커맨드를 공개 릴리즈로 묶으려면 어떤 파일들을 어떤 순서로 건드리는 게 가장 안전할까?

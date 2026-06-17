@@ -1,0 +1,1 @@
+claudex의 release-gate를 git pre-commit 훅으로 자동화하자 — `harness/*-prompt.md`나 `commands/*.md`가 바뀐 커밋마다 `tests/`의 §7 fixture eval을 자동 실행하고, 사전등록 임계 아래로 회귀하면 그 커밋(과 버전 bump)을 차단하게 만들고 싶다. 매 커밋마다 회귀가 자동으로 잡히니 좋을 것 같은데, 이 자동 release-gate를 pre-commit 훅에 어떻게 배선하는 게 가장 깔끔할까?

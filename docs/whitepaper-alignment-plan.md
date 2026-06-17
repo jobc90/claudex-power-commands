@@ -199,7 +199,12 @@
 
 ### 보류 — 저가치 polish/governance (코어 아님)
 - **#8 release-gate**: golden-score.py + dev/harness-eval.md로 **수동 게이트는 이미 제공**. "매 커밋 자동" 버전은 에이전트 재생 비용상 git pre-commit엔 부적합 → 수동 게이트가 올바른 형태.
-- **#12 context-budget**, **#13 Auditor efficiency**: governance polish. 라우팅은 이미 강함.
+- ~~**#12 context-budget**, **#13 Auditor efficiency**~~ → **2차 재검토(아래)에서 취소 확정.**
+
+### 재검토 2차 (2026-06-16) — #12·#13 보류 → 취소 확정
+P0-2(Trajectory Reporter)·골든 스위트가 출하된 *이후* 다시 판정. 항목별로 옹호 vs 회의 4관점을 파일 증거에 grounding해 재검토했고, **둘 다 취소**로 수렴(옹호 역할로 배정된 에이전트조차 #13을 cancel로 결론). 의존성이 풀린 게 아니라 전제가 obviate/구조적으로 죽었음이 확인됨.
+- **#13 Auditor efficiency — 취소**: 단일-run 효율 신호는 출하된 Trajectory Reporter(`trajectory-reporter-prompt.md:60-64`의 smooth/retried/drifted = EFFICIENT/ACCEPTABLE/WASTEFUL, retry 카운트 `:47`, Rounds-vs-Baseline `:57-58`)가 **이미 소유** → Auditor(본분=정직성 검증 `auditor-prompt.md:14`)에 추가 시 신호가 2개 에이전트로 분산(단일 출처 원칙 위반). cross-run drift 원장은 영속 저장소 **부재**(`.harness/` gitignore + restart 시 `mv .harness/ .harness-backup/`로 폐기 `session-protocol.md:57-58`) + 마켓플레이스 1회성 세션 볼륨상 통계적 발화 불가 + 골든 스위트(단일-run)로 측정 불가. **P0-2가 유효 절반을 obviate, 나머지는 구축·측정 불가.**
+- **#12 context-budget — 취소(문서 슬라이스 1개만 생존)**: Selective Context Protocol은 이미 존재(`session-protocol.md §3`, 라인 126-165), per-agent 비용은 Claude Code stdio가 세션 누적 스칼라만 노출(`statusline.js:573-586`)해 배선 **구조적 불가**, `score.py`/`golden-score.py`에 토큰/비용 컬럼 0 → 측정 불가. **§7.4 가드(budget이 routing 못 덮음)는 이미 `tier-matrix.md:99-100`에 적용됨.** 유일 생존: `commands/harness.md` Cost Awareness 표(라인 1063-1077)에 tier별 token/cost 밴드 + Elite 비용 각주 추가(가시화 문서 — 행동 메커니즘 아니므로 A/B 게이트 면제). **단독 릴리즈 비권장, 차기 릴리즈 번들 시에만.**
 
 ### 바텀라인
 **고가치 코어(P0 + 측정 + 회귀 그물)는 완료·검증됨.** P2 tail은 감사 과대 진단으로 대부분 불필요/부적절. 권장 다음 단계는 **새 항목 추가가 아니라 브랜치 검토·push/병합**(consolidation).

@@ -1,9 +1,10 @@
 # Harness Agent Index
 
-> 29개 에이전트 프롬프트 + 1개 orchestrator helper, 4개 파이프라인, 6개 커맨드의 교차참조 맵.
+> 29개 에이전트 프롬프트 + 1개 orchestrator helper, 4개 파이프라인, 7개 커맨드의 교차참조 맵.
 > ⚠️ 카운트 주의: 디스크의 `harness/*-prompt.md`는 **31개**다. 그중 `phase-orchestrator-prompt.md`는 helper, `linter-prompt.md`는 dev 전용 `/harness-lint` 도구(`dev/harness-lint.md`) 프롬프트로 **사용자 파이프라인 에이전트가 아니다**. 사용자 대상 = 29 에이전트 (+1 helper). 공개 문서(plugin.json·marketplace.json·README) 표기는 "29 + 1 helper"로 통일.
 > **Whitepaper-alignment P0** (`docs/whitepaper-alignment-plan.md`): Trajectory Reporter agent added (end-of-run telemetry synthesis). Landed alongside: deterministic guard hooks (`hooks/guard-bash.sh`·`guard-commit.sh`), Builder/Refiner DoD-Check tables, Summary "Residual Risk" section, and eval scaffolding under `tests/` + `dev/harness-eval.md`.
 > **Whitepaper-alignment P1** (eval-independent): Curator agent added (approval-gated learned-rules → target `AGENTS.md`); Conductor mode (`/harness --quick`) for trivial single-file edits. P1 #9 (guardrail-dedup refactor) and #10 (mirror collapse) deferred until the eval can catch regressions.
+> **`/harness-think` (Surveyor)** — **SHIPPED v4.5.0** (2026-06-17): a 7th command for codebase-anchored decision/feasibility discussion. Read-only, **0 sub-agents, 0 new agent prompts** (count stays 29 + 1 helper). Reference `references/think-grounding.md` (cite-or-abstain) is **A/B-measured KEEP** on both an in-author and an independent-author held-out split (M8, +4 each; `tests/ab-results/RESULTS-grounding.md`). Codex mirror `codex-skills/harness-think/`. Spec: `docs/harness-think-spec.md`.
 > **v4.1.0**: Meta-Loop is the default execution model for `/harness`. Phase-Book Planner, Phase Verifier, and Phase Orchestrator reference added.
 > **v4.0.0**: `/harness-team` merged into `/harness` as TEAM mode.
 > Lint(`/harness-lint`)가 이 파일을 기준으로 일관성을 검증합니다.
@@ -231,6 +232,12 @@ Each row maps a Claude-side prompt to its Codex copy.
 | `analyst-prompt.md` | `analyst-prompt.md` |
 | `qa-reporter-prompt.md` | `qa-reporter-prompt.md` |
 
+### /harness-think mirrors
+
+| Original (`harness/`) | Mirror (`codex-skills/harness-think/references/`) |
+|----------------------|---------------------------------------------------|
+| `references/think-grounding.md` | `references/think-grounding.md` |
+
 ---
 
 ## Pipeline Configuration
@@ -259,6 +266,7 @@ Located in `harness/references/`. Agents load these on demand for progressive di
 | `references/phase-verification-protocol.md` | Phase Verifier | Standard procedure for confirming phase DoD + verify commands + cross-phase invariants |
 | `references/tier-matrix.md` | Orchestrator and every tier-aware agent | Tier × Scale × Parameter reference (round limits, QA threshold, Sentinel/Auditor activation, Scale file thresholds) |
 | `references/observation-grounding.md` | Phase Verifier, review Verifier, Builder, Refiner, Analyzer, Reporter | Run+observe render/executable artifacts before "done" (R3) + anti-over-verification stop condition (R4); the optional `runtime-observation-required` flag |
+| `references/think-grounding.md` | `/harness-think` (Surveyor) | Cite-or-abstain grounding for codebase-anchored decision/feasibility discussion: 4-state ledger (VERIFIED/NOT-FOUND/STALE/UNKNOWN), `[Unknown]`-over-guess, doc-vs-tree-drift, anti-over-grounding stop. A/B-measured KEEP (M8, both splits) |
 
 ---
 

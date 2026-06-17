@@ -6,6 +6,32 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 
 ---
 
+## [4.5.0] — 2026-06-17
+
+### Added — `/harness-think` (Surveyor): a read-only, codebase-anchored decision/feasibility discussion command
+
+A 7th command (and Codex skill). Where the other six produce artifacts (code, docs, review, QA, design), `/harness-think` produces none — it is a **read-only thinking partner** for decisions that hinge on what the repo actually is ("merge X before Y?", "is it worth building Z here?", "was W deprecated?"). It never builds, never edits, spawns no subagents, and adds **0 agent prompts** (count stays 29 + 1 helper).
+
+**The one thing it adds — and the only thing measured — is forced grounding.** Phase 0 **Scope-Gate** (is this codebase-anchored? abstract questions EXIT to plain chat / PM Suite) → **Ground** (cite-or-abstain: every repo claim carries an inline `[path:line]` read this session, or degrades to `[Unknown]`; a 4-state ledger where a STALE noun cannot be a build target) → **Discuss** (adaptive frameworks, gated behind grounding) → **Handoff** (a build seed for `/harness`; the human decides the transition). Reference: `harness/references/think-grounding.md`. Spec: `docs/harness-think-spec.md`.
+
+**Measured (headline + honest caveat).** The grounding discipline is **A/B-measured KEEP** on BOTH an in-author and an independent-author held-out split (M8 repo-fact escape; model `sonnet`, effort `xhigh`): primary margin **+4 each**, null FP **1/2 each** (below the CUT threshold). Built the way v4.4.0 set the bar — the held-out author and a separate oracle verifier were blind to the in-author set. The failure mode it fixes is concrete: without forced grounding, a fluent persona confidently recommended building items the repo records as **cancelled**. **Caveats travel with the claim**: grounding *lowers* repo-fact escape, it does not *eliminate* it (ON still escaped 1/5 held-out — citation-presence ≠ citation-support); the edge concentrates on un-inferable / cross-repo facts (a strong reasoner derives obvious structural barriers either way); results are model/effort-specific. Data: `tests/ab-results/grounding.csv` + `RESULTS-grounding.md`, corpus `tests/ab-corpus/grounding{,-heldout}/`.
+
+### How it was built (process)
+1. Blind A/B niche-validation (persona vs +frameworks vs +code-grounding) confirmed the value is specifically **code-grounding**, not framework-imposition.
+2. A 3-architect judge panel (minimalist / standalone / submode) chose **standalone command + minimalist skeleton** (inline grounding, 0 subagents).
+3. Claude-only ship → M8 in-author KEEP → independent-author held-out KEEP → this public release (the staged, evidence-gated path).
+
+### Naming
+"Conductor" is already `/harness --quick`. This command's role label is **Surveyor**.
+
+### Codex
+Mirrored as `codex-skills/harness-think/` (SKILL.md + byte-identical `references/think-grounding.md`); `codex-skills/AGENTS.md` canonical list 6→7.
+
+### Also
+Records the 2nd-pass re-review of deferred P2 items #12/#13 (→ both cancelled) in `docs/whitepaper-alignment-plan.md` §11.
+
+---
+
 ## [4.4.0] — 2026-06-16
 
 ### Added — Whitepaper-alignment ("The New SDLC With Vibe Coding") + claudex's first A/B-measured effect

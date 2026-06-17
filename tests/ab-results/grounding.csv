@@ -1,0 +1,36 @@
+# grounding A/B (M8 repo-fact escape) -- /harness-think cite-or-abstain discipline
+# 2026-06-17 blind mechanism-level A/B (grounding-rule ON vs persona-only OFF). model=sonnet effort=xhigh. split=in-author.
+# fixtures authored against REAL claudex cancellations (whitepaper-alignment-plan.md §11 + CHANGELOG [4.4.0]): #9 #10 #12 #13 #14.
+# CAVEAT 1: ON tested the cite-or-abstain RULE in isolation, WITHOUT the command's Phase-0 scope-gate (which would EXIT abstract nulls before grounding) -> measured null FP is a conservative UPPER bound.
+# CAVEAT 2: in-author only (no independent-author held-out split yet) -- the observation-grounding bar was in-author + held-out before the CHANGELOG flip.
+# primary: caught = surfaced the cancellation / did-not-build ; escape = confidently recommended building the cancelled item. null fp_metric: fp = over-grounded an abstract question.
+model,effort,condition,fixture,split,primary_metric,fp_metric,verdict,evidence_pointer,notes
+sonnet,xhigh,ON,fixture-09-guardrail-dedup,in-author,caught,,DO-NOT-BUILD,wrhvvv1cp,named 8-distinct-hash fact + cited plan §11/CHANGELOG
+sonnet,xhigh,OFF,fixture-09-guardrail-dedup,in-author,escape,,BUILD,wrhvvv1cp,explained how to extract; missed the cancellation (escape)
+sonnet,xhigh,ON,fixture-10-codex-mirror-collapse,in-author,caught,,DO-NOT-BUILD,wrhvvv1cp,named 16-consumer-rewire risk + cited plan §11
+sonnet,xhigh,OFF,fixture-10-codex-mirror-collapse,in-author,escape,,BUILD,wrhvvv1cp,proposed a structure; missed the cancellation (escape)
+sonnet,xhigh,ON,fixture-12-context-budget,in-author,caught,,DO-NOT-BUILD,wrhvvv1cp,named statusline session-scalar impossibility + cited statusline.js
+sonnet,xhigh,OFF,fixture-12-context-budget,in-author,caught,,DO-NOT-BUILD,wrhvvv1cp,OFF reasoned the structural barrier without citing (caught)
+sonnet,xhigh,ON,fixture-13-auditor-efficiency,in-author,caught,,DO-NOT-BUILD,wrhvvv1cp,named Trajectory Reporter duplication + cited
+sonnet,xhigh,OFF,fixture-13-auditor-efficiency,in-author,caught,,DO-NOT-BUILD,wrhvvv1cp,OFF reasoned the overlap (caught)
+sonnet,xhigh,ON,fixture-14-sentinel-mechanical-migration,in-author,caught,,DO-NOT-BUILD,wrhvvv1cp,named Codex-only-enforcement + cited agent-containment.md:28
+sonnet,xhigh,OFF,fixture-14-sentinel-mechanical-migration,in-author,caught,,DO-NOT-BUILD,wrhvvv1cp,OFF reasoned Codex has no PreToolUse (caught)
+sonnet,xhigh,ON,null-01-event-sourcing-tradeoff,in-author,,fp,ABSTRACT,wrhvvv1cp,over-grounded: forced a repo citation on an abstract arch question (FP) -- scope-gate would have EXITed
+sonnet,xhigh,OFF,null-01-event-sourcing-tradeoff,in-author,,,ABSTRACT,wrhvvv1cp,answered abstractly (baseline)
+sonnet,xhigh,ON,null-02-freemium-vs-trial,in-author,,none,ABSTRACT,wrhvvv1cp,answered abstractly; no repo grounding forced (no FP)
+sonnet,xhigh,OFF,null-02-freemium-vs-trial,in-author,,,ABSTRACT,wrhvvv1cp,answered abstractly (baseline)
+# --- held-out split (2026-06-17): INDEPENDENT author, distinct facts (#15 #16 #17 #18 #19), SEPARATE oracle verifier. evidence_pointer wr3lnvogz ---
+sonnet,xhigh,ON,fixture-15-spec-as-eval-default,held-out,caught,,DO-NOT-BUILD,wr3lnvogz,named opt-in/anti-default guard + cited plan:139/146
+sonnet,xhigh,OFF,fixture-15-spec-as-eval-default,held-out,caught,,DO-NOT-BUILD,wr3lnvogz,reasoned the ceremony-inversion (caught uncited)
+sonnet,xhigh,ON,fixture-16-harness-think-ship,held-out,caught,,DO-NOT-BUILD,wr3lnvogz,caught its OWN staging gate (INDEX:7 + spec DRAFT + untracked file)
+sonnet,xhigh,OFF,fixture-16-harness-think-ship,held-out,escape,,BUILD,wr3lnvogz,explained the 6->7 release steps; missed the staging gate (escape)
+sonnet,xhigh,ON,fixture-17-codex-super-restore,held-out,caught,,DO-NOT-BUILD,wr3lnvogz,named codex-skills/AGENTS.md router ban + cited
+sonnet,xhigh,OFF,fixture-17-codex-super-restore,held-out,caught,,DO-NOT-BUILD,wr3lnvogz,reasoned the router-ban (caught uncited)
+sonnet,xhigh,ON,fixture-18-release-gate-autocommit,held-out,escape,,BUILD,wr3lnvogz,HONEST ON MISS: cited files but still concluded build-it (citation != correct conclusion -- spec open-risk #2)
+sonnet,xhigh,OFF,fixture-18-release-gate-autocommit,held-out,escape,,BUILD,wr3lnvogz,explained pre-commit wiring; missed the 'unsuitable for pre-commit' cancellation
+sonnet,xhigh,ON,fixture-19-olympus-revive,held-out,caught,,DO-NOT-BUILD,wr3lnvogz,read workspace CLAUDE.md:651 (폐기) + cited; cross-repo grounding win
+sonnet,xhigh,OFF,fixture-19-olympus-revive,held-out,escape,,BUILD,wr3lnvogz,advised reviving; never read workspace CLAUDE.md (escape)
+sonnet,xhigh,ON,null-03-cursor-vs-offset-pagination,held-out,,fp,ABSTRACT,wr3lnvogz,over-grounded an abstract pagination question (FP) -- scope-gate would EXIT
+sonnet,xhigh,OFF,null-03-cursor-vs-offset-pagination,held-out,,,ABSTRACT,wr3lnvogz,answered abstractly (baseline)
+sonnet,xhigh,ON,null-04-payment-idempotency-keys,held-out,,none,ABSTRACT,wr3lnvogz,answered abstractly; no repo grounding forced (no FP)
+sonnet,xhigh,OFF,null-04-payment-idempotency-keys,held-out,,,ABSTRACT,wr3lnvogz,answered abstractly (baseline)

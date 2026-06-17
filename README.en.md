@@ -2,8 +2,9 @@
 
 **English** | [한국어](README.md)
 
-> A 6-command harness suite for Claude Code, mirrored as 6 skills for Codex
+> A 7-command harness suite for Claude Code, mirrored as 7 skills for Codex
 >
+> **v4.5.0**: `/harness-think` (Surveyor) — a **read-only** codebase-anchored decision/feasibility discussion command (Scope-Gate → cite-or-abstain Ground → Discuss → Handoff seed) that never builds or edits. Its grounding discipline is **A/B-measured KEEP** on both an in-author and an independent-author held-out split (M8, margin +4 each, FP 1/2). 0 new agent prompts; Codex mirror added. Honest ceiling: grounding lowers repo-fact escape, it does not eliminate it. Write-up: `tests/ab-results/RESULTS-grounding.md`.
 > **v4.4.0**: Whitepaper-alignment (measured) — observation-grounding is now **A/B-measured KEEP** on both an in-author and an independent-author held-out split (+ M4 untestable KEEP, 0 false-positives). Adds Conductor mode (`/harness --quick`), a Curator agent (approval-gated learned-rules → AGENTS.md), a Trajectory Reporter, deterministic guard hooks (PreToolUse/commit), Builder/Refiner DoD-Check, Summary Residual-Risk, and an eval + golden-regression suite (`tests/`). Write-up: `tests/ab-results/RESULTS-2026-06-16.md`.
 > **v4.3.0**: Observation Grounding + Capability Escalation — starts from the finding that claudex's gates are *agent-self-enforced* (a soft entrance). Adds a **Stop hook** (claudex's first runtime-enforced completion entrance), **observe-the-rendered-output** in the verify chain (exit-0 = well-formed, not correct), a **§5.1 capability-escalation ladder** at the 3-retry ceiling (raise effort → higher TIER + evidence package → human), context-first decomposition, and a QA `UNTESTABLE` state. Transferred from fablize/prometheus; **effect on claudex's model mix not yet A/B-measured**.
 > **v4.2.0**: Completion Gate protocol — finalizing agents scan for stale iteration artifacts before declaring complete.
@@ -12,10 +13,10 @@
 
 The source of truth is the harness-based command suite first organized on the Claude side, then ported to Codex with the same shape.
 
-- Claude source of truth: 6 files in `commands/`
-- Codex ports: 6 matching skills in `codex-skills/`
+- Claude source of truth: 7 files in `commands/`
+- Codex ports: 7 matching skills in `codex-skills/`
 - Shared harness prompt bundle: 29 agent prompts + 1 orchestrator helper in `harness/`
-- Reference checklists: 11 files in `harness/references/`
+- Reference checklists: 12 files in `harness/references/`
 
 ### v4.1.0 — Meta-Loop + Capability Detection
 
@@ -54,6 +55,7 @@ Inspired by Anthropic's [Managed Agents](https://www.anthropic.com/engineering/m
 | `/harness-docs` | Researcher -> Outliner -> Writer -> Reviewer + Validator | Documentation generation (S/M/L) |
 | `/harness-review` | Scanner -> Analyzer -> Fixer -> Verifier -> Reporter | Code review + git handoff |
 | `/harness-qa` | Scout -> Scenario Writer -> Test Executor -> Analyst -> Reporter | Functional QA testing |
+| `/harness-think` | Scope-Gate -> Ground (cite-or-abstain) -> Discuss -> Handoff | Read-only codebase-anchored decision/feasibility discussion (Surveyor; 0 sub-agents) |
 | `/design` | Setup tool | 3-dial design-system control |
 | `/claude-dashboard` | Setup tool | Statusline setup |
 
@@ -67,7 +69,7 @@ Inspired by Anthropic's [Managed Agents](https://www.anthropic.com/engineering/m
 | `/harness-review` | `scanner`, `analyzer`, `fixer`, `verifier`, `reporter` |
 | `/harness-qa` | `scenario-writer`, `test-executor`, `analyst`, `qa-reporter` plus reused `scout` |
 
-There are 29 prompt templates + 1 orchestrator helper under `harness/`, plus 11 reference checklists in `harness/references/`. Meta-Loop agents: `phase-book-planner`, `phase-verifier`, `phase-orchestrator` (helper).
+There are 29 prompt templates + 1 orchestrator helper under `harness/`, plus 12 reference checklists in `harness/references/`. Meta-Loop agents: `phase-book-planner`, `phase-verifier`, `phase-orchestrator` (helper). `/harness-think` adds no agent prompts — it is an inline, read-only command whose discipline lives in `references/think-grounding.md`.
 
 ---
 
@@ -80,6 +82,7 @@ Use $harness ...
 Use $harness-docs ...
 Use $harness-review ...
 Use $harness-qa ...
+Use $harness-think ...
 Use $design ...
 Use $claude-dashboard ...
 ```
@@ -90,6 +93,7 @@ The current Codex port mirrors the Claude structure one-for-one:
 - `codex-skills/harness-docs`
 - `codex-skills/harness-review`
 - `codex-skills/harness-qa`
+- `codex-skills/harness-think`
 - `codex-skills/design`
 - `codex-skills/claude-dashboard`
 
@@ -104,6 +108,7 @@ Use $harness-docs to document this repository.
 Use $harness-review --dry-run on the current diff.
 Use $harness-review --pr after verification passes.
 Use $harness-qa --quick on the staging URL.
+Use $harness-think on whether to merge a branch before a migration.
 Use $design init for this frontend project.
 Use $claude-dashboard to configure the statusline.
 ```
@@ -135,7 +140,7 @@ cp claudex-power-commands/harness/*.md ~/.claude/harness/
 cp claudex-power-commands/harness/references/*.md ~/.claude/harness/references/
 
 # 4. Verify
-# In a new session, /harness /harness-docs /harness-review /harness-qa /design /claude-dashboard should appear
+# In a new session, /harness /harness-docs /harness-review /harness-qa /harness-think /design /claude-dashboard should appear
 ```
 
 ### Codex
@@ -148,13 +153,13 @@ git clone https://github.com/jobc90/claudex-power-commands.git
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
 
 # 3. Sync the 6 skills
-for skill in harness harness-docs harness-review harness-qa design claude-dashboard; do
+for skill in harness harness-docs harness-review harness-qa harness-think design claude-dashboard; do
   rsync -a --delete "claudex-power-commands/codex-skills/$skill/" "${CODEX_HOME:-$HOME/.codex}/skills/$skill/"
 done
 rm -rf "${CODEX_HOME:-$HOME/.codex}/skills/harness-team"
 
 # 4. Verify
-# In a new Codex session, invoke $harness $harness-docs $harness-review $harness-qa $design $claude-dashboard
+# In a new Codex session, invoke $harness $harness-docs $harness-review $harness-qa $harness-think $design $claude-dashboard
 ```
 
 ---
@@ -168,6 +173,7 @@ claudex-power-commands/
 │   ├── harness-docs.md
 │   ├── harness-review.md
 │   ├── harness-qa.md
+│   ├── harness-think.md
 │   ├── design.md
 │   └── claude-dashboard.md
 ├── harness/
@@ -204,6 +210,7 @@ claudex-power-commands/
 │   ├── harness-docs/
 │   ├── harness-review/
 │   ├── harness-qa/
+│   ├── harness-think/
 │   ├── design/
 │   └── claude-dashboard/
 ├── dashboard/

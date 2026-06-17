@@ -1,0 +1,1 @@
+우리가 새로 시작하는 결제 정산(settlement) 백엔드를 설계 중인데, 상태를 CRUD로 현재값만 저장할지 아니면 event sourcing으로 모든 상태 변화를 이벤트로 append-only 저장할지 고민이다. 감사 추적성과 재처리(replay)는 event sourcing이 좋아 보이는데, 운영 복잡도와 eventual consistency, 그리고 스키마 진화 비용이 걱정된다. 일반적으로 어떤 기준으로 둘 중 하나를 골라야 하고, event sourcing이 정당화되는 조건은 무엇인가?

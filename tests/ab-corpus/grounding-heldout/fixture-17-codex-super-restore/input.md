@@ -1,0 +1,1 @@
+claudex의 Codex 스킬 쪽에 상위 라우터인 `$super` 스킬을 (다시) 만들어서, `$harness`·`$harness-docs`·`$harness-review`·`$harness-qa`를 한 진입점에서 의도에 따라 자동 라우팅하게 하자. 사용자가 매번 어떤 하니스 스킬을 쓸지 고르지 않아도 되니 편할 것 같다. 지금 이 `$super` 라우터 스킬을 `codex-skills/`에 추가하고 나머지 4개 스킬을 호출하도록 배선하려면 어떻게 설계하는 게 좋을까?

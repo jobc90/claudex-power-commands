@@ -2,8 +2,9 @@
 
 [English](README.en.md) | **한국어**
 
-> Claude Code용 harness commands와 Codex용 harness skills를 같은 구조로 맞춘 6종 세트
+> Claude Code용 harness commands와 Codex용 harness skills를 같은 구조로 맞춘 7종 세트
 >
+> **v4.5.0**: `/harness-think` (Surveyor) — 코드베이스에 앵커링된 의사결정/타당성 토론용 **read-only** 커맨드. Scope-Gate → cite-or-abstain Ground → Discuss → Handoff seed; 코드를 짜거나 편집하지 않음. grounding 규율이 in-author + 독립저자 held-out **양 split A/B-measured KEEP**(M8, margin +4 each, FP 1/2). 신규 에이전트 프롬프트 0개, Codex 미러 추가. 정직한 천장: grounding은 repo-fact escape를 낮추지 제거하지 않음. 측정: `tests/ab-results/RESULTS-grounding.md`.
 > **v4.4.0**: Whitepaper-alignment (측정됨) — observation-grounding이 in-author + 독립저자 held-out **양 split KEEP**(+ M4 KEEP, FP 0)로 **A/B 측정 완료**. Conductor 모드(`/harness --quick`), Curator 에이전트(승인 게이트 학습규칙 → AGENTS.md), Trajectory Reporter, 결정론적 가드 훅(PreToolUse/commit), Builder/Refiner DoD-Check, Summary Residual-Risk, eval + golden 회귀 스위트(`tests/`). 측정: `tests/ab-results/RESULTS-2026-06-16.md`.
 > **v4.3.0**: Observation Grounding + Capability Escalation — claudex의 게이트는 사실 **agent-self-enforced(soft entrance)**라는 발견에서 출발. **Stop hook**(claudex 첫 런타임 완료 entrance) + verify-chain의 **observe-rendered-output**(exit-0은 well-formed일 뿐 correct 아님) + 3-retry 천장의 **§5.1 capability-escalation ladder**(effort↑ → 상위 TIER + 증거패키지 → 사람) + context-first 분해 + QA `UNTESTABLE`. fablize/prometheus에서 이식한 절차로, **claudex 모델 믹스에서의 효과는 아직 A/B 미측정**.
 > **v4.2.0**: Completion Gate protocol — Reporter / QA Reporter / Integrator / Refiner / Auditor가 **완료 선언 직전 stale iteration artifact를 자동 스캔**. terminated 리소스 ID, "진행 중" 마커, version drift, step-status 모순을 **다른 단계가 통과해도 구조적으로 차단**. 원본 사고: 다층 감사 통과 후 사용자가 stale EC2 ID를 정리작업에서 발견 — 이 패턴을 시스템적으로 재발 방지.
@@ -12,10 +13,10 @@
 
 이 저장소는 `harness` 계열 중심 구조를 기준으로 운영합니다.
 
-- Claude Code 기준 진실: `commands/` 6개
-- Codex 포트: `codex-skills/` 6개
+- Claude Code 기준 진실: `commands/` 7개
+- Codex 포트: `codex-skills/` 7개
 - 하네스 프롬프트 번들: `harness/` 29개 에이전트 프롬프트 + 1개 orchestrator helper
-- 참조 체크리스트: `harness/references/` 11개 (v4.3.0에 `observation-grounding.md` 추가)
+- 참조 체크리스트: `harness/references/` 12개 (v4.3.0 `observation-grounding.md`, v4.5.0 `think-grounding.md` 추가)
 - 템플릿 스크립트: `harness/completion-gate-template.sh` (프로젝트에 `scripts/completion-gate.sh`로 복사)
 
 ### v4.3.0 — Observation Grounding + Capability Escalation
@@ -84,6 +85,7 @@ Anthropic의 [Managed Agents](https://www.anthropic.com/engineering/managed-agen
 | `/harness-docs` | Researcher -> Outliner -> Writer -> Reviewer + Validator | 문서 생성 (S/M/L) |
 | `/harness-review` | Scanner -> Analyzer -> Fixer -> Verifier -> Reporter | 코드 리뷰 + git 핸드오프 |
 | `/harness-qa` | Scout -> Scenario Writer -> Test Executor -> Analyst -> Reporter | 기능 QA 테스트 |
+| `/harness-think` | Scope-Gate -> Ground (cite-or-abstain) -> Discuss -> Handoff | 코드베이스 앵커 의사결정/타당성 토론 (Surveyor, read-only, 서브에이전트 0) |
 | `/design` | 설정 도구 | 디자인 시스템 3-dial 설정 |
 | `/claude-dashboard` | 설정 도구 | statusline 설정 |
 
@@ -110,6 +112,7 @@ Use $harness ...
 Use $harness-docs ...
 Use $harness-review ...
 Use $harness-qa ...
+Use $harness-think ...
 Use $design ...
 Use $claude-dashboard ...
 ```
@@ -120,6 +123,7 @@ Use $claude-dashboard ...
 - `codex-skills/harness-docs`
 - `codex-skills/harness-review`
 - `codex-skills/harness-qa`
+- `codex-skills/harness-think`
 - `codex-skills/design`
 - `codex-skills/claude-dashboard`
 
@@ -134,6 +138,7 @@ Use $harness-docs to document this repository.
 Use $harness-review --dry-run on the current diff.
 Use $harness-review --pr after verification passes.
 Use $harness-qa --quick on the staging URL.
+Use $harness-think on whether to merge a branch before a migration.
 Use $design init for this frontend project.
 Use $claude-dashboard to configure the statusline.
 ```
@@ -165,7 +170,7 @@ cp claudex-power-commands/harness/*.md ~/.claude/harness/
 cp claudex-power-commands/harness/references/*.md ~/.claude/harness/references/
 
 # 4. 확인
-# 새 세션에서 /harness /harness-docs /harness-review /harness-qa /design /claude-dashboard 가 보이면 성공
+# 새 세션에서 /harness /harness-docs /harness-review /harness-qa /harness-think /design /claude-dashboard 가 보이면 성공
 ```
 
 ### Codex
@@ -178,13 +183,13 @@ git clone https://github.com/jobc90/claudex-power-commands.git
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
 
 # 3. 6개 스킬 동기화
-for skill in harness harness-docs harness-review harness-qa design claude-dashboard; do
+for skill in harness harness-docs harness-review harness-qa harness-think design claude-dashboard; do
   rsync -a --delete "claudex-power-commands/codex-skills/$skill/" "${CODEX_HOME:-$HOME/.codex}/skills/$skill/"
 done
 rm -rf "${CODEX_HOME:-$HOME/.codex}/skills/harness-team"
 
 # 4. 확인
-# 새 Codex 세션에서 $harness $harness-docs $harness-review $harness-qa $design $claude-dashboard 를 호출하면 된다
+# 새 Codex 세션에서 $harness $harness-docs $harness-review $harness-qa $harness-think $design $claude-dashboard 를 호출하면 된다
 ```
 
 ---
@@ -198,6 +203,7 @@ claudex-power-commands/
 │   ├── harness-docs.md
 │   ├── harness-review.md
 │   ├── harness-qa.md
+│   ├── harness-think.md
 │   ├── design.md
 │   └── claude-dashboard.md
 ├── harness/
@@ -237,6 +243,7 @@ claudex-power-commands/
 │   ├── harness-docs/
 │   ├── harness-review/
 │   ├── harness-qa/
+│   ├── harness-think/
 │   ├── design/
 │   └── claude-dashboard/
 ├── dashboard/

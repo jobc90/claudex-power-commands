@@ -1,0 +1,1 @@
+claudex의 Auditor 에이전트에 "Trajectory Efficiency" 판정(EFFICIENT / ACCEPTABLE / WASTEFUL)을 추가하고, 동일 exit-code 반복·중복 재렌더·baseline 초과 라운드를 감지하게 하자. 거기에 더해 cross-run drift 원장(ledger)을 만들어서 retry율 상승이나 1라운드 점수 하락 같은 조용한 드리프트를 run 간에 추적하면 좋겠다. 지금 Auditor에 이 효율 판정과 원장을 붙이려면 어떻게 설계하는 게 좋을까?

@@ -1,0 +1,1 @@
+claudex의 27개 에이전트 프롬프트에 "Banned Expressions" 블록이 중복으로 들어가 있어서 유지보수가 너무 번거롭다. 지금 이 중복 블록을 공유 reference 한 곳(`harness/references/banned-expressions.md`)으로 추출해서 단일 진실원천(single source of truth)으로 만들고, 각 프롬프트는 그걸 포인터로 참조하게 리팩터링하자 — context-rot과 drift도 줄일 수 있을 것 같은데, 어떻게 하면 가장 깔끔하게 추출할 수 있을까?

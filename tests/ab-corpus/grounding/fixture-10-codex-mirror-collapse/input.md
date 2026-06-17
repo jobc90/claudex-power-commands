@@ -1,0 +1,1 @@
+claudex에는 범용 체크리스트 4종(security · error-handling · confidence-calibration · observation-grounding)이 있는데, Claude 쪽 reference와 Codex 쪽 SKILL.md 미러가 손으로 N중 동기화되고 있어서 drift가 난다. 이걸 단일 스킬 출처(single skill source)로 모아서 Codex 미러를 단일화(mirror-collapse)하자 — 한 곳만 고치면 양쪽에 반영되게. 지금 적용하려면 어떻게 구조를 잡는 게 좋을까?
