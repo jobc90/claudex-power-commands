@@ -6,6 +6,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 
 ---
 
+## [4.5.1] — 2026-06-25
+
+### Changed — harness subagents inherit the parent session model
+
+All harness subagents now omit the `model` parameter and **inherit the parent session model** instead of being pinned per-role to `sonnet`/`haiku`. The per-role downgrade table in `harness/references/session-protocol.md` §4 — and its `tier-matrix.md` / `team-build-protocol.md` equivalents — is retired in favor of one uniform policy: the session model is the single control knob. In an Opus session (e.g. `/effort ultracode`) every agent — Scout, Planner, Builder, Sentinel, QA, Worker, Integrator, Auditor, and the review/docs/QA-pipeline agents — runs Opus.
+
+**Trade-off (documented in the `session-protocol.md` Override Rule):** running `/harness` from a non-Opus session lets subagents follow it down — no silent Opus billing, but no Opus guarantee either. The previous behavior pinned cost-saving downgrades regardless of the parent model.
+
+**Preserved:** capability tier-detection (`sonnet|haiku → Standard`, `opus → Advanced`) is unaffected — it reads the *parent* model and governs pipeline rigor (round limits, QA threshold, Sentinel/Auditor activation), not the subagent model. Historical A/B records (`think-grounding.md` measurement notes) are untouched. Codex prompt mirrors (`codex-skills/harness/references/{architect,curator,trajectory-reporter}-prompt.md`) re-synced for byte-parity. README "Model Selection" rows updated. No agent count change (still 29 + 1 helper).
+
+---
+
 ## [4.5.0] — 2026-06-17
 
 ### Added — `/harness-think` (Surveyor): a read-only, codebase-anchored decision/feasibility discussion command

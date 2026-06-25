@@ -4,6 +4,7 @@
 
 > Claude Code용 harness commands와 Codex용 harness skills를 같은 구조로 맞춘 7종 세트
 >
+> **v4.5.1**: harness 전 서브에이전트가 **부모 세션 모델 상속** — 역할별 sonnet/haiku 다운그레이드 표 폐지. 세션 모델(`/effort`·`/model`)이 단일 제어점이라 Opus 세션에선 전 에이전트가 Opus. tier-detection은 부모 모델 기준이라 무영향. trade-off: 비-Opus 세션에서 돌리면 서브도 따라 내려감.
 > **v4.5.0**: `/harness-think` (Surveyor) — 코드베이스에 앵커링된 의사결정/타당성 토론용 **read-only** 커맨드. Scope-Gate → cite-or-abstain Ground → Discuss → Handoff seed; 코드를 짜거나 편집하지 않음. grounding 규율이 in-author + 독립저자 held-out **양 split A/B-measured KEEP**(M8, margin +4 each, FP 1/2). 신규 에이전트 프롬프트 0개, Codex 미러 추가. 정직한 천장: grounding은 repo-fact escape를 낮추지 제거하지 않음. 측정: `tests/ab-results/RESULTS-grounding.md`.
 > **v4.4.0**: Whitepaper-alignment (측정됨) — observation-grounding이 in-author + 독립저자 held-out **양 split KEEP**(+ M4 KEEP, FP 0)로 **A/B 측정 완료**. Conductor 모드(`/harness --quick`), Curator 에이전트(승인 게이트 학습규칙 → AGENTS.md), Trajectory Reporter, 결정론적 가드 훅(PreToolUse/commit), Builder/Refiner DoD-Check, Summary Residual-Risk, eval + golden 회귀 스위트(`tests/`). 측정: `tests/ab-results/RESULTS-2026-06-16.md`.
 > **v4.3.0**: Observation Grounding + Capability Escalation — claudex의 게이트는 사실 **agent-self-enforced(soft entrance)**라는 발견에서 출발. **Stop hook**(claudex 첫 런타임 완료 entrance) + verify-chain의 **observe-rendered-output**(exit-0은 well-formed일 뿐 correct 아님) + 3-retry 천장의 **§5.1 capability-escalation ladder**(effort↑ → 상위 TIER + 증거패키지 → 사람) + context-first 분해 + QA `UNTESTABLE`. fablize/prometheus에서 이식한 절차로, **claudex 모델 믹스에서의 효과는 아직 A/B 미측정**.
