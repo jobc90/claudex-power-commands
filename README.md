@@ -71,7 +71,7 @@ Anthropic의 [Managed Agents](https://www.anthropic.com/engineering/managed-agen
 | **Unified Event Log** | `.harness/session-events.md` append-only 타임라인 | 패턴 인식 + 정확한 디버깅 |
 | **Selective Context** | Round 2+ Builder에 3단계 컨텍스트 계층 | 토큰 절약 + agent 집중도 향상 |
 | **Worktree Isolation** | Team Workers에 `isolation: "worktree"` 적용 | 병렬 안전성 (Claude Code 공식 기능) |
-| **Model Selection** | agent별 최적 모델 라우팅 (sonnet/opus) | 속도 향상 + 비용 절감 |
+| **Model Selection** | 모든 서브에이전트가 부모 세션 모델 상속 (역할별 다운그레이드 없음) | 세션 모델 하나로 일괄 제어 |
 | **Execution Audit** | Builder/Refiner 실행 로그 → Diagnostician | 근본 원인 추적 정확도 향상 → 라운드 절감 |
 | **Background Diagnostician** | Scale L에서 `run_in_background` 적용 | 대기 시간 절감 |
 

@@ -41,7 +41,7 @@ Inspired by Anthropic's [Managed Agents](https://www.anthropic.com/engineering/m
 | **Unified Event Log** | Append-only timeline in `.harness/session-events.md` | Better pattern recognition + debugging |
 | **Selective Context** | 3-tier context hierarchy for Round 2+ Builder | Token savings + improved agent focus |
 | **Worktree Isolation** | `isolation: "worktree"` for Team Workers | True parallel safety (official Claude Code feature) |
-| **Model Selection** | Per-agent optimal model routing (sonnet/opus) | Faster execution + cost reduction |
+| **Model Selection** | All subagents inherit the parent session model (no per-role downgrade) | Single session-model control knob |
 | **Execution Audit** | Builder/Refiner action logs for Diagnostician | More accurate root cause analysis, fewer rounds |
 | **Background Diagnostician** | `run_in_background` for Scale L | Reduced wait time |
 

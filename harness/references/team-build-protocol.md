@@ -47,7 +47,7 @@ For each Worker i (1 to N):
   - If R == 1: "Write progress to `.harness/team-worker-{i}-progress.md`"
 - **description**: "harness-team worker {i}"
 - **isolation**: `"worktree"`
-- **model**: Use `haiku` for 1-2 file mechanical tasks, `sonnet` for standard work, inherit parent for complex judgment calls (per Architect's plan complexity rating).
+- **model**: omit for every Worker — inherit the parent session model (no per-role downgrade, regardless of task complexity).
 
 **All N Workers must complete before proceeding.**
 
@@ -83,7 +83,7 @@ After all Workers complete but BEFORE merging any Worker branches:
 
 For each Worker i that returned changes (has a branch):
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The sentinel prompt template (`~/.claude/harness/sentinel-prompt.md`) + context:
   - "Team plan: `.harness/team-plan.md` -- file ownership assignments for Worker {i}"
   - "Worker {i} branch: `{worker-branch-i}` at path `{worktree-path-i}`"
@@ -100,7 +100,7 @@ Launch a **general-purpose Agent** with **model `sonnet`**:
   - "  6. git diff --stat of branch matches Worker's claimed file list"
   - "Write report to `.harness/sentinel-worker-{i}-round-{R}.md`"
 - **description**: "harness-team sentinel worker {i} round {R}"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 **Note**: Per-Worker Sentinels can run in **parallel** (multiple Agent calls in one message), since each inspects an independent branch.
 
@@ -134,7 +134,7 @@ echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] sentinel:team:r{R} | done | sentinel-work
 
 ## Wave 3 -- Integration
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The integrator prompt template (`~/.claude/harness/integrator-prompt.md`) + context:
   - "Architect's plan: `.harness/team-plan.md`"
   - "Worker progress reports: `.harness/team-worker-{0..N}-progress.md`"
@@ -144,7 +144,7 @@ Launch a **general-purpose Agent** with **model `sonnet`**:
   - "NOTE: Worker branches have already been merged by the orchestrator. If merge conflicts were noted, resolve them as part of integration."
   - "IMPORTANT: Perform CODE HYGIENE on all Worker-changed files: remove console.log/debug, remove TODO/FIXME comments, remove commented-out code, verify naming matches context.md conventions, check for unused imports. Report hygiene issues found/fixed in the integration report."
 - **description**: "harness-team integrator"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 After Integrator completes:
 - Read `.harness/team-integration-report.md`
@@ -290,17 +290,19 @@ Append to `.harness/team-history.md`:
 
 ## Model Selection Directives
 
+> **Inherit-parent policy (user policy 2026-06-25):** every agent below inherits the parent session model — omit the `model` param. No per-role downgrades to `sonnet`/`haiku`. In an Opus session every agent is Opus.
+
 | Agent | Model | Rationale |
 |-------|-------|-----------|
-| Architect | inherit parent | Architectural decisions are critical |
-| Worker (1-2 file mechanical) | `haiku` | Simple, fast, cost-efficient |
-| Worker (standard) | `sonnet` | Balanced capability |
-| Worker (complex judgment) | inherit parent | Needs deep reasoning |
-| Integrator | `sonnet` | Merge verification, hygiene |
-| Sentinel (per-Worker) | `sonnet` | Checklist-driven pattern matching |
-| Diagnostician | inherit parent | Root cause analysis needs deep reasoning |
-| QA | `sonnet` | Test execution, scoring |
-| Auditor | `sonnet` | Cross-verification |
+| Architect | inherit | Architectural decisions are critical |
+| Worker (1-2 file mechanical) | inherit | Cost-no-object override |
+| Worker (standard) | inherit | Cost-no-object override |
+| Worker (complex judgment) | inherit | Needs deep reasoning |
+| Integrator | inherit | Merge verification, hygiene |
+| Sentinel (per-Worker) | inherit | Cost-no-object override |
+| Diagnostician | inherit | Root cause analysis needs deep reasoning |
+| QA | inherit | Test execution, scoring |
+| Auditor | inherit | Cross-verification |
 
 ---
 
@@ -320,7 +322,7 @@ Append to `.harness/team-history.md`:
 2. **No two Workers may modify the same file.** The Architect ensures this; the Integrator verifies.
 3. **Wave 1 MUST complete before Wave 2 starts.** Foundation dependencies are sequential.
 4. **Workers CANNOT self-certify.** The Integrator verifies integration; QA verifies quality.
-5. **Worker model selection**: Use `haiku` for 1-2 file mechanical tasks, `sonnet` for standard work, inherit parent for complex judgment calls. Pass `model` parameter in Agent tool call.
+5. **Worker model selection**: every Worker inherits the parent session model — omit the `model` param in the Agent tool call (no per-role downgrade).
 6. **Wave 2 Workers use `isolation: "worktree"`** for true parallel safety. Orchestrator merges branches before Integrator runs.
 7. **Round 2 Workers use Selective Context**: PRIMARY (diagnosis), SECONDARY (plan), ON-DEMAND (feedback).
 8. **Diagnostician runs in background** (`run_in_background: true`). History and user reporting proceed in parallel.

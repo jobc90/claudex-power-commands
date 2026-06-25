@@ -146,7 +146,7 @@ Include in the prompt file:
 
 Read the scout prompt template: `~/.claude/harness/scout-prompt.md`
 
-Launch a **general-purpose Agent** with subagent_type `Explore` and **model `sonnet`**:
+Launch a **general-purpose Agent** with subagent_type `Explore` (model inherits parent):
 - **prompt**: The scout prompt template + context:
   - "Project directory: `{cwd}`"
   - "User's request: `{$ARGUMENTS}`"
@@ -156,7 +156,7 @@ Launch a **general-purpose Agent** with subagent_type `Explore` and **model `son
   - Mode-specific focus instructions (see below)
   - QA-specific supplementary instructions (see below)
 - **description**: "harness-qa scout"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 ### QA-Specific Supplementary Instructions (ALWAYS append to Scout prompt)
 
@@ -223,7 +223,7 @@ After Scout completes:
 
 Read the scenario writer prompt template: `~/.claude/harness/scenario-writer-prompt.md`
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The scenario writer prompt template + context:
   - "Codebase context: `.harness/qa-context.md`"
   - "Target URL: `{URL}`"
@@ -286,7 +286,7 @@ See `~/.claude/harness/references/meta-loop-protocol.md`.
 
 #### 4a. Execute
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The test executor prompt template + context:
   - "Test scenarios: `.harness/qa-scenarios.md`"
   - "Target URL: `{URL}`"
@@ -317,7 +317,7 @@ After completion:
 
 #### 4b. Analyze
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The analyst prompt template + context:
   - "Test results: `.harness/qa-results.md`"
   - "Test scenarios: `.harness/qa-scenarios.md`"
@@ -359,7 +359,7 @@ After Analyst completes:
 
 Read the qa-reporter prompt template: `~/.claude/harness/qa-reporter-prompt.md`
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The qa-reporter prompt template + context:
   - "Analysis: `.harness/qa-analysis.md`"
   - "Test results: `.harness/qa-results.md`"
@@ -427,7 +427,7 @@ Full report: `.harness/qa-report.md`
 12. **`responsive` mode requires `browser_resize`** at every viewport before screenshots.
 13. **`regression` mode requires `--change` description** to know what to verify.
 14. **Session state and event log are updated after EVERY agent.** See `~/.claude/harness/references/session-protocol.md`.
-15. **All agents use model `sonnet`** — QA is systematic work.
+15. **All agents inherit the parent session model** — omit the `model` param on every spawn (no per-role downgrade).
 
 ## Cost Awareness
 

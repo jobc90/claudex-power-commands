@@ -94,11 +94,11 @@ Detection order:
 
 ## Agent Model Selection Under Each Tier
 
-The `model` parameter passed to sub-Agent calls is **not** the same as the parent tier. Agents still follow the role-based recommendations in `session-protocol.md` §4. However, under the **Elite** parent tier:
+The `model` parameter passed to sub-Agent calls is **not** the same as the parent tier. Under the **inherit-parent policy (user policy 2026-06-25)**, every agent — at every tier — **inherits the parent session model** (the `model` param is omitted):
 
-- Do NOT downgrade Builder (L) or Worker (complex) to `sonnet`. Inherit parent.
-- Planner, Architect, Diagnostician always inherit parent.
-- Sentinel, Auditor remain `sonnet` (checklist-driven work, downgrading is appropriate).
+- All agents (Scout, Planner, Architect, Builder, Worker, Sentinel, Refiner, Integrator, QA, Auditor, Diagnostician, and every review/docs/QA-pipeline agent) → inherit parent. In an Opus session (e.g. `/effort ultracode`) that means every agent is Opus.
+- No per-role downgrades to `sonnet`/`haiku`. The session model is the single control knob. The previous per-role downgrade table in `session-protocol.md` §4 is superseded by this policy.
+- Tier detection (`Standard`/`Advanced`/`Elite`) still governs pipeline rigor — round limits, QA thresholds, Sentinel/Auditor activation — but no longer affects which model an agent runs.
 
 ---
 

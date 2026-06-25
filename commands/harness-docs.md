@@ -143,26 +143,26 @@ No approval needed — proceed directly to Phase 3.
 
 ### Scale M — Focused Research
 
-Launch a **general-purpose Agent** with subagent_type `Explore` and **model `sonnet`**:
+Launch a **general-purpose Agent** with subagent_type `Explore` (model inherits parent):
 - **prompt**: The researcher prompt template + `"MODE: FOCUSED. Scale is M."` + context:
   - "Project directory: `{cwd}`"
   - "User's request: `{$ARGUMENTS}`"
   - "Focus ONLY on modules/files relevant to the request. Do NOT scan the entire codebase."
   - "Write output to `.harness/docs-research.md`"
 - **description**: "harness-docs focused research"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 After Researcher completes, update event log: `echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] researcher | done | docs-research.md | {summary}" >> .harness/session-events.md`
 
 ### Scale L — Full Research
 
-Launch a **general-purpose Agent** with subagent_type `Explore` and **model `sonnet`**:
+Launch a **general-purpose Agent** with subagent_type `Explore` (model inherits parent):
 - **prompt**: The researcher prompt template + `"MODE: FULL. Scale is L."` + context:
   - "Project directory: `{cwd}`"
   - "User's request: `{$ARGUMENTS}`"
   - "Write output to `.harness/docs-research.md`"
 - **description**: "harness-docs full research"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 After Researcher completes, update event log: `echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] researcher | done | docs-research.md | {summary}" >> .harness/session-events.md`
 
@@ -192,7 +192,7 @@ Present to user: **"문서 범위와 구조를 검토해주세요. 진행할까�
 
 ### Scale M — Focused Outline
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The outliner prompt template + context:
   - "Research file: `.harness/docs-research.md`"
   - "User's request: `{$ARGUMENTS}`"
@@ -208,7 +208,7 @@ After completion:
 
 ### Scale L — Full Outline
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The outliner prompt template + context:
   - "Research file: `.harness/docs-research.md`"
   - "User's request: `{$ARGUMENTS}`"
@@ -242,7 +242,7 @@ Read `tier:` from `.harness/session-state.md` (persisted in Phase 0). See `harne
 
 #### 4a. Write
 
-Launch a **general-purpose Agent** (inherit parent model — writing quality is critical):
+Launch a **general-purpose Agent** (model inherits parent — writing quality is critical):
 - **prompt**: The writer prompt template + context:
   - "Research file: `.harness/docs-research.md`"
   - "Document blueprint: `.harness/docs-outline.md` — follow this structure."
@@ -260,7 +260,7 @@ Launch a **general-purpose Agent** (inherit parent model — writing quality is 
 
 Launch BOTH agents in parallel:
 
-**Reviewer** (model `sonnet`):
+**Reviewer** (model inherits parent):
 - **prompt**: The reviewer prompt template + context:
   - "Document to review: `.harness/docs-draft.md`"
   - "Research baseline: `.harness/docs-research.md`"
@@ -273,7 +273,7 @@ Launch BOTH agents in parallel:
   - Scale L: `"REVIEW_MODE: FULL. Verify ALL factual claims against actual source code."`
 - **description**: "harness-docs reviewer round {N}"
 
-**Validator** (model `sonnet`):
+**Validator** (model inherits parent):
 - **prompt**: The validator prompt template + context:
   - "Document to validate: `.harness/docs-draft.md`"
   - "Research baseline: `.harness/docs-research.md`"
@@ -430,7 +430,7 @@ Include artifact status in the Summary.
 10. **Scale S skips Outliner agent, review loop, and validation** for efficiency.
 11. **When in doubt on scale, pick smaller.**
 12. **Session state and event log are updated after EVERY agent.** See `~/.claude/harness/references/session-protocol.md`.
-13. **Model selection**: Researcher/Outliner/Reviewer/Validator → `sonnet`; Writer → inherit parent.
+13. **Model selection**: every agent inherits the parent session model — omit the `model` param on every spawn.
 
 After Phase 6 Summary, finalize session:
 ```bash

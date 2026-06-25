@@ -170,57 +170,57 @@ Fix ROOT CAUSES from the diagnosis. Do not re-investigate from scratch."
 
 ### Per-Agent Model Recommendations
 
-Optimized for the Claude Code subscription environment. Use the `model` parameter in Agent tool calls.
+> **Inherit-parent policy (user policy 2026-06-25):** every agent inherits the parent session model — **omit** the `model` param on every Agent call. The per-role table below is kept for documentation; all cells now read *inherit*. No per-role downgrades to `sonnet`/`haiku`. In an Opus session every agent is Opus; the single control knob is the session model (`/model`, `/effort`).
 
 | Agent | Model | Rationale |
 |-------|-------|-----------|
-| **Scout** | `sonnet` | Systematic exploration, no deep reasoning needed |
-| **Planner** | *default (inherit)* | Planning quality is critical — use parent model |
-| **Architect** | *default (inherit)* | Architectural decisions require deep judgment |
-| **Builder (S/M)** | `sonnet` | Standard implementation, patterns from spec |
-| **Builder (L)** | *default (inherit)* | Complex multi-module implementation |
-| **Worker (simple)** | `haiku` | 1-2 file mechanical tasks |
-| **Worker (standard)** | `sonnet` | Standard implementation with clear brief |
-| **Worker (complex)** | *default (inherit)* | Complex judgment, cross-cutting concerns |
-| **Sentinel** | `sonnet` | Checklist-driven pattern matching |
-| **Refiner** | `sonnet` | Checklist-driven pattern matching |
-| **Integrator** | `sonnet` | Systematic merge verification |
-| **QA** | `sonnet` | Systematic testing against criteria |
-| **Diagnostician** | *default (inherit)* | Root cause analysis requires deep reasoning |
-| **Auditor** | `sonnet` | Evidence cross-referencing, systematic comparison |
-| **Scanner** | `sonnet` | Git diff analysis, systematic |
-| **Analyzer** | `sonnet` | Issue identification from diff |
-| **Fixer** | `sonnet` | Targeted, scoped fixes |
-| **Verifier** | `sonnet` | Verification against analysis |
-| **Reporter** | `sonnet` | Report generation |
-| **Researcher** | `sonnet` | Codebase exploration |
-| **Outliner** | `sonnet` | Document structure planning |
-| **Writer** | *default (inherit)* | Quality writing needs strong model |
-| **Reviewer** | `sonnet` | Fact-checking against source |
-| **Validator** | `sonnet` | Command execution and verification |
-| **Scenario Writer** | `sonnet` | Test scenario generation |
-| **Test Executor** | `sonnet` | Playwright-based systematic testing |
-| **Analyst** | `sonnet` | Results classification |
-| **QA Reporter** | `sonnet` | Report generation |
-| **Trajectory Reporter** | `sonnet` | Synthesis of existing telemetry, no new analysis |
+| **Scout** | *inherit* | Systematic exploration, no deep reasoning needed |
+| **Planner** | *inherit* | Planning quality is critical — use parent model |
+| **Architect** | *inherit* | Architectural decisions require deep judgment |
+| **Builder (S/M)** | *inherit* | Standard implementation, patterns from spec |
+| **Builder (L)** | *inherit* | Complex multi-module implementation |
+| **Worker (simple)** | *inherit* | 1-2 file mechanical tasks |
+| **Worker (standard)** | *inherit* | Standard implementation with clear brief |
+| **Worker (complex)** | *inherit* | Complex judgment, cross-cutting concerns |
+| **Sentinel** | *inherit* | Checklist-driven pattern matching |
+| **Refiner** | *inherit* | Checklist-driven pattern matching |
+| **Integrator** | *inherit* | Systematic merge verification |
+| **QA** | *inherit* | Systematic testing against criteria |
+| **Diagnostician** | *inherit* | Root cause analysis requires deep reasoning |
+| **Auditor** | *inherit* | Evidence cross-referencing, systematic comparison |
+| **Scanner** | *inherit* | Git diff analysis, systematic |
+| **Analyzer** | *inherit* | Issue identification from diff |
+| **Fixer** | *inherit* | Targeted, scoped fixes |
+| **Verifier** | *inherit* | Verification against analysis |
+| **Reporter** | *inherit* | Report generation |
+| **Researcher** | *inherit* | Codebase exploration |
+| **Outliner** | *inherit* | Document structure planning |
+| **Writer** | *inherit* | Quality writing needs strong model |
+| **Reviewer** | *inherit* | Fact-checking against source |
+| **Validator** | *inherit* | Command execution and verification |
+| **Scenario Writer** | *inherit* | Test scenario generation |
+| **Test Executor** | *inherit* | Playwright-based systematic testing |
+| **Analyst** | *inherit* | Results classification |
+| **QA Reporter** | *inherit* | Report generation |
+| **Trajectory Reporter** | *inherit* | Synthesis of existing telemetry, no new analysis |
 
 ### How to Apply
 
-In the Agent tool call, add the `model` parameter:
+In the Agent tool call, **omit** the `model` parameter so the agent inherits the parent session model:
 
 ```
 Agent({
   description: "harness scout (M)",
-  model: "sonnet",
+  // no model param → inherits the parent session model
   prompt: "..."
 })
 ```
 
-Agents without explicit model inherit from parent (typically opus).
+Do not pass a `model` value. The parent session model (e.g. Opus under `/effort ultracode`) flows to every agent.
 
 ### Override Rule
 
-If the user's parent model is already `sonnet`, do NOT downgrade agents to `haiku` unless explicitly listed as `haiku` above. The recommendations assume an `opus` parent.
+**Inherit-parent (user policy 2026-06-25):** never pin or downgrade any agent. Every claudex subagent inherits the parent session model by omitting the `model` param, so the session model is the single control point. Trade-off accepted: if `/harness` is ever run from a non-Opus session, subagents follow it down (no silent Opus billing, but no Opus guarantee either). (Historical note: the per-role table once downgraded systematic roles to `sonnet`/`haiku` for cost; that optimization is retired.)
 
 ---
 
@@ -310,7 +310,7 @@ Multiple Workers modifying the same working directory risks:
 Agent({
   description: "harness-team worker 1",
   isolation: "worktree",
-  model: "sonnet",
+  // no model param → inherits the parent session model
   prompt: "..."
 })
 ```

@@ -98,12 +98,12 @@ echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] setup | done | — | Review pipeline star
 
 Read the scanner prompt template: `~/.claude/harness/scanner-prompt.md`
 
-Launch a **general-purpose Agent** with subagent_type `Explore` and **model `sonnet`**:
+Launch a **general-purpose Agent** with subagent_type `Explore` (model inherits parent):
 - **prompt**: The scanner prompt template + context:
   - "Project directory: `{cwd}`"
   - "Write output to `.harness/review-context.md`"
 - **description**: "harness-review scanner"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 After completion:
 - Read `.harness/review-context.md`
@@ -118,12 +118,12 @@ After completion:
 
 Read the analyzer prompt template: `~/.claude/harness/analyzer-prompt.md`
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The analyzer prompt template + context:
   - "Review context: `.harness/review-context.md`"
   - "Write output to `.harness/review-analysis.md`"
 - **description**: "harness-review analyzer"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 After completion:
 - Read `.harness/review-analysis.md`
@@ -138,13 +138,13 @@ After completion:
 
 Read the fixer prompt template: `~/.claude/harness/fixer-prompt.md`
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The fixer prompt template + context:
   - "Analysis report: `.harness/review-analysis.md`"
   - "Review context: `.harness/review-context.md`"
   - "Write output to `.harness/review-fix-report.md`"
 - **description**: "harness-review fixer"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 After completion, update event log: `echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] fixer | done | review-fix-report.md | {summary}" >> .harness/session-events.md`
 
@@ -154,14 +154,14 @@ After completion, update event log: `echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] fixe
 
 Read the verifier prompt template: `~/.claude/harness/verifier-prompt.md`
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The verifier prompt template + context:
   - "Fix report: `.harness/review-fix-report.md`"
   - "Analysis report: `.harness/review-analysis.md`"
   - "Review context: `.harness/review-context.md`"
   - "Write output to `.harness/review-verify-report.md`"
 - **description**: "harness-review verifier"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 After completion, update event log: `echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] verifier | done | review-verify-report.md | {summary}" >> .harness/session-events.md`
 
@@ -173,7 +173,7 @@ After completion, update event log: `echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] veri
 
 Read the reporter prompt template: `~/.claude/harness/reporter-prompt.md`
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The reporter prompt template + context:
   - "Review context: `.harness/review-context.md`"
   - "Analysis report: `.harness/review-analysis.md`"
@@ -182,7 +182,7 @@ Launch a **general-purpose Agent** with **model `sonnet`**:
   - "Git action flags: `{--dry-run | --commit | --push | --pr | default}`"
   - "Write output to `.harness/review-report.md`"
 - **description**: "harness-review reporter"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 After completion:
 - Read `.harness/review-report.md`
@@ -219,7 +219,7 @@ After completion:
 6. **Read prompt templates from `~/.claude/harness/`** before spawning each agent.
 7. **No user approval gates.** Review pipeline runs automatically (unlike /harness which waits for spec approval).
 8. **Session state and event log are updated after EVERY agent.** See `~/.claude/harness/references/session-protocol.md`.
-9. **All agents use model `sonnet`** — review is systematic work, not creative judgment.
+9. **All agents inherit the parent session model** — omit the `model` param on every spawn (no per-role downgrade).
 
 ## Cost Awareness
 

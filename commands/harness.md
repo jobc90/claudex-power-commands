@@ -304,7 +304,7 @@ For FIX/MODIFY requests, append this instruction to the Scout prompt:
 
 ### Scale S — Targeted Scan
 
-Launch a **general-purpose Agent** with subagent_type `Explore` and **model `sonnet`**:
+Launch a **general-purpose Agent** with subagent_type `Explore` (model inherits parent):
 - **prompt**: The scout prompt template + context:
   - "Project directory: `{cwd}`"
   - "User's request: `{$ARGUMENTS}`"
@@ -312,11 +312,11 @@ Launch a **general-purpose Agent** with subagent_type `Explore` and **model `son
   - "Write output to `.harness/build-context.md`"
   - If FIX/MODIFY: Deep Dive instruction (see above)
 - **description**: "harness scout (S)"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 ### Scale M — Module Scan
 
-Launch a **general-purpose Agent** with subagent_type `Explore` and **model `sonnet`**:
+Launch a **general-purpose Agent** with subagent_type `Explore` (model inherits parent):
 - **prompt**: The scout prompt template + context:
   - "Project directory: `{cwd}`"
   - "User's request: `{$ARGUMENTS}`"
@@ -324,11 +324,11 @@ Launch a **general-purpose Agent** with subagent_type `Explore` and **model `son
   - "Write output to `.harness/build-context.md`"
   - If FIX/MODIFY: Deep Dive instruction (see above)
 - **description**: "harness scout (M)"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 ### Scale L — Full Codebase Scan
 
-Launch a **general-purpose Agent** with subagent_type `Explore` and **model `sonnet`**:
+Launch a **general-purpose Agent** with subagent_type `Explore` (model inherits parent):
 - **prompt**: The scout prompt template + context:
   - "Project directory: `{cwd}`"
   - "User's request: `{$ARGUMENTS}`"
@@ -336,7 +336,7 @@ Launch a **general-purpose Agent** with subagent_type `Explore` and **model `son
   - "Write output to `.harness/build-context.md`"
   - If FIX/MODIFY: Deep Dive instruction (see above)
 - **description**: "harness scout (L)"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 After Scout completes:
 1. Briefly confirm to the user: **"Scout 완료. 코드베이스 컨텍스트를 수집했습니다."** (No approval needed.)
@@ -384,7 +384,7 @@ Present the scope note to the user and ask: **"Scope를 검토해주세요. 진�
 
 ### Scale M — Lite Planner
 
-Launch a **general-purpose Agent** (inherit parent model — planning quality is critical):
+Launch a **general-purpose Agent** (model inherits parent — planning quality is critical):
 - **prompt**: The planner prompt template + `"MODE: LITE. Scale is M."` + the user's request.
   - "Codebase context is at `.harness/build-context.md` — read it first to understand existing patterns, conventions, and reusable assets."
 - **description**: "harness lite planner"
@@ -505,7 +505,7 @@ Pass this snapshot path to the Builder: "Environment snapshot: `.harness/snapsho
 
 #### 4a. Build
 
-Launch a **general-purpose Agent** (Scale S/M: **model `sonnet`**; Scale L: inherit parent):
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The builder prompt template + these context instructions:
   - "Codebase context: `.harness/build-context.md` — read it to understand existing patterns and reusable assets."
   - "Product spec: `.harness/build-spec.md` — your blueprint."
@@ -522,7 +522,7 @@ Launch a **general-purpose Agent** (Scale S/M: **model `sonnet`**; Scale L: inhe
   - "Write your execution audit to `.harness/traces/round-{N}-execution-log.md` (see Execution Audit in builder prompt)."
   - Scale M/L only: "Start the dev server in background and note the URL in progress.md."
 - **description**: "harness builder round {N}"
-- **model**: Scale S/M → `sonnet`; Scale L → omit (inherit parent)
+- **model**: inherit parent (omit the `model` param)
 
 After Builder completes, update event log:
 ```bash
@@ -535,7 +535,7 @@ echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] builder:r{N} | done | build-progress.md |
 
 Read the sentinel prompt template: `~/.claude/harness/sentinel-prompt.md`
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The sentinel prompt template + these context instructions:
   - "Execution audit log: `.harness/traces/round-{N}-execution-log.md`"
   - "Build progress: `.harness/build-progress.md`"
@@ -545,7 +545,7 @@ Launch a **general-purpose Agent** with **model `sonnet`**:
   - "Round number: {N}"
   - "Write your report to `.harness/sentinel-report-round-{N}.md`"
 - **description**: "harness sentinel round {N}"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 After Sentinel completes:
 1. Read `.harness/sentinel-report-round-{N}.md`
@@ -586,7 +586,7 @@ echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] sentinel:r{N} | {verdict} | sentinel-repo
 
 #### 4b. Refine
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The refiner prompt template + these context instructions:
   - "Codebase context: `.harness/build-context.md`"
   - "Product spec: `.harness/build-spec.md`"
@@ -599,7 +599,7 @@ Launch a **general-purpose Agent** with **model `sonnet`**:
   - "Append your refinement actions to `.harness/traces/round-{N}-execution-log.md` under a '## Refiner Actions' header."
   - Scale M/L: "Also write execution trace to `.harness/traces/round-{N}-refiner-trace.md` (build/test results after your fixes)."
 - **description**: "harness refiner round {N}"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 After Refiner completes, update event log:
 ```bash
@@ -616,7 +616,7 @@ After the refiner agent completes:
 
 #### 4d. QA
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The QA prompt template + these context instructions:
   - "Product spec: `.harness/build-spec.md`"
   - "Refiner report: `.harness/build-refiner-report.md`"
@@ -628,7 +628,7 @@ Launch a **general-purpose Agent** with **model `sonnet`**:
   - Scale L: `"QA_MODE: FULL. Playwright is MANDATORY."` + "App URL: `{URL from progress.md}`" + `"Write evidence traces to .harness/traces/round-{N}-qa-evidence.md for ALL results."`
   - "DoD/spec items whose output is observable (HTML page, SVG, UI, chart, script stdout) and that the producer flagged `runtime-observation-required` must be **run and observed** per `harness/references/observation-grounding.md` — an `exit 0` or clean static parse alone does NOT satisfy them. Unflagged items keep current exit-code verification (the flag is optional and backward-compatible)."
 - **description**: "harness QA round {N}"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 After QA completes, update event log:
 ```bash
@@ -653,7 +653,7 @@ After QA agent completes:
 
 Read the diagnostician prompt template: `~/.claude/harness/diagnostician-prompt.md`
 
-Launch a **general-purpose Agent** (inherit parent model — deep reasoning needed).
+Launch a **general-purpose Agent** (model inherits parent — deep reasoning needed).
 **Scale L**: use `run_in_background: true` and proceed to 4g (History) immediately. Scale M: foreground (default).
 
 - **prompt**: The diagnostician prompt template + these context instructions:
@@ -780,7 +780,7 @@ After the Build-Sentinel-Refine-QA loop exits (PASS or max rounds), run the Audi
 
 Read the auditor prompt template: `~/.claude/harness/auditor-prompt.md`
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The auditor prompt template + context:
   - "Build progress: `.harness/build-progress.md`"
   - "Refiner report: `.harness/build-refiner-report.md`"
@@ -792,7 +792,7 @@ Launch a **general-purpose Agent** with **model `sonnet`**:
   - "Total rounds completed: {N}"
   - "Write your report to `.harness/auditor-report.md`"
 - **description**: "harness auditor"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 After Auditor completes:
 1. Read `.harness/auditor-report.md`
@@ -814,7 +814,7 @@ Runs after Phase 4-audit, before Phase 5. Decides whether the current phase pass
 Read the agent prompt: `~/.claude/harness/phase-verifier-prompt.md`.
 Read the protocol: `~/.claude/harness/references/phase-verification-protocol.md`.
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The phase-verifier prompt + context:
   - "Phase book: `.harness/phase-book.md`."
   - "Current phase: {i}. Phase name: {name from phase-book}."
@@ -823,7 +823,7 @@ Launch a **general-purpose Agent** with **model `sonnet`**:
   - "Tier: read from `.harness/session-state.md`."
   - "Write evidence to `.harness/phase-evidence-{i}.md`."
 - **description**: "phase verifier (phase {i})"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 ### Branch on verdict
 
@@ -867,13 +867,13 @@ If `current_phase > total_phases`, set `status: complete` and proceed to Phase 5
 
 Synthesize the whole run's telemetry into one human-readable artifact. Read the agent prompt: `~/.claude/harness/trajectory-reporter-prompt.md`.
 
-Launch a **general-purpose Agent** with **model `sonnet`**:
+Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The trajectory-reporter prompt + context:
   - "Session events: `.harness/session-events.md`. Execution logs: `.harness/traces/round-{1..N}-execution-log.md`."
   - "QA feedback: `.harness/build-round-{1..N}-feedback.md`. Diagnoses: `.harness/diagnosis-round-{1..N}.md` (if any). Auditor: `.harness/auditor-report.md` (if any). History: `.harness/build-history.md`. Session state: `.harness/session-state.md`."
   - "Write the report to `.harness/trajectory-report.md`. Do NOT re-analyze or re-verify — synthesize existing artifacts only; note any missing input and continue."
 - **description**: "harness trajectory reporter"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 After it completes, append to the event log:
 ```bash
@@ -1005,13 +1005,13 @@ echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] summary | done | — | Pipeline complete,
 
 After the Summary, capture durable learnings so future runs on this project don't repeat caught mistakes (the whitepaper's "add a rule every time the agent does something it should not do again"). **Skip** when there is nothing to learn from — Scale S with a single clean round, or no Diagnostician/Auditor findings.
 
-Load `~/.claude/harness/curator-prompt.md`. Launch a **general-purpose Agent** with **model `sonnet`**:
+Load `~/.claude/harness/curator-prompt.md`. Launch a **general-purpose Agent** (model inherits parent):
 - **prompt**: The curator prompt + context:
   - "Diagnoses: `.harness/diagnosis-round-{1..N}.md`. Auditor: `.harness/auditor-report.md` (if any). QA feedback: `.harness/build-round-{1..N}-feedback.md`. History: `.harness/build-history.md`."
   - "Existing rules: read the target project's `AGENTS.md` and `CLAUDE.md` at the project root if present, and DEDUP against them."
   - "Write a PROPOSAL ONLY to `.harness/curator-proposal.md`. You MUST NOT edit `AGENTS.md`, `CLAUDE.md`, or any project file — the orchestrator appends after the user approves."
 - **description**: "harness curator"
-- **model**: `sonnet`
+- **model**: inherit parent (omit the `model` param)
 
 Then the orchestrator (NOT the agent) handles persistence:
 1. Read `.harness/curator-proposal.md`. If it is "No new rules — nothing to propose.", skip silently.
@@ -1042,13 +1042,13 @@ Then the orchestrator (NOT the agent) handles persistence:
 15. **Build history is cumulative.** NEVER overwrite `.harness/build-history.md` — only append.
 16. **Evidence traces go to `.harness/traces/`.** QA and Refiner write raw diagnostic data here for the Diagnostician.
 17. **Session state and event log are updated after EVERY agent.** See `~/.claude/harness/references/session-protocol.md`.
-18. **Model selection follows the protocol**: Scout/Refiner/QA → `sonnet`; Planner/Diagnostician → inherit parent. See session-protocol.md §4.
+18. **Model selection follows the protocol**: every agent inherits the parent session model — omit the `model` param on every spawn (no per-role downgrades). See session-protocol.md §4.
 19. **Round 2+ Builder uses Selective Context**: PRIMARY (diagnosis + snapshot), SECONDARY (spec), ON-DEMAND (rest). See session-protocol.md §3.
 20. **Scale L Diagnostician runs in background** (`run_in_background: true`). History and user reporting proceed in parallel.
 21. **Builder and Refiner write execution audit logs** to `.harness/traces/round-{N}-execution-log.md`. Diagnostician reads these for root cause analysis.
 22. **Sentinel runs AFTER Builder, BEFORE Refiner** (when active). A BLOCK verdict skips Refiner and QA, returning to Builder. Two consecutive BLOCKs abort the pipeline.
 23. **Security Triage runs AFTER Scale classification** and re-evaluates AFTER Scout. See Phase 0.5.
-24. **Sentinel model is `sonnet`** — checklist-driven pattern matching, not deep reasoning.
+24. **Sentinel inherits the parent model** — like every claudex subagent (omit the `model` param); no per-role downgrade.
 25. **Auditor runs AFTER the final QA round, BEFORE Summary** (when active).
 26. **LOW integrity verdict blocks auto-commit.** User must verify manually.
 27. **Scale S/M always use SINGLE mode.** TEAM mode is only available for Scale L.
