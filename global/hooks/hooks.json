@@ -34,15 +34,6 @@
           "command": "~/.claude/hooks/context-sync-suggest.sh"
         }
       ]
-    },
-    {
-      "hooks": [
-        {
-          "type": "command",
-          "command": "~/.claude/hooks/forge-update-check.sh",
-          "timeout": 5000
-        }
-      ]
     }
   ],
   "UserPromptSubmit": [
@@ -66,10 +57,6 @@
           "type": "command",
           "command": "~/.claude/hooks/output-secret-filter.sh",
           "timeout": 5000
-        },
-        {
-          "type": "command",
-          "command": "~/.claude/skills/continuous-learning-v2/hooks/observe.sh"
         }
       ]
     },
