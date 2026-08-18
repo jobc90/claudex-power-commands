@@ -77,3 +77,11 @@ global/                  # 정본. install.sh가 ~/.claude로 복사 배포 (sym
   소비자가 다르므로 의도된 중복이다. 내용 수정 시 양쪽을 같이 고칠 것.
 - 전역 수정 워크플로: `global/`에서 고치고 `./global/install.sh` → 커밋. `~/.claude`를 직접
   고쳤다면 `--diff`로 드리프트를 확인해 `global/`로 역이식 후 커밋.
+
+## 수정 (2026-08-18, 같은 날 후속)
+
+- `commands/summarize/` → attic 강등 (live 23→22). 당시 keep 사유는 interaction.md
+  Web Fetching 표의 1순위 참조뿐이었으나, 실측 결과 `summarize` binary 미설치·
+  `~/.summarize/config.json` 없음·API 키 없음·gemini 기본값 stale — 동작 불능.
+  interaction.md 표에서도 제거(자체 원칙: 미설치 도구를 규칙으로 강제하지 않는다).
+  복원: 설치(brew steipete/tap/summarize)·모델 설정 후 attic에서 mv + install.sh.
