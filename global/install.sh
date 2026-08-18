@@ -26,12 +26,12 @@ for s in "${SLOTS[@]}"; do
   case "$MODE" in
     --diff)
       echo "== $s =="
-      rsync -rlpgo -n -v --delete --exclude .DS_Store "$SRC/$s/" "$DEST/$s/" \
+      rsync -rlptgo -n -v --delete --exclude .DS_Store "$SRC/$s/" "$DEST/$s/" \
         | grep -v -e '^sending' -e '^sent ' -e '^total size' -e '^$' -e '^\./$' || true
       ;;
     install)
       mkdir -p "$DEST/$s"
-      rsync -rlpgo --delete --exclude .DS_Store "$SRC/$s/" "$DEST/$s/"
+      rsync -rlptgo --delete --exclude .DS_Store "$SRC/$s/" "$DEST/$s/"
       echo "synced $s -> $DEST/$s"
       ;;
     *)

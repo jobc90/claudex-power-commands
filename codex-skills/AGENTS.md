@@ -58,6 +58,9 @@ The reference files under `codex-skills/*/references/` are **byte-identical mirr
 for skill in harness harness-docs harness-review harness-qa harness-think design claude-dashboard; do
   rsync -a --delete "codex-skills/$skill/" "${CODEX_HOME:-$HOME/.codex}/skills/$skill/"
 done
+# This routing/translation doc must travel with the skills — the mirrored
+# references cite it (Codex Runtime translation table):
+cp -p codex-skills/AGENTS.md "${CODEX_HOME:-$HOME/.codex}/skills/AGENTS.md"
 ```
 
 - After sync, remove installed skills that are no longer present in `codex-skills/`.
