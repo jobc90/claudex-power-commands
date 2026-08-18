@@ -35,11 +35,7 @@ description: 비니즈(BENEEDS)/dearwell ~/dev 워크스페이스의 프로젝�
 │
 ├── Side Projects
 │   └── side-project/
-│       ├── claudex-power-commands  # 자체 Claude Code 플러그인 (Marketplace 게시) + 글로벌 ~/.claude 설정 정본 (global/)
-│       ├── multi-ai-orchestration  # 자체 — Multi-AI Orchestration Protocol(AIOS) v5.3
-│       ├── pm-skills               # 외부 클론 (phuryn/pm-skills) — PM Suite 스킬 참조
-│       ├── claude-plugins-official # 외부 클론 (anthropics) — 공식 플러그인 레퍼런스
-│       └── claude-source           # Claude Code CLI 리버스 엔지니어링 분석 문서 (비-git)
+│       └── claudex-power-commands  # 자체 Claude Code 플러그인 (Marketplace 게시) + 글로벌 ~/.claude 설정 정본 (global/)
 │
 ├── Deprecated
 │   ├── dearwell-user-next        # 유통사 프론트엔드 (중단, console로 이관)
