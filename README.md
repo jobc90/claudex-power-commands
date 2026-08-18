@@ -252,6 +252,10 @@ claudex-power-commands/
 ├── rules/
 ├── dev/                          # Plugin development tools (not for end users)
 │   └── harness-lint.md
+├── global/                       # User-global ~/.claude config source (NOT shipped by the plugin)
+│   ├── agents/ rules/ commands/ skills/ hooks/ scripts/
+│   ├── attic/                    # Demoted items, never installed
+│   └── install.sh                # Deploy: ./global/install.sh (see docs/global-absorption.md)
 ├── README.md
 └── README.en.md
 ```
