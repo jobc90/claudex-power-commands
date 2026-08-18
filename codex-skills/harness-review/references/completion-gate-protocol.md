@@ -76,7 +76,7 @@ Occurrences in "describe the process" context are benign. Occurrences in
 ### 2.4 Version reference drift
 Patterns:
 - Revision labels: `v1`, `v2`, `v3`, `v4.1.0` (outside a "history" section)
-- Model version: `Claude 3.5`, `Opus 4.7`, etc. (if mentioned in a
+- Model version: `Fable 5`, `Opus 5`, etc. (if mentioned in a
   "current" section, must match the actual config)
 
 Context-sensitive — flag only when the context implies "current version".

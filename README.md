@@ -4,6 +4,7 @@
 
 > Claude Code용 harness commands와 Codex용 harness skills를 같은 구조로 맞춘 7종 세트
 >
+> **v4.6.0**: 프론티어 리프레시 — tier 폴백이 `fable`/`mythos`/`sol`을 **Elite**로 인식 (기존엔 Fable 5 세션이 최하위 Standard로 분류되는 **티어 역전**이 있었음; unknown 기본값도 Standard→Advanced). Elite-부모 모델 경제: 노동 에이전트는 `model: "opus"`, 판단 3역(Planner/Architect/Diagnostician)만 상속 유지, Codex 런타임은 전부 상속(`codex-skills/AGENTS.md` 번역 테이블). v4.5.1이 주장한 미러 byte-parity가 실제론 참조 9개 드리프트였음을 정정 — 전부 재동기화 + pre-commit lint가 공유 references까지 동적으로 diff. `.harness_codex`→`.harness` 통일. golden 베이스라인은 sonnet 시절 측정치라 **re-baseline pending** 명시.
 > **v4.5.1**: harness 전 서브에이전트가 **부모 세션 모델 상속** — 역할별 sonnet/haiku 다운그레이드 표 폐지. 세션 모델(`/effort`·`/model`)이 단일 제어점이라 Opus 세션에선 전 에이전트가 Opus. tier-detection은 부모 모델 기준이라 무영향. trade-off: 비-Opus 세션에서 돌리면 서브도 따라 내려감.
 > **v4.5.0**: `/harness-think` (Surveyor) — 코드베이스에 앵커링된 의사결정/타당성 토론용 **read-only** 커맨드. Scope-Gate → cite-or-abstain Ground → Discuss → Handoff seed; 코드를 짜거나 편집하지 않음. grounding 규율이 in-author + 독립저자 held-out **양 split A/B-measured KEEP**(M8, margin +4 each, FP 1/2). 신규 에이전트 프롬프트 0개, Codex 미러 추가. 정직한 천장: grounding은 repo-fact escape를 낮추지 제거하지 않음. 측정: `tests/ab-results/RESULTS-grounding.md`.
 > **v4.4.0**: Whitepaper-alignment (측정됨) — observation-grounding이 in-author + 독립저자 held-out **양 split KEEP**(+ M4 KEEP, FP 0)로 **A/B 측정 완료**. Conductor 모드(`/harness --quick`), Curator 에이전트(승인 게이트 학습규칙 → AGENTS.md), Trajectory Reporter, 결정론적 가드 훅(PreToolUse/commit), Builder/Refiner DoD-Check, Summary Residual-Risk, eval + golden 회귀 스위트(`tests/`). 측정: `tests/ab-results/RESULTS-2026-06-16.md`.

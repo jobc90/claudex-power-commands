@@ -39,13 +39,13 @@ Treat these literal tokens in the user's prompt as workflow hints:
 
 ## Required Artifacts
 
-Use `.harness_codex/review-` in the target project directory.
+Use `.harness/review-` in the target project directory.
 
-- `.harness_codex/review-context.md`
-- `.harness_codex/review-analysis.md`
-- `.harness_codex/review-fix-report.md`
-- `.harness_codex/review-verify-report.md`
-- `.harness_codex/review-report.md`
+- `.harness/review-context.md`
+- `.harness/review-analysis.md`
+- `.harness/review-fix-report.md`
+- `.harness/review-verify-report.md`
+- `.harness/review-report.md`
 
 ## Arguments
 
@@ -60,7 +60,7 @@ Use `.harness_codex/review-` in the target project directory.
 Create the working directory:
 
 ```bash
-mkdir -p .harness_codex
+mkdir -p .harness
 ```
 
 ## Phase 2. Scan
@@ -69,11 +69,11 @@ Load `references/scanner-prompt.md`.
 
 Spawn a fresh scanner subagent:
 
-- require output at `.harness_codex/review-context.md`
+- require output at `.harness/review-context.md`
 
 After it finishes:
 
-- read `.harness_codex/review-context.md`
+- read `.harness/review-context.md`
 - if it reports no changes, stop
 - otherwise briefly report the number of changed files and high-risk areas
 
@@ -83,12 +83,12 @@ Load `references/analyzer-prompt.md`.
 
 Spawn a fresh analyzer subagent:
 
-- input context: `.harness_codex/review-context.md`
-- output: `.harness_codex/review-analysis.md`
+- input context: `.harness/review-context.md`
+- output: `.harness/review-analysis.md`
 
 After it finishes:
 
-- read `.harness_codex/review-analysis.md`
+- read `.harness/review-analysis.md`
 - report the issue count by severity
 
 If `--dry-run` is active, stop here and present the analysis summary.
@@ -99,9 +99,9 @@ Load `references/fixer-prompt.md`.
 
 Spawn a fresh fixer subagent:
 
-- analysis report: `.harness_codex/review-analysis.md`
-- review context: `.harness_codex/review-context.md`
-- output: `.harness_codex/review-fix-report.md`
+- analysis report: `.harness/review-analysis.md`
+- review context: `.harness/review-context.md`
+- output: `.harness/review-fix-report.md`
 
 ## Phase 5. Verify
 
@@ -109,10 +109,10 @@ Load `references/verifier-prompt.md`.
 
 Spawn a fresh verifier subagent:
 
-- fix report: `.harness_codex/review-fix-report.md`
-- analysis report: `.harness_codex/review-analysis.md`
-- review context: `.harness_codex/review-context.md`
-- output: `.harness_codex/review-verify-report.md`
+- fix report: `.harness/review-fix-report.md`
+- analysis report: `.harness/review-analysis.md`
+- review context: `.harness/review-context.md`
+- output: `.harness/review-verify-report.md`
 
 ## Phase 6. Report + Git
 
@@ -120,16 +120,16 @@ Load `references/reporter-prompt.md`.
 
 Spawn a fresh reporter subagent:
 
-- review context: `.harness_codex/review-context.md`
-- analysis report: `.harness_codex/review-analysis.md`
-- fix report: `.harness_codex/review-fix-report.md`
-- verification report: `.harness_codex/review-verify-report.md`
+- review context: `.harness/review-context.md`
+- analysis report: `.harness/review-analysis.md`
+- fix report: `.harness/review-fix-report.md`
+- verification report: `.harness/review-verify-report.md`
 - git action flag state
-- output: `.harness_codex/review-report.md`
+- output: `.harness/review-report.md`
 
 After it finishes:
 
-- read `.harness_codex/review-report.md`
+- read `.harness/review-report.md`
 - present the user-facing summary
 
 If the selected mode includes git actions, only execute them when the report verdict is PASS.
@@ -137,7 +137,7 @@ If the selected mode includes git actions, only execute them when the report ver
 ## Execution Rules
 
 1. Each phase agent must be a separate `spawn_agent` call with fresh context.
-2. Never pass state between agents in chat. Use `.harness_codex/review-` files only.
+2. Never pass state between agents in chat. Use `.harness/review-` files only.
 3. `--dry-run` stops after the Analyze phase.
 4. Git actions require a PASS verdict from the Reporter.
 5. Never push to `main` or `master` without explicit user instruction.

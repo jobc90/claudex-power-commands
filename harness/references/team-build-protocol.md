@@ -290,7 +290,7 @@ Append to `.harness/team-history.md`:
 
 ## Model Selection Directives
 
-> **Inherit-parent policy (user policy 2026-06-25):** every agent below inherits the parent session model — omit the `model` param. No per-role downgrades to `sonnet`/`haiku`. In an Opus session every agent is Opus.
+> **Model economy — inherit by default, split under an Elite-tier parent:** every agent below inherits the parent session model — omit the `model` param. No per-role downgrades to `sonnet`/`haiku`, ever. **Exception:** when the parent session model is Elite-tier by §9 (identifier contains `fable`, `mythos`, or `sol`), spawn labor agents (Worker, Sentinel, Integrator, QA — examples, non-exhaustive) with `model: "opus"` — the scarce top model does the orchestrating/judgment turn only, the abundant frontier workhorse does the labor. Only Planner, Architect, and Diagnostician keep inheriting; any role not named there is labor. In an Opus session the exception is inert and every agent is Opus, and in the Codex runtime subagents always inherit the session model. See `session-protocol.md` §4 for the authoritative rule and the Codex-runtime caveat.
 
 | Agent | Model | Rationale |
 |-------|-------|-----------|

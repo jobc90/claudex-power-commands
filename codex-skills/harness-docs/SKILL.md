@@ -61,18 +61,18 @@ When in doubt between two scales, pick the smaller one.
 
 ## Required Artifacts
 
-Use `.harness_codex/docs-` in the target project directory.
+Use `.harness/docs-` in the target project directory.
 
-- `.harness_codex/docs-request.md`
-- `.harness_codex/docs-research.md`
-- `.harness_codex/docs-outline.md`
-- `.harness_codex/docs-draft.md`
-- `.harness_codex/docs-round-1-review.md`
-- `.harness_codex/docs-round-2-review.md`
-- `.harness_codex/docs-round-3-review.md`
-- `.harness_codex/docs-round-1-validation.md`
-- `.harness_codex/docs-round-2-validation.md`
-- `.harness_codex/docs-round-3-validation.md`
+- `.harness/docs-request.md`
+- `.harness/docs-research.md`
+- `.harness/docs-outline.md`
+- `.harness/docs-draft.md`
+- `.harness/docs-round-1-review.md`
+- `.harness/docs-round-2-review.md`
+- `.harness/docs-round-3-review.md`
+- `.harness/docs-round-1-validation.md`
+- `.harness/docs-round-2-validation.md`
+- `.harness/docs-round-3-validation.md`
 
 All inter-agent communication must happen through these files only.
 
@@ -82,10 +82,10 @@ All inter-agent communication must happen through these files only.
 2. Create the working directory:
 
 ```bash
-mkdir -p .harness_codex
+mkdir -p .harness
 ```
 
-3. Write the user's request and classified scale to `.harness_codex/docs-request.md`.
+3. Write the user's request and classified scale to `.harness/docs-request.md`.
 
 ## Phase 2. Research
 
@@ -96,7 +96,7 @@ Load `references/researcher-prompt.md`.
 Do not spawn a Researcher agent. The orchestrator directly:
 
 1. reads only the files relevant to the request
-2. writes a brief `.harness_codex/docs-research.md`
+2. writes a brief `.harness/docs-research.md`
 
 Then proceed directly to Outline.
 
@@ -105,14 +105,14 @@ Then proceed directly to Outline.
 Spawn a fresh focused research subagent:
 
 - add `MODE: FOCUSED. Scale is M.`
-- require output at `.harness_codex/docs-research.md`
+- require output at `.harness/docs-research.md`
 
 ### Scale `L`
 
 Spawn a fresh full research subagent:
 
 - add `MODE: FULL. Scale is L.`
-- require output at `.harness_codex/docs-research.md`
+- require output at `.harness/docs-research.md`
 
 ## Phase 3. Outline
 
@@ -120,7 +120,7 @@ Load `references/outliner-prompt.md`.
 
 ### Scale `S`
 
-Do not spawn an Outliner agent. Write `.harness_codex/docs-outline.md` directly with:
+Do not spawn an Outliner agent. Write `.harness/docs-outline.md` directly with:
 
 - document type
 - intended sections
@@ -136,9 +136,9 @@ Stop and wait for approval.
 
 Spawn a fresh outliner subagent:
 
-- input research file: `.harness_codex/docs-research.md`
+- input research file: `.harness/docs-research.md`
 - scale: `M`
-- output: `.harness_codex/docs-outline.md`
+- output: `.harness/docs-outline.md`
 
 After it finishes, summarize the structure and ask:
 
@@ -150,9 +150,9 @@ Stop and wait for approval.
 
 Spawn a fresh outliner subagent:
 
-- input research file: `.harness_codex/docs-research.md`
+- input research file: `.harness/docs-research.md`
 - scale: `L`
-- output: `.harness_codex/docs-outline.md`
+- output: `.harness/docs-outline.md`
 
 After it finishes, summarize the structure and ask:
 
@@ -180,11 +180,11 @@ Spawn a fresh writer subagent for each round.
 
 Writer instructions must include:
 
-- research baseline: `.harness_codex/docs-research.md`
-- document blueprint: `.harness_codex/docs-outline.md`
+- research baseline: `.harness/docs-research.md`
+- document blueprint: `.harness/docs-outline.md`
 - user's original request
-- if round 1: write `.harness_codex/docs-draft.md`
-- if round 2+: read `.harness_codex/docs-round-{N-1}-review.md` and `.harness_codex/docs-round-{N-1}-validation.md`, then revise `.harness_codex/docs-draft.md`
+- if round 1: write `.harness/docs-draft.md`
+- if round 2+: read `.harness/docs-round-{N-1}-review.md` and `.harness/docs-round-{N-1}-validation.md`, then revise `.harness/docs-draft.md`
 
 ### 4b. Review + Validate
 
@@ -194,18 +194,18 @@ Scale `M` and `L`: spawn both in parallel.
 
 Reviewer instructions must include:
 
-- draft path: `.harness_codex/docs-draft.md`
-- research baseline: `.harness_codex/docs-research.md`
-- document blueprint: `.harness_codex/docs-outline.md`
+- draft path: `.harness/docs-draft.md`
+- research baseline: `.harness/docs-research.md`
+- document blueprint: `.harness/docs-outline.md`
 - round number
-- output path: `.harness_codex/docs-round-{N}-review.md`
+- output path: `.harness/docs-round-{N}-review.md`
 
 Validator instructions must include:
 
-- draft path: `.harness_codex/docs-draft.md`
-- research baseline: `.harness_codex/docs-research.md`
+- draft path: `.harness/docs-draft.md`
+- research baseline: `.harness/docs-research.md`
 - round number
-- output path: `.harness_codex/docs-round-{N}-validation.md`
+- output path: `.harness/docs-round-{N}-validation.md`
 
 ### 4c. Evaluate
 
@@ -229,11 +229,11 @@ After both reviewer and validator finish:
 
 After the loop ends:
 
-1. Read the final `.harness_codex/docs-draft.md`.
+1. Read the final `.harness/docs-draft.md`.
 2. Ask the user where to save it if no path was specified.
 3. Default to project root or `docs/` when no destination is given.
 4. Copy or move the final document to the chosen path.
-5. Keep or remove `.harness_codex/docs-` only if the user explicitly requests cleanup.
+5. Keep or remove `.harness/docs-` only if the user explicitly requests cleanup.
 
 ## Phase 6. Summary
 
@@ -260,17 +260,17 @@ Use this reporting shape:
 - Final document: {path}
 
 ### Artifacts
-- Research: `.harness_codex/docs-research.md`
-- Outline: `.harness_codex/docs-outline.md`
-- Draft: `.harness_codex/docs-draft.md`
-- Last review: `.harness_codex/docs-round-{N}-review.md`
-- Last validation: `.harness_codex/docs-round-{N}-validation.md`
+- Research: `.harness/docs-research.md`
+- Outline: `.harness/docs-outline.md`
+- Draft: `.harness/docs-draft.md`
+- Last review: `.harness/docs-round-{N}-review.md`
+- Last validation: `.harness/docs-round-{N}-validation.md`
 ```
 
 ## Execution Rules
 
 1. Each phase agent must be a separate `spawn_agent` call with fresh context.
-2. Never pass state between agents in chat. Use `.harness_codex/docs-` files only.
+2. Never pass state between agents in chat. Use `.harness/docs-` files only.
 3. Always load the prompt templates from `references/` before composing each agent task.
 4. Always wait for explicit user approval after the outline phase.
 5. The Reviewer fact-checks by reading source code. The Validator fact-checks by executing commands and examples.

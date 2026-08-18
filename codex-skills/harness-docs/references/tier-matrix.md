@@ -10,14 +10,18 @@
 
 | Tier | Typical Models | Risk Profile |
 |------|----------------|--------------|
-| Standard | small/fast general-purpose | Lower autonomy, obvious mistakes |
-| Advanced | mid-size reasoning | Reliable, standard mistake patterns |
-| Elite | high-capability frontier | High autonomy; mistakes are subtler; stricter alignment posture required |
+| Standard | capable mid-tier models | Lower autonomy, obvious mistakes |
+| Advanced | frontier-family workhorse models (e.g. Opus 5) | Reliable, standard mistake patterns |
+| Elite | top-tier / Mythos-class frontier models (e.g. Fable 5, gpt-5.6-sol) | High autonomy; mistakes are subtler; stricter alignment posture required |
 
 Detection order:
 1. `CLAUDEX_TIER_OVERRIDE` env var (`standard|advanced|elite`)
 2. `CLAUDEX_ELITE_MODELS` env var contains current runtime identifier → Elite
-3. Name-based fallback: `sonnet|haiku` → Standard, `opus` → Advanced, else → Standard
+3. Name-based fallback:
+   - identifier contains `fable`, `mythos`, or `sol` (e.g. `claude-fable-5`, `gpt-5.6-sol`) → `Elite`
+   - identifier contains `opus` → `Advanced`
+   - identifier contains `sonnet` or `haiku` → `Standard`
+   - otherwise → `Advanced` (frontier-era default: an unlisted model is likelier new-and-strong than old-and-weak)
 
 ---
 
@@ -94,11 +98,12 @@ Detection order:
 
 ## Agent Model Selection Under Each Tier
 
-The `model` parameter passed to sub-Agent calls is **not** the same as the parent tier. Agents still follow the role-based recommendations in `session-protocol.md` §4. However, under the **Elite** parent tier:
+The `model` parameter passed to sub-Agent calls is **not** the same as the parent tier. The **model economy** is: inherit by default, split only at the top.
 
-- Do NOT downgrade Builder (L) or Worker (complex) to `sonnet`. Inherit parent.
-- Planner, Architect, Diagnostician always inherit parent.
-- Sentinel, Auditor remain `sonnet` (checklist-driven work, downgrading is appropriate).
+- All agents (Scout, Planner, Architect, Builder, Worker, Sentinel, Refiner, Integrator, QA, Auditor, Diagnostician, and every review/docs/QA-pipeline agent) → inherit parent (the `model` param is omitted). In an Opus 5 session every agent is Opus 5.
+- **Elite-tier parent exception (`fable` / `mythos` / `sol`):** in Claude Code every agent is labor and is spawned with `model: "opus"`, with exactly three exceptions — Planner, Architect, Diagnostician — which keep inheriting the parent; any role not named there is labor. In the Codex runtime the Claude model names do not exist and subagents always inherit the session model. Authority: `session-protocol.md` §4.
+- No per-role downgrades to `sonnet`/`haiku`, ever. The previous per-role downgrade table in `session-protocol.md` §4 is superseded and must not return.
+- Tier detection (`Standard`/`Advanced`/`Elite`) still governs pipeline rigor — round limits, QA thresholds, Sentinel/Auditor activation — but no longer affects which model an agent runs.
 
 ---
 
@@ -134,3 +139,9 @@ When a capability-conditional branch is needed:
 2. Consult this matrix for the parameter in question.
 3. If the matrix does not cover the parameter, apply tier-neutral defaults.
 4. Never expose the underlying model identifier to the user; reference the tier label only.
+
+---
+
+## Conductor Mode (`--quick`)
+
+Conductor mode (the `/harness --quick` fork — a direct single-agent edit with no Meta-Loop) is **tier-neutral**: it spawns no sub-agents, so the tier-conditional tables above (round limits, QA threshold, Sentinel/Auditor activation, file thresholds) do not apply. The one capability rule that DOES apply: Conductor mode is permitted only for trivial, single-file, non-security edits regardless of tier — security-sensitive or multi-file work always falls back to Orchestrator mode and its full tier-aware pipeline.

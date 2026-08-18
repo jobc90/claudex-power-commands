@@ -17,9 +17,9 @@ Internal labels, used consistently across commands, agent prompts, references, a
 
 | Tier | Typical Model Profile |
 |------|----------------------|
-| `Standard` | Small / fast general-purpose models |
-| `Advanced` | Mid-size reasoning models |
-| `Elite` | High-capability frontier models |
+| `Standard` | Capable mid-tier models |
+| `Advanced` | Frontier-family workhorse models (e.g. Opus 5) |
+| `Elite` | Top-tier / Mythos-class frontier models (e.g. Fable 5, gpt-5.6-sol) |
 
 **User-facing output policy**: the orchestrator emits at most `tier: {Standard | Advanced | Elite}`. The underlying runtime model identifier is never revealed.
 
@@ -30,9 +30,10 @@ Session start (Phase 0 of every command):
 1. **Explicit override** — if `CLAUDEX_TIER_OVERRIDE` ∈ {`standard`, `advanced`, `elite`}, use that value. Intended for testing / admin-approved scenarios.
 2. **Elite allowlist** — if the runtime model identifier appears in `CLAUDEX_ELITE_MODELS` (comma-separated), tier = `Elite`.
 3. **Name-based fallback** — for identifiers not in the allowlist:
-   - contains `sonnet` or `haiku` → `Standard`
-   - contains `opus` → `Advanced`
-   - otherwise → `Standard` (conservative default)
+   - identifier contains `fable`, `mythos`, or `sol` (e.g. `claude-fable-5`, `gpt-5.6-sol`) → `Elite`
+   - identifier contains `opus` → `Advanced`
+   - identifier contains `sonnet` or `haiku` → `Standard`
+   - otherwise → `Advanced` (frontier-era default: an unlisted model is likelier new-and-strong than old-and-weak)
 
 The tier is persisted to `.harness/session-state.md` so every downstream agent reads the same value.
 
@@ -41,7 +42,7 @@ The tier is persisted to `.harness/session-state.md` so every downstream agent r
 The allowlist lives in an environment variable. Project administrators maintain it locally or via CI/secrets, not in tracked source files.
 
 ```bash
-export CLAUDEX_ELITE_MODELS="id-1,id-2"
+export CLAUDEX_ELITE_MODELS="claude-fable-5,gpt-5.6-sol"
 ```
 
 ### Criteria for inclusion

@@ -103,7 +103,7 @@ Phase Orchestrator is a **reference document for the `/harness` orchestrator**, 
 
 ## Artifact Flow Map
 
-All artifacts are written to `.harness/` (Claude) or `.harness_codex/` (Codex).
+All artifacts are written to `.harness/` — the same directory on Claude and Codex.
 
 ### /harness Artifact Flow (SINGLE Mode)
 

@@ -170,7 +170,7 @@ Fix ROOT CAUSES from the diagnosis. Do not re-investigate from scratch."
 
 ### Per-Agent Model Recommendations
 
-> **Inherit-parent policy (user policy 2026-06-25):** every agent inherits the parent session model — **omit** the `model` param on every Agent call. The per-role table below is kept for documentation; all cells now read *inherit*. No per-role downgrades to `sonnet`/`haiku`. In an Opus session every agent is Opus; the single control knob is the session model (`/model`, `/effort`).
+> **Model economy — inherit by default, split under an Elite-tier parent:** every agent inherits the parent session model — **omit** the `model` param on the Agent call. The per-role table below is kept for documentation; all cells read *inherit* (the session model). Under an Elite-tier parent in Claude Code, every labor row resolves to `opus` per the exception below; Planner/Architect/Diagnostician keep inheriting. No per-role downgrades to `sonnet`/`haiku`, ever. **Exception:** when the parent session model is Elite-tier by §9 (identifier contains `fable`, `mythos`, or `sol`), spawn labor agents with `model: "opus"` — the scarce top model does the orchestrating/judgment turn only, the abundant frontier workhorse does the labor. This matches the user's global model-routing doctrine (scarce judgment, abundant labor). In the Codex runtime the Claude model names above do not exist; subagents always inherit the session model — see the Codex Runtime translation table in `codex-skills/AGENTS.md`. In an Opus session the exception is inert and every agent is Opus; the control knob remains the session model (`/model`, `/effort`).
 
 | Agent | Model | Rationale |
 |-------|-------|-----------|
@@ -216,11 +216,23 @@ Agent({
 })
 ```
 
-Do not pass a `model` value. The parent session model (e.g. Opus under `/effort ultracode`) flows to every agent.
+The parent session model flows to every agent — e.g. in an Opus 5 session every agent is Opus 5.
+
+**Elite-tier parent exception.** When the parent session model is Elite-tier by §9 (identifier contains `fable`, `mythos`, or `sol`), pass `model: "opus"` on every labor agent (examples, non-exhaustive: Scout, Builder, Worker, Sentinel, Refiner, Integrator, QA, Auditor, Scanner, Analyzer, Fixer, Verifier, Reporter, Researcher, Writer, Validator, Test Executor):
+
+```
+Agent({
+  description: "harness scout (M)",
+  model: "opus",          // Elite-tier parent → labor runs on the frontier workhorse
+  prompt: "..."
+})
+```
+
+Under an Elite-tier parent in Claude Code, every agent is labor and is spawned with `model: "opus"`, with exactly three exceptions — Planner, Architect, Diagnostician — whose output is the final judgment; they keep inheriting the session model. Any role not named here is labor. The Auditor is labor: adversarial evidence-checking is labor, and the orchestrator makes the final ship call on its own turn. In the Codex runtime the Claude model names above do not exist; subagents always inherit the session model — see the Codex Runtime translation table in `codex-skills/AGENTS.md`.
 
 ### Override Rule
 
-**Inherit-parent (user policy 2026-06-25):** never pin or downgrade any agent. Every claudex subagent inherits the parent session model by omitting the `model` param, so the session model is the single control point. Trade-off accepted: if `/harness` is ever run from a non-Opus session, subagents follow it down (no silent Opus billing, but no Opus guarantee either). (Historical note: the per-role table once downgraded systematic roles to `sonnet`/`haiku` for cost; that optimization is retired.)
+**Never downgrade; split only at the top.** No agent is ever pinned below the parent — `sonnet`/`haiku` pins are banned outright. The default is inherit, so the session model is the control point. The **only** permitted deviation is upward-scarcity management: under an Elite-tier parent (`fable` / `mythos` / `sol`), labor agents are pinned to `opus` so the scarce top model is spent on the orchestrating and judgment turn rather than on bulk exploration, edits, and verification. Trade-off accepted: if `/harness` runs from a weaker session, subagents follow it down. (Historical note: the per-role table once downgraded systematic roles to `sonnet`/`haiku` for cost; that optimization is retired and must not return.)
 
 ---
 
@@ -395,9 +407,9 @@ Run Diagnostician in foreground (default). The time saving is marginal for short
 
 | Tier | Typical Models | Characteristics |
 |------|---------------|----------------|
-| Standard | small/fast general-purpose models | Systematic execution, structured tasks |
-| Advanced | mid-size reasoning models | Deep reasoning, reliable judgment |
-| Elite | high-capability frontier models | Exceptional autonomy; mistakes can be subtle; stricter alignment posture required |
+| Standard | capable mid-tier models | Systematic execution, structured tasks |
+| Advanced | frontier-family workhorse models (e.g. Opus 5) | Deep reasoning, reliable judgment |
+| Elite | top-tier / Mythos-class frontier models (e.g. Fable 5, gpt-5.6-sol) | Exceptional autonomy; mistakes can be subtle; stricter alignment posture required |
 
 ### Tier-Specific Adjustments
 
@@ -419,9 +431,10 @@ The orchestrator classifies the parent model at session start by the following p
 1. **Explicit override** — `CLAUDEX_TIER_OVERRIDE` environment variable (`standard` | `advanced` | `elite`). For testing and admin-approved scenarios.
 2. **Elite allowlist** — if the runtime model identifier appears in the comma-separated `CLAUDEX_ELITE_MODELS` environment variable → Elite.
 3. **Name-based fallback** (for unlisted models):
-   - Identifier contains `sonnet` or `haiku` → Standard
-   - Identifier contains `opus` → Advanced
-   - Otherwise → Standard (conservative default)
+   - identifier contains `fable`, `mythos`, or `sol` (e.g. `claude-fable-5`, `gpt-5.6-sol`) → `Elite`
+   - identifier contains `opus` → `Advanced`
+   - identifier contains `sonnet` or `haiku` → `Standard`
+   - otherwise → `Advanced` (frontier-era default: an unlisted model is likelier new-and-strong than old-and-weak)
 
 **User-facing output**: at session start, emit a single line — `tier: {Standard|Advanced|Elite}` — without revealing the underlying model identifier.
 
@@ -436,7 +449,7 @@ Elite-tier models with very large effective context (256K–1M+) can process mor
 
 ## 9.5 Elite Model Allowlist
 
-Elite-tier classification is intentionally decoupled from hard-coded model names to preserve the project's naming-neutrality policy. The allowlist lives in an environment variable so downstream consumers and agent prompts see only the `Elite` tier label, never the underlying model identifier.
+The allowlist is the **operator-controlled** path to Elite: it lets a deployment promote a model the name-based fallback (§9 step 3) does not recognize, without editing any file. Naming neutrality still holds where it matters — downstream consumers, agent prompts, and user-facing output see only the `Elite` tier label, never the underlying model identifier.
 
 ### Setup
 
@@ -444,7 +457,7 @@ Add to your shell profile or `.env`:
 
 ```bash
 # Comma-separated list of runtime model identifiers that should use the Elite tier.
-export CLAUDEX_ELITE_MODELS="id-1,id-2"
+export CLAUDEX_ELITE_MODELS="claude-fable-5,gpt-5.6-sol"
 ```
 
 ### Criteria for inclusion

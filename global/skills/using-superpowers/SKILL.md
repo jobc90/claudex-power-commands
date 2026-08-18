@@ -110,8 +110,8 @@ When multiple skills could apply, use this order:
 
 "Let's build X" → brainstorming first, then implementation skills.
 "Fix this bug" → debugging first, then domain-specific skills.
-"계약서 검토해줘" → agent-router → contract-legal agent spawned.
-"세금 계산해줘" → agent-router → financial-accountant agent spawned.
+"코드 리뷰해줘" → agent-router → code-reviewer agent spawned.
+"DB 스키마 점검해줘" → agent-router → database-reviewer agent spawned.
 
 ## Skill Types
 

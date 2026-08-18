@@ -157,32 +157,32 @@ prompt_plan.md 키워드 분석:
 
 | 역할 | subagent_type | 모델 | 담당 |
 |------|--------------|------|------|
-| Implementer 1 | general-purpose | sonnet | 핵심 기능 구현 |
-| Implementer 2 | general-purpose | sonnet | 보조 기능 구현 |
-| Tester | general-purpose | sonnet | 테스트 작성 + 리뷰 |
+| Implementer 1 | general-purpose | opus | 핵심 기능 구현 |
+| Implementer 2 | general-purpose | opus | 보조 기능 구현 |
+| Tester | general-purpose | opus | 테스트 작성 + 리뷰 |
 
 **bugfix** (팀원 2명):
 
 | 역할 | subagent_type | 모델 | 담당 |
 |------|--------------|------|------|
-| Investigator | Explore | sonnet | 버그 원인 분석 |
-| Fixer | general-purpose | sonnet | 수정 + 테스트 |
+| Investigator | Explore | opus | 버그 원인 분석 |
+| Fixer | general-purpose | opus | 수정 + 테스트 |
 
 **refactor** (팀원 3명):
 
 | 역할 | subagent_type | 모델 | 담당 |
 |------|--------------|------|------|
-| Analyzer | Explore | sonnet | 코드 분석 + 계획 |
-| Implementer | general-purpose | sonnet | 리팩토링 실행 |
-| Verifier | general-purpose | sonnet | 테스트 + 검증 |
+| Analyzer | Explore | opus | 코드 분석 + 계획 |
+| Implementer | general-purpose | opus | 리팩토링 실행 |
+| Verifier | general-purpose | opus | 테스트 + 검증 |
 
 **review** (팀원 3명):
 
 | 역할 | subagent_type | 모델 | 담당 |
 |------|--------------|------|------|
-| Security Reviewer | Explore | sonnet | 보안 분석 |
-| Performance Reviewer | Explore | sonnet | 성능 분석 |
-| Quality Reviewer | Explore | sonnet | 코드 품질 분석 |
+| Security Reviewer | Explore | opus | 보안 분석 |
+| Performance Reviewer | Explore | opus | 성능 분석 |
+| Quality Reviewer | Explore | opus | 코드 품질 분석 |
 
 ## 5단계: Wave 그룹화
 
@@ -253,9 +253,9 @@ TaskCreate → Wave 3 태스크들 (blockedBy: Wave 2 태스크)
 
 **Step 3: 팀원 생성 (Task 도구)**
 ```
-Task → Implementer 1 (general-purpose, sonnet)
-Task → Implementer 2 (general-purpose, sonnet)
-Task → Tester (general-purpose, sonnet)
+Task → Implementer 1 (general-purpose, opus)
+Task → Implementer 2 (general-purpose, opus)
+Task → Tester (general-purpose, opus)
 ```
 
 **Step 4: 태스크 배정**

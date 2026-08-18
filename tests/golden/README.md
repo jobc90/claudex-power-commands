@@ -41,3 +41,9 @@ Pass rule (derived by the scorer): `expected=PASS` → `actual=PASS`; `expected=
 ## Using it as a gate (#8)
 
 When `harness/*-prompt.md` or `commands/*.md` change, re-run the golden scenarios and `golden-score.py`; block the version bump on exit 1 (a pinned behaviour regressed). This is the mechanical enforcement of the project's "ship only what a controlled check verified" posture.
+
+### Re-baseline pending (2026-08-18)
+
+The 2026-06-16 baseline was recorded on `sonnet` / effort `xhigh`, which **predates the current model policy** (Fable-5-class sessions; subagents inherit the parent session model, with `opus` labor agents under an Elite-tier parent — per-role `sonnet`/`haiku` downgrades are banned). Per the caveat above ("re-baseline when the harness model policy changes"), `results-baseline.csv` no longer reflects what the shipped prompts actually run on, and its rows are kept only as history.
+
+**Status: re-baseline pending.** Until it is redone under the current policy, treat a `golden-score.py` run against these rows as indicative, not as the release gate.

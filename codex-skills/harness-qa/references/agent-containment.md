@@ -25,6 +25,8 @@ These commands MUST NEVER appear in agent execution. Any occurrence triggers a S
 | Command obfuscation | `base64 -d \| sh`, `eval $(`, `printf '\\x' \| sh`, `python -c "exec(` | Command Obfuscation |
 | MCP manipulation | Writing to MCP server config, modifying running MCP processes | MCP Tampering |
 
+> **Deterministic enforcement (whitepaper-alignment P0)**: the pure-regex subset of these CRITICAL patterns (catastrophic deletion, history destruction, permission escalation, command obfuscation, subagent escalation, credential hunting) is now ALSO enforced by the deterministic PreToolUse hook `hooks/guard-bash.sh`, which blocks the matched command **before it runs** — independent of whether the Sentinel agent is active. Hardcoded-secret commits are caught by the `hooks/guard-commit.sh` pre-commit scanner ("block a commit with a hardcoded password"). The Sentinel agent remains the judgment layer (scope creep, dishonest progress claims, prompt-injection semantics); hooks handle the mechanical layer — deterministic > agent-remembered. (Hooks are Claude-only; Codex has no PreToolUse runtime, so on Codex this deny-list stays Sentinel-enforced.)
+
 ### HIGH — Sentinel WARN
 
 These commands are flagged but do not BLOCK. They may be legitimate in some contexts.

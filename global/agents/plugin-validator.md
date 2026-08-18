@@ -92,7 +92,8 @@ You are an expert plugin validator specializing in comprehensive validation of C
        - Frontmatter with `name`, `description`, `model`, `color`
        - Name format (lowercase, hyphens, 3-50 chars)
        - Description includes `<example>` blocks
-       - Model is valid (inherit/sonnet/opus/haiku)
+       - Model is valid (`fable`/`opus`/`sonnet`/`haiku`/`inherit`)
+       - Warn on `model: inherit` — valid Claude Code frontmatter, but this setup pins explicit models (rules/model-routing.md); warn, don't fail
        - Color is valid (blue/cyan/green/yellow/magenta/red)
        - System prompt exists and is substantial (>20 chars)
 

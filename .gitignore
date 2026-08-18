@@ -11,3 +11,6 @@ node_modules/
 # python test-run artifacts (golden fixtures)
 __pycache__/
 .pytest_cache/
+
+# Re-include: shipped Codex-runtime doc (globally ignored pattern AGENTS.md)
+!codex-skills/AGENTS.md

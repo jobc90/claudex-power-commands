@@ -72,7 +72,7 @@ $harness <prompt> [--workers N]
   |
   +- Phase 0: Triage            -> Scale S/M/L
   +- Phase 0.5: Security Triage -> LOW/MEDIUM/HIGH
-  +- Phase 1: Setup             -> .harness_codex/ + session state
+  +- Phase 1: Setup             -> .harness/ + session state
   +- Phase 2: Scout             -> build-context.md
   +- Phase 3: Planning          -> build-spec.md (includes Build Mode: SINGLE/TEAM)
   |                             -> User reviews and approves
@@ -85,24 +85,24 @@ $harness <prompt> [--workers N]
 
 ## Required Artifacts
 
-Use `.harness_codex/` in the target project directory.
+Use `.harness/` in the target project directory.
 
-- `.harness_codex/build-prompt.md`
-- `.harness_codex/build-context.md`
-- `.harness_codex/build-spec.md`
-- `.harness_codex/build-progress.md`
-- `.harness_codex/build-refiner-report.md`
-- `.harness_codex/build-round-1-feedback.md`
-- `.harness_codex/build-round-2-feedback.md`
-- `.harness_codex/build-round-3-feedback.md`
-- `.harness_codex/security-triage.md`
-- `.harness_codex/session-state.md`
-- `.harness_codex/session-events.md`
-- `.harness_codex/build-history.md`
-- `.harness_codex/build-mode.md` (Scale L only)
-- `.harness_codex/traces/` (execution logs, QA evidence)
-- `.harness_codex/sentinel-report-round-{N}.md` (when Sentinel active)
-- `.harness_codex/auditor-report.md` (when Auditor active)
+- `.harness/build-prompt.md`
+- `.harness/build-context.md`
+- `.harness/build-spec.md`
+- `.harness/build-progress.md`
+- `.harness/build-refiner-report.md`
+- `.harness/build-round-1-feedback.md`
+- `.harness/build-round-2-feedback.md`
+- `.harness/build-round-3-feedback.md`
+- `.harness/security-triage.md`
+- `.harness/session-state.md`
+- `.harness/session-events.md`
+- `.harness/build-history.md`
+- `.harness/build-mode.md` (Scale L only)
+- `.harness/traces/` (execution logs, QA evidence)
+- `.harness/sentinel-report-round-{N}.md` (when Sentinel active)
+- `.harness/auditor-report.md` (when Auditor active)
 
 All inter-agent communication must happen through these files only.
 
@@ -135,7 +135,7 @@ Analyze the user's request for security-sensitive keywords:
 
 ### Write Triage Result
 
-Write to `.harness_codex/security-triage.md`:
+Write to `.harness/security-triage.md`:
 
 ```markdown
 # Security Triage
@@ -160,10 +160,10 @@ Sentinel: {활성화/비활성화}, QA Security Track: {활성화/비활성화}
 
 ### Post-Scout Re-evaluation
 
-After Phase 2 (Scout) completes, re-read `.harness_codex/build-context.md` and check the "Files to Change" section:
+After Phase 2 (Scout) completes, re-read `.harness/build-context.md` and check the "Files to Change" section:
 - If files include paths containing `auth/`, `payment/`, `security/`, `.env`, `credential` → upgrade to HIGH
 - If files include paths containing `api/`, `routes/`, `middleware/`, `model/` → upgrade to at least MEDIUM
-- Update `.harness_codex/security-triage.md` if sensitivity increased. Notify user: **"보안 민감도가 {OLD} → {NEW}로 상향되었습니다."**
+- Update `.harness/security-triage.md` if sensitivity increased. Notify user: **"보안 민감도가 {OLD} → {NEW}로 상향되었습니다."**
 
 ## Phase 1. Setup
 
@@ -171,13 +171,13 @@ Load `references/session-protocol.md`.
 
 ### 1a. Session Recovery Check
 
-Before creating `.harness_codex/`, check for an existing session:
+Before creating `.harness/`, check for an existing session:
 
-1. If `.harness_codex/session-state.md` exists:
+1. If `.harness/session-state.md` exists:
    - Read it and verify referenced artifacts exist on disk
    - Present to user: **"이전 세션이 감지되었습니다. Phase {phase}, {last_completed_agent} 완료 후 중단. 이어서 진행할까요?"**
    - If **resume**: skip to the phase AFTER `last_completed_agent`, reading existing artifacts as context
-   - If **restart**: rename `.harness_codex/` to `.harness_codex-backup-{timestamp}/` and continue to 1b
+   - If **restart**: rename `.harness/` to `.harness-backup-{timestamp}/` and continue to 1b
 2. If no session-state.md: continue to 1b
 
 ### 1b. Fresh Setup
@@ -186,12 +186,12 @@ Before creating `.harness_codex/`, check for an existing session:
 2. Create the working directory and initialize git if needed:
 
 ```bash
-mkdir -p .harness_codex/traces
+mkdir -p .harness/traces
 git init 2>/dev/null || true
 ```
 
-3. Write the user's original request and classified scale to `.harness_codex/build-prompt.md`.
-4. Initialize session state in `.harness_codex/session-state.md`:
+3. Write the user's original request and classified scale to `.harness/build-prompt.md`.
+4. Initialize session state in `.harness/session-state.md`:
 
 ```markdown
 # Session State
@@ -203,10 +203,10 @@ git init 2>/dev/null || true
 - last_completed_at: {ISO8601}
 - status: IN_PROGRESS
 - artifacts_written:
-  - .harness_codex/build-prompt.md
+  - .harness/build-prompt.md
 ```
 
-5. Initialize event log in `.harness_codex/session-events.md`:
+5. Initialize event log in `.harness/session-events.md`:
 
 ```markdown
 # Session Events
@@ -230,11 +230,11 @@ Before launching the Scout, classify the request type:
 For FIX/MODIFY requests, append this instruction to the Scout prompt:
 - "This is a FIX/MODIFICATION request. After the standard module scan, you MUST execute the **Deep Dive Protocol** described in the scout prompt. Trace the specific feature's data flow end-to-end, verify each flag/guard/condition with file:line evidence, and map behavior per user type/role. The Planner will reject unverified claims."
 
-Use a fresh explore-style subagent (model: `sonnet`):
+Use a fresh explore-style subagent (inherit the session model — omit the `model` param):
 
 - keep `fork_context` false
 - pass only the scout prompt plus minimal local context
-- require the agent to write `.harness_codex/build-context.md`
+- require the agent to write `.harness/build-context.md`
 - scale guidance:
   - `S`: scan only the 2-5 directly relevant files
   - `M`: scan the relevant modules, roughly 5-15 files
@@ -243,7 +243,7 @@ Use a fresh explore-style subagent (model: `sonnet`):
 
 After Scout completes:
 1. Briefly confirm: **"Scout 완료. 코드베이스 컨텍스트를 수집했습니다."** (No approval gate.)
-2. Update session state and event log in `.harness_codex/session-state.md` and `.harness_codex/session-events.md`.
+2. Update session state and event log in `.harness/session-state.md` and `.harness/session-events.md`.
 3. Run Post-Scout Security Re-evaluation (see Phase 0.5).
 
 ## Phase 3. Planning
@@ -252,9 +252,9 @@ Load `references/planner-prompt.md`.
 
 ### Scale `S`
 
-Do not spawn a Planner agent. Write `.harness_codex/build-spec.md` directly using `.harness_codex/build-context.md`.
+Do not spawn a Planner agent. Write `.harness/build-spec.md` directly using `.harness/build-context.md`.
 
-**CRITICAL**: Before writing the spec, READ `.harness_codex/build-context.md` thoroughly. For FIX/MODIFY requests, the "Feature Deep Dive" section contains verified findings — use ONLY those findings to determine files to change. Do NOT list files based on your own inference.
+**CRITICAL**: Before writing the spec, READ `.harness/build-context.md` thoroughly. For FIX/MODIFY requests, the "Feature Deep Dive" section contains verified findings — use ONLY those findings to determine files to change. Do NOT list files based on your own inference.
 
 Include:
 
@@ -276,9 +276,9 @@ Stop and wait for approval.
 Spawn a fresh planner subagent (inherit parent model — planning quality is critical):
 
 - keep `fork_context` false
-- require it to read `.harness_codex/build-context.md`
+- require it to read `.harness/build-context.md`
 - add `MODE: LITE. Scale is M.`
-- require it to write `.harness_codex/build-spec.md`
+- require it to write `.harness/build-spec.md`
 
 After it finishes, summarize the spec and ask:
 
@@ -291,9 +291,9 @@ Stop and wait for approval. After approval, update session state and event log.
 Spawn a fresh planner subagent (inherit parent model):
 
 - keep `fork_context` false
-- require it to read `.harness_codex/build-context.md`
+- require it to read `.harness/build-context.md`
 - add `MODE: FULL. Scale is L.`
-- require it to write `.harness_codex/build-spec.md`
+- require it to write `.harness/build-spec.md`
 
 After it finishes, summarize the spec and ask:
 
@@ -306,11 +306,11 @@ Stop and wait for approval. After approval, update session state and event log.
 After the Planner completes and the user approves the spec:
 
 1. If `--workers N` flag was provided: **Force TEAM mode** with N workers.
-2. Otherwise, read `.harness_codex/build-spec.md` for the Planner's Build Mode recommendation:
+2. Otherwise, read `.harness/build-spec.md` for the Planner's Build Mode recommendation:
    - If Planner recommends TEAM: present to user: **"Planner가 TEAM 모드를 추천합니다 (Workers: {N}명). TEAM 모드로 진행할까요?"**
    - If Planner recommends SINGLE: proceed with SINGLE mode (default).
    - User can override in either direction.
-3. Write the decision to `.harness_codex/build-mode.md`:
+3. Write the decision to `.harness/build-mode.md`:
    ```markdown
    mode: {SINGLE/TEAM}
    workers: {N}
@@ -322,7 +322,7 @@ Scale S/M always use SINGLE mode.
 
 ### Build Mode Branch
 
-Read `.harness_codex/build-mode.md` (or default to SINGLE if file doesn't exist — Scale S/M always SINGLE).
+Read `.harness/build-mode.md` (or default to SINGLE if file doesn't exist — Scale S/M always SINGLE).
 
 **If SINGLE mode**: Follow the Build-Sentinel-Refine-QA loop below.
 
@@ -354,25 +354,17 @@ Load:
 | M | 2 | Full checklist | Code review + build/test + Playwright (if UI exists) | Before round 2 |
 | L | 3 | Full checklist + security scan | Playwright mandatory | Before rounds 2 and 3 |
 
-### Model Selection
+### Model economy
 
-| Agent | Model |
-|-------|-------|
-| Scout | `sonnet` |
-| Planner | inherit parent (planning quality is critical) |
-| Builder (S/M) | `sonnet` |
-| Builder (L) | inherit parent |
-| Sentinel | `sonnet` |
-| Refiner | `sonnet` |
-| QA | `sonnet` |
-| Diagnostician | inherit parent (deep reasoning needed) |
-| Auditor | `sonnet` |
+Every agent — Scout, Planner, Builder, Sentinel, Refiner, QA, Diagnostician, Auditor — **inherits the session model**: omit the `model` param on the spawn call. There is no per-role table and no per-role downgrade to `sonnet`/`haiku`, ever. On Codex the session model is whatever `~/.codex/config.toml` sets (currently `gpt-5.6-sol`), so that file is the single control knob.
+
+**Exception — Elite-tier parent (Claude Code only):** when the parent session model is Elite-tier by §9 (identifier contains `fable`, `mythos`, or `sol`), every agent is labor and is spawned with `model: "opus"`, with exactly three exceptions — Planner, Architect, Diagnostician — whose output is the final judgment; they keep inheriting the session model. Any role not named here is labor (Scout, Builder, Sentinel, Refiner, QA, Auditor, …). In the Codex runtime the Claude model names do not exist, so the exception is inert and every agent inherits the session model — see the Codex Runtime translation table in `codex-skills/AGENTS.md`.
 
 ### For each round N:
 
 #### 4-pre. Environment Snapshot (Every Round)
 
-Before each Build round, capture the project state to `.harness_codex/snapshot-round-{N}.md`:
+Before each Build round, capture the project state to `.harness/snapshot-round-{N}.md`:
 - `git diff --stat` and `git diff --name-only`
 - Build command exit code + last 20 lines if failure
 - Test command exit code + summary
@@ -386,38 +378,38 @@ For each round `N`, spawn a fresh builder subagent (`fork_context` false).
 
 Builder instructions must include:
 
-- codebase context: `.harness_codex/build-context.md`
-- product spec: `.harness_codex/build-spec.md`
-- environment snapshot: `.harness_codex/snapshot-round-{N}.md`
+- codebase context: `.harness/build-context.md`
+- product spec: `.harness/build-spec.md`
+- environment snapshot: `.harness/snapshot-round-{N}.md`
 - scale: `{S|M|L}`
 - round handling:
   - round 1: implement the requested changes from the spec
   - round 2+ (**Selective Context Protocol**):
-    - **PRIMARY** (read FIRST): `.harness_codex/diagnosis-round-{N-1}.md` — root cause analysis with file:line citations. `.harness_codex/snapshot-round-{N}.md` — current project state.
-    - **SECONDARY** (reference): `.harness_codex/build-spec.md` — the spec.
-    - **ON-DEMAND** (only if diagnosis is insufficient): `.harness_codex/build-history.md`, `.harness_codex/traces/round-{N-1}-qa-evidence.md`, `.harness_codex/traces/round-{N-1}-execution-log.md`
+    - **PRIMARY** (read FIRST): `.harness/diagnosis-round-{N-1}.md` — root cause analysis with file:line citations. `.harness/snapshot-round-{N}.md` — current project state.
+    - **SECONDARY** (reference): `.harness/build-spec.md` — the spec.
+    - **ON-DEMAND** (only if diagnosis is insufficient): `.harness/build-history.md`, `.harness/traces/round-{N-1}-qa-evidence.md`, `.harness/traces/round-{N-1}-execution-log.md`
     - Fix ROOT CAUSES from the diagnosis. Do not re-investigate from scratch.
-- write progress to `.harness_codex/build-progress.md`
-- **Execution Audit**: write execution log to `.harness_codex/traces/round-{N}-execution-log.md`
-- for scale `M` and `L`, start the dev server in background and record the URL in `.harness_codex/build-progress.md`
+- write progress to `.harness/build-progress.md`
+- **Execution Audit**: write execution log to `.harness/traces/round-{N}-execution-log.md`
+- for scale `M` and `L`, start the dev server in background and record the URL in `.harness/build-progress.md`
 
-After Builder completes, update event log in `.harness_codex/session-events.md`.
+After Builder completes, update event log in `.harness/session-events.md`.
 
 #### 4a-post. Sentinel Check (Conditional)
 
-**Skip if**: `.harness_codex/security-triage.md` shows `sentinel_active: false`
+**Skip if**: `.harness/security-triage.md` shows `sentinel_active: false`
 
 Load `references/sentinel-prompt.md`.
 
-Spawn a fresh sentinel subagent (model: `sonnet`, `fork_context` false):
+Spawn a fresh sentinel subagent (inherit the session model — omit the `model` param; `fork_context` false):
 
-- execution audit log: `.harness_codex/traces/round-{N}-execution-log.md`
-- build progress: `.harness_codex/build-progress.md`
-- product spec: `.harness_codex/build-spec.md`
+- execution audit log: `.harness/traces/round-{N}-execution-log.md`
+- build progress: `.harness/build-progress.md`
+- product spec: `.harness/build-spec.md`
 - containment reference: `references/agent-containment.md`
-- security triage: `.harness_codex/security-triage.md`
+- security triage: `.harness/security-triage.md`
 - round number: {N}
-- output: `.harness_codex/sentinel-report-round-{N}.md`
+- output: `.harness/sentinel-report-round-{N}.md`
 
 After Sentinel completes, extract the verdict: **BLOCK / WARN / CLEAR**
 
@@ -435,22 +427,22 @@ After Sentinel completes, extract the verdict: **BLOCK / WARN / CLEAR**
 **If CLEAR**:
 - Proceed to Refiner (4b) normally
 
-Update event log in `.harness_codex/session-events.md`.
+Update event log in `.harness/session-events.md`.
 
 #### 4b. Refine
 
-Spawn a fresh refiner subagent (model: `sonnet`, `fork_context` false).
+Spawn a fresh refiner subagent (inherit the session model — omit the `model` param; `fork_context` false).
 
 Refiner instructions must include:
 
-- codebase context: `.harness_codex/build-context.md`
-- product spec: `.harness_codex/build-spec.md`
-- build progress: `.harness_codex/build-progress.md`
+- codebase context: `.harness/build-context.md`
+- product spec: `.harness/build-spec.md`
+- build progress: `.harness/build-progress.md`
 - scale and round number
 - round 2+: previous QA feedback path
 - apply safe cleanup and hardening directly to the code
-- write `.harness_codex/build-refiner-report.md`
-- **Execution Audit**: append refinement actions to `.harness_codex/traces/round-{N}-execution-log.md` under a `## Refiner Actions` header
+- write `.harness/build-refiner-report.md`
+- **Execution Audit**: append refinement actions to `.harness/traces/round-{N}-execution-log.md` under a `## Refiner Actions` header
 
 After Refiner completes, update event log.
 
@@ -458,7 +450,7 @@ After Refiner completes, update event log.
 
 For scale `M` and `L` only:
 
-1. Read `.harness_codex/build-progress.md` and extract the app URL.
+1. Read `.harness/build-progress.md` and extract the app URL.
 2. Verify the server responds:
 
 ```bash
@@ -470,15 +462,15 @@ curl -s -o /dev/null -w '%{http_code}' <URL>
 
 #### 4d. QA
 
-Spawn a fresh QA subagent (model: `sonnet`, `fork_context` false).
+Spawn a fresh QA subagent (inherit the session model — omit the `model` param; `fork_context` false).
 
 QA instructions must include:
 
-- product spec path: `.harness_codex/build-spec.md`
-- refiner report path: `.harness_codex/build-refiner-report.md`
+- product spec path: `.harness/build-spec.md`
+- refiner report path: `.harness/build-refiner-report.md`
 - scale and round number
-- output path: `.harness_codex/build-round-{N}-feedback.md`
-- for scale M/L: write evidence traces to `.harness_codex/traces/round-{N}-qa-evidence.md`
+- output path: `.harness/build-round-{N}-feedback.md`
+- for scale M/L: write evidence traces to `.harness/traces/round-{N}-qa-evidence.md`
 - mode:
   - `S`: code review plus build/test verification only
   - `M`: Playwright if UI exists, otherwise code review plus build/test
@@ -491,7 +483,7 @@ After QA completes, update event log.
 
 After QA finishes:
 
-1. Read `.harness_codex/build-round-{N}-feedback.md`.
+1. Read `.harness/build-round-{N}-feedback.md`.
 2. Extract the criterion scores.
 3. Report briefly: round number, scores, pass/fail, key issues
 4. Decide (evaluate in this order):
@@ -509,16 +501,16 @@ Spawn a fresh diagnostician subagent (inherit parent model, `fork_context` false
 
 **Scale L**: use `run_in_background` and proceed to 4g (History) immediately. Scale M: foreground (default).
 
-- QA feedback: `.harness_codex/build-round-{N}-feedback.md`
-- QA evidence traces: `.harness_codex/traces/round-{N}-qa-evidence.md`
-- execution audit log: `.harness_codex/traces/round-{N}-execution-log.md`
-- event log: `.harness_codex/session-events.md`
-- environment snapshot: `.harness_codex/snapshot-round-{N}.md`
-- build progress: `.harness_codex/build-progress.md`
-- codebase context: `.harness_codex/build-context.md`
+- QA feedback: `.harness/build-round-{N}-feedback.md`
+- QA evidence traces: `.harness/traces/round-{N}-qa-evidence.md`
+- execution audit log: `.harness/traces/round-{N}-execution-log.md`
+- event log: `.harness/session-events.md`
+- environment snapshot: `.harness/snapshot-round-{N}.md`
+- build progress: `.harness/build-progress.md`
+- codebase context: `.harness/build-context.md`
 - round number: {N}
 - if round 2+: previous diagnosis and build history paths
-- output: `.harness_codex/diagnosis-round-{N}.md`
+- output: `.harness/diagnosis-round-{N}.md`
 
 **Scale L flow** (background Diagnostician):
 1. Diagnostician runs in background
@@ -533,7 +525,7 @@ After Diagnostician completes, update event log.
 
 #### 4g. Accumulate History (Every Round)
 
-Append to `.harness_codex/build-history.md`:
+Append to `.harness/build-history.md`:
 
 ```markdown
 ## Round {N}
@@ -571,27 +563,27 @@ Report the result:
 
 ## Phase 4-audit. Auditor Verification (Conditional)
 
-**Skip if**: `.harness_codex/security-triage.md` shows `auditor_active: false`
+**Skip if**: `.harness/security-triage.md` shows `auditor_active: false`
 **Skip for Scale S**: Auditor is only active for Scale M/L with MEDIUM/HIGH security sensitivity.
 
 After the Build-Sentinel-Refine-QA loop exits, run the Auditor for cross-verification.
 
 Load `references/auditor-prompt.md`.
 
-Spawn a fresh auditor subagent (model: `sonnet`, `fork_context` false):
+Spawn a fresh auditor subagent (inherit the session model — omit the `model` param; `fork_context` false):
 
-- build progress: `.harness_codex/build-progress.md`
-- refiner report: `.harness_codex/build-refiner-report.md`
-- QA feedback files: `.harness_codex/build-round-{1..N}-feedback.md`
-- execution logs: `.harness_codex/traces/round-{1..N}-execution-log.md`
-- sentinel reports: `.harness_codex/sentinel-report-round-{1..N}.md` (if exist)
-- product spec: `.harness_codex/build-spec.md`
-- build history: `.harness_codex/build-history.md`
+- build progress: `.harness/build-progress.md`
+- refiner report: `.harness/build-refiner-report.md`
+- QA feedback files: `.harness/build-round-{1..N}-feedback.md`
+- execution logs: `.harness/traces/round-{1..N}-execution-log.md`
+- sentinel reports: `.harness/sentinel-report-round-{1..N}.md` (if exist)
+- product spec: `.harness/build-spec.md`
+- build history: `.harness/build-history.md`
 - total rounds completed: {N}
-- output: `.harness_codex/auditor-report.md`
+- output: `.harness/auditor-report.md`
 
 After Auditor completes:
-1. Read `.harness_codex/auditor-report.md`
+1. Read `.harness/auditor-report.md`
 2. Extract integrity verdict: HIGH / MEDIUM / LOW
 3. If LOW: **"Auditor: LOW integrity 탐지. 수동 검증을 권장합니다."**
 4. Include integrity verdict in Phase 5 Summary
@@ -602,11 +594,11 @@ Update event log.
 
 Synthesize the whole run's telemetry into one artifact. Load `references/trajectory-reporter-prompt.md`.
 
-Spawn a fresh subagent (model: `sonnet`, `fork_context` false):
-- session events: `.harness_codex/session-events.md`
-- execution logs: `.harness_codex/traces/round-{1..N}-execution-log.md`
-- QA feedback: `.harness_codex/build-round-{1..N}-feedback.md`; diagnoses `.harness_codex/diagnosis-round-{1..N}.md` (if any); auditor `.harness_codex/auditor-report.md` (if any); history `.harness_codex/build-history.md`; session state `.harness_codex/session-state.md`
-- output: `.harness_codex/trajectory-report.md`
+Spawn a fresh subagent (inherit the session model — omit the `model` param; `fork_context` false):
+- session events: `.harness/session-events.md`
+- execution logs: `.harness/traces/round-{1..N}-execution-log.md`
+- QA feedback: `.harness/build-round-{1..N}-feedback.md`; diagnoses `.harness/diagnosis-round-{1..N}.md` (if any); auditor `.harness/auditor-report.md` (if any); history `.harness/build-history.md`; session state `.harness/session-state.md`
+- output: `.harness/trajectory-report.md`
 
 It only synthesizes existing telemetry — no new analysis; note any missing input and continue. Update event log.
 
@@ -653,7 +645,7 @@ It only synthesizes existing telemetry — no new analysis; note any missing inp
 **Integrity**: {HIGH/MEDIUM/LOW} (from Auditor, if active; otherwise "N/A — Auditor inactive")
 
 ### Residual Risk / 인간 확인 필요
-[Ranked hand-verify spots from the QA Reporter — Diagnostician LIKELY/HYPOTHESIS, QA UNTESTABLE/RENDER_UNCHECKED, <70 deferrals, Integrator RISKY. "none flagged" if empty. See `.harness_codex/trajectory-report.md` for the timeline.]
+[Ranked hand-verify spots from the QA Reporter — Diagnostician LIKELY/HYPOTHESIS, QA UNTESTABLE/RENDER_UNCHECKED, <70 deferrals, Integrator RISKY. "none flagged" if empty. See `.harness/trajectory-report.md` for the timeline.]
 ```
 
 ### Scale L — Full Report
@@ -688,12 +680,12 @@ It only synthesizes existing telemetry — no new analysis; note any missing inp
 [Ranked hand-verify spots from the QA Reporter — Diagnostician LIKELY/HYPOTHESIS, QA UNTESTABLE/RENDER_UNCHECKED, <70 deferrals, Integrator RISKY. "none flagged" if empty.]
 
 ### Artifacts
-- Context: `.harness_codex/build-context.md`
-- Spec: `.harness_codex/build-spec.md`
-- Refiner: `.harness_codex/build-refiner-report.md`
-- Final QA: `.harness_codex/build-round-{N}-feedback.md`
-- Progress: `.harness_codex/build-progress.md`
-- Trajectory: `.harness_codex/trajectory-report.md`
+- Context: `.harness/build-context.md`
+- Spec: `.harness/build-spec.md`
+- Refiner: `.harness/build-refiner-report.md`
+- Final QA: `.harness/build-round-{N}-feedback.md`
+- Progress: `.harness/build-progress.md`
+- Trajectory: `.harness/trajectory-report.md`
 ```
 
 After presenting the Summary, finalize session state (set status to COMPLETED) and write final event log entry.
@@ -702,17 +694,17 @@ After presenting the Summary, finalize session state (set status to COMPLETED) a
 
 After the Summary, capture durable learnings so future runs on this project don't repeat caught mistakes. Skip when there is nothing to learn (Scale S single clean round, or no diagnoses/auditor findings). Load `references/curator-prompt.md`.
 
-Spawn a fresh subagent (model: `sonnet`, `fork_context` false):
-- diagnoses: `.harness_codex/diagnosis-round-{1..N}.md`; auditor `.harness_codex/auditor-report.md` (if any); QA feedback `.harness_codex/build-round-{1..N}-feedback.md`; history `.harness_codex/build-history.md`
+Spawn a fresh subagent (inherit the session model — omit the `model` param; `fork_context` false):
+- diagnoses: `.harness/diagnosis-round-{1..N}.md`; auditor `.harness/auditor-report.md` (if any); QA feedback `.harness/build-round-{1..N}-feedback.md`; history `.harness/build-history.md`
 - existing rules: read the target project's `AGENTS.md` and `CLAUDE.md` (dedup against them)
-- output: PROPOSAL ONLY to `.harness_codex/curator-proposal.md` — the agent MUST NOT edit `AGENTS.md`/`CLAUDE.md`/any project file
+- output: PROPOSAL ONLY to `.harness/curator-proposal.md` — the agent MUST NOT edit `AGENTS.md`/`CLAUDE.md`/any project file
 
 Then the orchestrator (not the agent): read the proposal; if it proposes rules, SHOW them and ask the user for approval; ONLY on approval append the deduped rules to `./AGENTS.md` under `## Learned Rules (harness)`. The agent never edits the user repo. Update event log.
 
 ## Execution Rules
 
 1. Each phase agent must be a separate `spawn_agent` call with fresh context (`fork_context` false).
-2. Never pass state between agents in chat. Use `.harness_codex/` files only.
+2. Never pass state between agents in chat. Use `.harness/` files only.
 3. Always load the prompt templates from `references/` before composing each agent task.
 4. Always wait for explicit user approval after the planning phase.
 5. The Builder cannot self-certify. Refiner and QA must run after every build round.
@@ -721,10 +713,10 @@ Then the orchestrator (not the agent): read the proposal; if it proposes rules, 
 8. Scale `M` uses Playwright only when UI exists.
 9. Scale `L` requires live-app QA with Playwright.
 10. If subagents are unavailable, stop and say the harness cannot run as designed. Do not fake the multi-agent loop in one pass.
-11. **Model selection follows the protocol**: Scout/Refiner/QA/Sentinel/Auditor → `sonnet`; Planner/Diagnostician → inherit parent.
+11. **Every agent inherits the session model** — omit the `model` param on every spawn. No per-role downgrades. The session model (`~/.codex/config.toml`) is the single control knob. Exception (Claude Code only): under an Elite-tier session model (identifier contains `fable`, `mythos`, or `sol`), spawn labor agents with `model: "opus"` — everything except Planner, Architect, and Diagnostician is labor. Inert under Codex, where every agent inherits. See "Model economy" above.
 12. **Round 2+ Builder uses Selective Context**: PRIMARY (diagnosis + snapshot), SECONDARY (spec), ON-DEMAND (rest).
 13. **Scale L Diagnostician runs in background**. History and user reporting proceed in parallel.
-14. **Builder and Refiner write execution audit logs** to `.harness_codex/traces/round-{N}-execution-log.md`.
+14. **Builder and Refiner write execution audit logs** to `.harness/traces/round-{N}-execution-log.md`.
 15. **Sentinel runs AFTER Builder, BEFORE Refiner** (when active). A BLOCK verdict returns to Builder. Two consecutive BLOCKs abort the pipeline.
 16. **Security Triage runs AFTER Scale classification** and re-evaluates AFTER Scout.
 17. **Auditor runs AFTER the final QA round, BEFORE Summary** (when active). LOW integrity blocks auto-commit.
@@ -732,8 +724,8 @@ Then the orchestrator (not the agent): read the proposal; if it proposes rules, 
 19. **`--workers N` flag forces TEAM mode** regardless of Planner's recommendation. Max 5 workers.
 20. **TEAM mode follows `references/team-build-protocol.md`.** All team-specific logic lives there, not in this file.
 21. **Session state and event log are updated after EVERY agent.** See `references/session-protocol.md`.
-22. **Build history is cumulative.** NEVER overwrite `.harness_codex/build-history.md` — only append.
-23. **Evidence traces go to `.harness_codex/traces/`.** QA and Refiner write raw diagnostic data here for the Diagnostician.
+22. **Build history is cumulative.** NEVER overwrite `.harness/build-history.md` — only append.
+23. **Evidence traces go to `.harness/traces/`.** QA and Refiner write raw diagnostic data here for the Diagnostician.
 
 ## Cost Awareness
 

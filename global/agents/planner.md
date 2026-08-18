@@ -49,7 +49,7 @@ color: blue
 
   <Tool_Usage>
     - Use AskUserQuestion for all preference/priority questions (provides clickable options).
-    - Spawn explore agent (model=haiku) for codebase context questions.
+    - Spawn explore agent (model=opus) for codebase context questions.
     - Use mcp__sequential-thinking__sequentialthinking for complex multi-step reasoning during plan creation.
     - Use mcp__context7__* for latest library/framework documentation when plan involves specific technologies.
   </Tool_Usage>

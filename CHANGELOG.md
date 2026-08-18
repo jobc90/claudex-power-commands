@@ -6,6 +6,26 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 
 ---
 
+## [4.6.0] — 2026-08-18
+
+### Changed — frontier refresh: Elite tier reachable by name (Fable 5 / gpt-5.6-sol), Elite-parent model economy, mirror truth restored
+
+**Tier inversion fixed (the headline defect).** The name-based tier fallback knew only `sonnet|haiku → Standard`, `opus → Advanced`, `else → Standard` — so a **Fable 5 session (the top model) classified as the LOWEST tier**: looser QA bar (7/10), Sentinel/Auditor off, narrower Scout scans. The fallback is now, textually identical in every copy (commands ×4, session-protocol, tier-matrix, `docs/capability-detection.md`, + Codex mirrors): `fable`/`mythos`/`sol` (e.g. `claude-fable-5`, `gpt-5.6-sol`) → **Elite**; `opus` → Advanced; `sonnet`/`haiku` → Standard; **otherwise → Advanced** (frontier-era default: an unlisted 2026 model is likelier new-and-strong than old-and-weak). Tier descriptions updated to match (Advanced = frontier-family workhorse, e.g. Opus 5; Elite = Mythos-class, e.g. Fable 5 / gpt-5.6-sol); `CLAUDEX_ELITE_MODELS` example now uses real ids.
+
+**Model economy: Elite-parent exception on top of v4.5.1 inherit.** Inherit-parent stays the default and per-role `sonnet`/`haiku` downgrades stay banned. New: under an **Elite-tier parent in Claude Code** (scarce judgment tier), every agent is labor and is spawned with `model: "opus"` — with exactly three exceptions (Planner, Architect, Diagnostician) whose output is the final judgment and who keep inheriting. In the Codex runtime, Claude model names don't exist: subagents always inherit the session model (see the new Codex Runtime translation table in `codex-skills/AGENTS.md`).
+
+**Mirror truth restored (correcting v4.5.1's release note).** v4.5.1 claimed Codex mirrors were "re-synced for byte-parity"; on disk, 9 shared reference mirrors (session-protocol ×4, tier-matrix ×4, team-build-protocol) still carried the retired downgrade table, and `codex-skills/harness/SKILL.md` pinned `sonnet` at 9 spawn sites. Root cause: the pre-commit lint diffed only `*-prompt.md` mirrors. All mirrors are re-synced (16/16 byte-identical, red-green verified), and `hooks/pre-commit-lint.sh` now derives the shared-reference pair list **dynamically** — this drift class is a lint failure from now on.
+
+**Codex side.** `codex-skills/AGENTS.md` gains a Codex Runtime section (frontier model `gpt-5.6-sol`, 1M context, `model_reasoning_effort`; translation table for Claude-only vocabulary in the byte-mirrored references) and is now actually tracked (it was silently excluded by a global `AGENTS.md` gitignore pattern — re-included via repo `.gitignore`). Artifact dir standardized on `.harness/` (`.harness_codex` divergence removed). `codex-skills/harness-think/agents/openai.yaml` added (was the only skill missing one). Known debt, deferred deliberately: the Codex SKILL.md flow structure is still the v4.1-era derivation (missing Phase 0 Triage / Phase-Book approval gate / Phase 4-verify) — model policy is current, flow re-derive is not.
+
+**Global config (`global/`, deploys via `install.sh`).** Stale labor pins swept to `opus`: orchestrate (11 team rows + diagrams), handoff-verify, session-wrap, planner (`haiku` spawn), verify-agent config table, agent-creator template (default `model: opus`, sonnet/haiku ladder dropped). agent-router trimmed from 34 phantom domains to the 11 routes whose agents actually exist. plugin-validator model set updated (`fable`/`opus`/`sonnet`/`haiku`/`inherit`; warns on `inherit`).
+
+**Statusline.** `Fable`/`Mythos` display names shorten correctly (hand-patched bundle — no TS source in repo; noted inline).
+
+**Honest gates.** A/B scorers and golden-score re-run green — but the golden baseline is sonnet/xhigh-era and predates this policy; `tests/golden/README.md` + `dev/harness-eval.md` now mark it **re-baseline pending**, and this release ships with that gate explicitly suspended rather than silently claimed. Measurement records (`tests/ab-results/`, think-grounding notes) untouched; the deleted grounding-heldout fixture-19 was restored. No agent count change (29 + 1 helper, 7 commands).
+
+---
+
 ## [4.5.1] — 2026-06-25
 
 ### Changed — harness subagents inherit the parent session model

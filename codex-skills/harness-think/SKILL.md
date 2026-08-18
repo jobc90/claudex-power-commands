@@ -57,7 +57,7 @@ On convergence to "do this", show a seed: one-line decision + confidence; VERIFI
 
 ## Execution Rules
 
-1. **Read-only.** Never write/edit any repo file. Any optional ledger/handoff artifact goes under `.harness_codex/think-*.md`.
+1. **Read-only.** Never write/edit any repo file. Any optional ledger/handoff artifact goes under `.harness/think-*.md`.
 2. **No repo claim without an inline `[path:line]` from THIS session** — else `[Unknown]`.
 3. **CODE questions verify the tree**; never cite a summary doc as verified for code (tag drift).
 4. **Never auto-transition to `$harness`** — the handoff is data, not a trigger.

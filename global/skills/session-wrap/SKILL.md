@@ -18,13 +18,13 @@ argument-hint: '[--dry-run] [--skip-docs] [--skip-learning] [--skip-scout] [--sk
   ├─ ~/.claude/homunculus/observations.jsonl (최근 관찰)
   └─ /tmp/session-wrap/context.md 생성
 
-[Phase 1] 병렬 4개 subagent (Explore, sonnet)
+[Phase 1] 병렬 4개 subagent (Explore, opus)
   ├─ doc-updater        → 문서 업데이트 필요 곳 탐지
   ├─ automation-scout   → 반복 패턴 발견 + 스킬 후보 제안
   ├─ learning-extractor → 배운 점 추출 (instinct 후보)
   └─ followup-suggester → 다음 작업 제안
 
-[Phase 2] 순차 1개 subagent (Explore, sonnet)
+[Phase 2] 순차 1개 subagent (Explore, opus)
   └─ duplicate-checker  → Phase 1 결과 중복 제거 + 카테고리 분류
 
 [Phase 3] AskUserQuestion으로 사용자 선택
@@ -98,10 +98,11 @@ active_agents = [
   ("followup-suggester", skip_followup 아니면),
 ]
 
-# 병렬 Task 호출 (Explore, sonnet)
+# 병렬 Task 호출 (Explore, opus)
 for agent in active_agents:
   Task(
     subagent_type="Explore",
+    model="opus",
     prompt=Read("references/prompt-{agent}.md") + context_data
   )
 ```

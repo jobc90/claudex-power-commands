@@ -102,12 +102,21 @@ After each agent completes, the orchestrator runs:
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] {agent}:{round} | {status} | {output_file} | {one-line summary}" >> .harness/session-events.md
 ```
 
+**Latency field (optional, backward-compatible)**: the orchestrator MAY record each agent's dispatch time and, on completion, insert a `dur={seconds}s` field before the summary:
+
+```bash
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] {agent}:{round} | {status} | {output_file} | dur={N}s | {one-line summary}" >> .harness/session-events.md
+```
+
+Consumers tolerate its absence — the Trajectory Reporter renders `dur: n/a` when it is missing, and adding it never changes existing parsing. This is the cheap enabler for end-of-run latency metering.
+
 ### Consumers
 
 | Consumer | Purpose |
 |----------|---------|
 | Diagnostician | Read event log to detect patterns across rounds (e.g., same module failing twice) |
 | Session Resume | Read event log to determine exact re-entry point |
+| Trajectory Reporter | Synthesize the timeline + `dur=` latencies + QA score trend into `.harness/trajectory-report.md` at end of run |
 | User | Quick overview of what happened in the pipeline |
 
 ---
@@ -161,56 +170,69 @@ Fix ROOT CAUSES from the diagnosis. Do not re-investigate from scratch."
 
 ### Per-Agent Model Recommendations
 
-Optimized for the Claude Code subscription environment. Use the `model` parameter in Agent tool calls.
+> **Model economy — inherit by default, split under an Elite-tier parent:** every agent inherits the parent session model — **omit** the `model` param on the Agent call. The per-role table below is kept for documentation; all cells read *inherit* (the session model). Under an Elite-tier parent in Claude Code, every labor row resolves to `opus` per the exception below; Planner/Architect/Diagnostician keep inheriting. No per-role downgrades to `sonnet`/`haiku`, ever. **Exception:** when the parent session model is Elite-tier by §9 (identifier contains `fable`, `mythos`, or `sol`), spawn labor agents with `model: "opus"` — the scarce top model does the orchestrating/judgment turn only, the abundant frontier workhorse does the labor. This matches the user's global model-routing doctrine (scarce judgment, abundant labor). In the Codex runtime the Claude model names above do not exist; subagents always inherit the session model — see the Codex Runtime translation table in `codex-skills/AGENTS.md`. In an Opus session the exception is inert and every agent is Opus; the control knob remains the session model (`/model`, `/effort`).
 
 | Agent | Model | Rationale |
 |-------|-------|-----------|
-| **Scout** | `sonnet` | Systematic exploration, no deep reasoning needed |
-| **Planner** | *default (inherit)* | Planning quality is critical — use parent model |
-| **Architect** | *default (inherit)* | Architectural decisions require deep judgment |
-| **Builder (S/M)** | `sonnet` | Standard implementation, patterns from spec |
-| **Builder (L)** | *default (inherit)* | Complex multi-module implementation |
-| **Worker (simple)** | `haiku` | 1-2 file mechanical tasks |
-| **Worker (standard)** | `sonnet` | Standard implementation with clear brief |
-| **Worker (complex)** | *default (inherit)* | Complex judgment, cross-cutting concerns |
-| **Sentinel** | `sonnet` | Checklist-driven pattern matching |
-| **Refiner** | `sonnet` | Checklist-driven pattern matching |
-| **Integrator** | `sonnet` | Systematic merge verification |
-| **QA** | `sonnet` | Systematic testing against criteria |
-| **Diagnostician** | *default (inherit)* | Root cause analysis requires deep reasoning |
-| **Auditor** | `sonnet` | Evidence cross-referencing, systematic comparison |
-| **Scanner** | `sonnet` | Git diff analysis, systematic |
-| **Analyzer** | `sonnet` | Issue identification from diff |
-| **Fixer** | `sonnet` | Targeted, scoped fixes |
-| **Verifier** | `sonnet` | Verification against analysis |
-| **Reporter** | `sonnet` | Report generation |
-| **Researcher** | `sonnet` | Codebase exploration |
-| **Outliner** | `sonnet` | Document structure planning |
-| **Writer** | *default (inherit)* | Quality writing needs strong model |
-| **Reviewer** | `sonnet` | Fact-checking against source |
-| **Validator** | `sonnet` | Command execution and verification |
-| **Scenario Writer** | `sonnet` | Test scenario generation |
-| **Test Executor** | `sonnet` | Playwright-based systematic testing |
-| **Analyst** | `sonnet` | Results classification |
-| **QA Reporter** | `sonnet` | Report generation |
+| **Scout** | *inherit* | Systematic exploration, no deep reasoning needed |
+| **Planner** | *inherit* | Planning quality is critical — use parent model |
+| **Architect** | *inherit* | Architectural decisions require deep judgment |
+| **Builder (S/M)** | *inherit* | Standard implementation, patterns from spec |
+| **Builder (L)** | *inherit* | Complex multi-module implementation |
+| **Worker (simple)** | *inherit* | 1-2 file mechanical tasks |
+| **Worker (standard)** | *inherit* | Standard implementation with clear brief |
+| **Worker (complex)** | *inherit* | Complex judgment, cross-cutting concerns |
+| **Sentinel** | *inherit* | Checklist-driven pattern matching |
+| **Refiner** | *inherit* | Checklist-driven pattern matching |
+| **Integrator** | *inherit* | Systematic merge verification |
+| **QA** | *inherit* | Systematic testing against criteria |
+| **Diagnostician** | *inherit* | Root cause analysis requires deep reasoning |
+| **Auditor** | *inherit* | Evidence cross-referencing, systematic comparison |
+| **Scanner** | *inherit* | Git diff analysis, systematic |
+| **Analyzer** | *inherit* | Issue identification from diff |
+| **Fixer** | *inherit* | Targeted, scoped fixes |
+| **Verifier** | *inherit* | Verification against analysis |
+| **Reporter** | *inherit* | Report generation |
+| **Researcher** | *inherit* | Codebase exploration |
+| **Outliner** | *inherit* | Document structure planning |
+| **Writer** | *inherit* | Quality writing needs strong model |
+| **Reviewer** | *inherit* | Fact-checking against source |
+| **Validator** | *inherit* | Command execution and verification |
+| **Scenario Writer** | *inherit* | Test scenario generation |
+| **Test Executor** | *inherit* | Playwright-based systematic testing |
+| **Analyst** | *inherit* | Results classification |
+| **QA Reporter** | *inherit* | Report generation |
+| **Trajectory Reporter** | *inherit* | Synthesis of existing telemetry, no new analysis |
 
 ### How to Apply
 
-In the Agent tool call, add the `model` parameter:
+In the Agent tool call, **omit** the `model` parameter so the agent inherits the parent session model:
 
 ```
 Agent({
   description: "harness scout (M)",
-  model: "sonnet",
+  // no model param → inherits the parent session model
   prompt: "..."
 })
 ```
 
-Agents without explicit model inherit from parent (typically opus).
+The parent session model flows to every agent — e.g. in an Opus 5 session every agent is Opus 5.
+
+**Elite-tier parent exception.** When the parent session model is Elite-tier by §9 (identifier contains `fable`, `mythos`, or `sol`), pass `model: "opus"` on every labor agent (examples, non-exhaustive: Scout, Builder, Worker, Sentinel, Refiner, Integrator, QA, Auditor, Scanner, Analyzer, Fixer, Verifier, Reporter, Researcher, Writer, Validator, Test Executor):
+
+```
+Agent({
+  description: "harness scout (M)",
+  model: "opus",          // Elite-tier parent → labor runs on the frontier workhorse
+  prompt: "..."
+})
+```
+
+Under an Elite-tier parent in Claude Code, every agent is labor and is spawned with `model: "opus"`, with exactly three exceptions — Planner, Architect, Diagnostician — whose output is the final judgment; they keep inheriting the session model. Any role not named here is labor. The Auditor is labor: adversarial evidence-checking is labor, and the orchestrator makes the final ship call on its own turn. In the Codex runtime the Claude model names above do not exist; subagents always inherit the session model — see the Codex Runtime translation table in `codex-skills/AGENTS.md`.
 
 ### Override Rule
 
-If the user's parent model is already `sonnet`, do NOT downgrade agents to `haiku` unless explicitly listed as `haiku` above. The recommendations assume an `opus` parent.
+**Never downgrade; split only at the top.** No agent is ever pinned below the parent — `sonnet`/`haiku` pins are banned outright. The default is inherit, so the session model is the control point. The **only** permitted deviation is upward-scarcity management: under an Elite-tier parent (`fable` / `mythos` / `sol`), labor agents are pinned to `opus` so the scarce top model is spent on the orchestrating and judgment turn rather than on bulk exploration, edits, and verification. Trade-off accepted: if `/harness` runs from a weaker session, subagents follow it down. (Historical note: the per-role table once downgraded systematic roles to `sonnet`/`haiku` for cost; that optimization is retired and must not return.)
 
 ---
 
@@ -300,7 +322,7 @@ Multiple Workers modifying the same working directory risks:
 Agent({
   description: "harness-team worker 1",
   isolation: "worktree",
-  model: "sonnet",
+  // no model param → inherits the parent session model
   prompt: "..."
 })
 ```
@@ -385,9 +407,9 @@ Run Diagnostician in foreground (default). The time saving is marginal for short
 
 | Tier | Typical Models | Characteristics |
 |------|---------------|----------------|
-| Standard | small/fast general-purpose models | Systematic execution, structured tasks |
-| Advanced | mid-size reasoning models | Deep reasoning, reliable judgment |
-| Elite | high-capability frontier models | Exceptional autonomy; mistakes can be subtle; stricter alignment posture required |
+| Standard | capable mid-tier models | Systematic execution, structured tasks |
+| Advanced | frontier-family workhorse models (e.g. Opus 5) | Deep reasoning, reliable judgment |
+| Elite | top-tier / Mythos-class frontier models (e.g. Fable 5, gpt-5.6-sol) | Exceptional autonomy; mistakes can be subtle; stricter alignment posture required |
 
 ### Tier-Specific Adjustments
 
@@ -409,9 +431,10 @@ The orchestrator classifies the parent model at session start by the following p
 1. **Explicit override** — `CLAUDEX_TIER_OVERRIDE` environment variable (`standard` | `advanced` | `elite`). For testing and admin-approved scenarios.
 2. **Elite allowlist** — if the runtime model identifier appears in the comma-separated `CLAUDEX_ELITE_MODELS` environment variable → Elite.
 3. **Name-based fallback** (for unlisted models):
-   - Identifier contains `sonnet` or `haiku` → Standard
-   - Identifier contains `opus` → Advanced
-   - Otherwise → Standard (conservative default)
+   - identifier contains `fable`, `mythos`, or `sol` (e.g. `claude-fable-5`, `gpt-5.6-sol`) → `Elite`
+   - identifier contains `opus` → `Advanced`
+   - identifier contains `sonnet` or `haiku` → `Standard`
+   - otherwise → `Advanced` (frontier-era default: an unlisted model is likelier new-and-strong than old-and-weak)
 
 **User-facing output**: at session start, emit a single line — `tier: {Standard|Advanced|Elite}` — without revealing the underlying model identifier.
 
@@ -426,7 +449,7 @@ Elite-tier models with very large effective context (256K–1M+) can process mor
 
 ## 9.5 Elite Model Allowlist
 
-Elite-tier classification is intentionally decoupled from hard-coded model names to preserve the project's naming-neutrality policy. The allowlist lives in an environment variable so downstream consumers and agent prompts see only the `Elite` tier label, never the underlying model identifier.
+The allowlist is the **operator-controlled** path to Elite: it lets a deployment promote a model the name-based fallback (§9 step 3) does not recognize, without editing any file. Naming neutrality still holds where it matters — downstream consumers, agent prompts, and user-facing output see only the `Elite` tier label, never the underlying model identifier.
 
 ### Setup
 
@@ -434,7 +457,7 @@ Add to your shell profile or `.env`:
 
 ```bash
 # Comma-separated list of runtime model identifiers that should use the Elite tier.
-export CLAUDEX_ELITE_MODELS="id-1,id-2"
+export CLAUDEX_ELITE_MODELS="claude-fable-5,gpt-5.6-sol"
 ```
 
 ### Criteria for inclusion

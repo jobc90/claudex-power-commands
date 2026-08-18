@@ -62,6 +62,18 @@ done
 # harness-think (reference-only skill — no prompts, one reference mirror)
 [ -f "harness/references/think-grounding.md" ] && check_mirror "harness/references/think-grounding.md" "codex-skills/harness-think/references/think-grounding.md"
 
+# shared references — derived dynamically: every harness/references/*.md that has a
+# same-named counterpart under a codex skill's references/ must stay byte-identical.
+# New shared references are covered automatically, no edit to this list required.
+for ref in harness/references/*.md; do
+  [ -f "$ref" ] || continue
+  ref_name="$(basename "$ref")"
+  for skill in harness harness-docs harness-qa harness-review; do
+    mirror="codex-skills/$skill/references/$ref_name"
+    [ -f "$mirror" ] && check_mirror "$ref" "$mirror"
+  done
+done
+
 # --- Check 2: Required Files Exist ---
 echo ""
 echo "## Required Files"

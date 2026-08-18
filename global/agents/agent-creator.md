@@ -101,7 +101,7 @@ When a user describes what they want an agent to do, you will:
      - Edge case handling
 
 3. **Select Configuration**:
-   - **Model**: Use `inherit` unless user specifies (sonnet for complex, haiku for simple)
+   - **Model**: Default to `opus` (labor tier) unless the user specifies a model. Do not downgrade by task complexity — no sonnet-for-complex / haiku-for-simple ladder. Never emit `inherit`.
    - **Color**: Choose appropriate color:
      - blue/cyan: Analysis, review
      - green: Generation, creation
@@ -115,7 +115,7 @@ When a user describes what they want an agent to do, you will:
    ---
    name: [identifier]
    description: [Use this agent when... Examples: <example>...</example>]
-   model: inherit
+   model: opus
    color: [chosen-color]
    tools: ["Tool1", "Tool2"]  # Optional
    ---
@@ -170,7 +170,7 @@ Validate with: `scripts/validate-agent.sh agents/[identifier].md`
 - Conflicts with existing agents: Note conflict, suggest different scope/name
 - Very complex requirements: Break into multiple specialized agents
 - User wants specific tool access: Honor the request in agent configuration
-- User specifies model: Use specified model instead of inherit
+- User specifies model: Use the specified model; otherwise default to `opus`
 - First agent in plugin: Create agents/ directory first
 ```
 

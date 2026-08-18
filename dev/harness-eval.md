@@ -160,6 +160,9 @@ After editing any `harness/*-prompt.md` or `commands/*.md` (especially `qa-promp
    holds; **exit 1** on any regression (a pinned behaviour changed → investigate before shipping).
 
 ### Baseline
-`tests/golden/results-baseline.csv` — **4/4 pass** on the current prompts (model `sonnet`, effort
-`xhigh`). Re-baseline when the harness model policy changes; results are model/effort-specific and
-do not port.
+`tests/golden/results-baseline.csv` — **4/4 pass** as recorded on 2026-06-16 (model `sonnet`, effort
+`xhigh`). **Re-baseline pending (2026-08-18):** those rows predate the current model policy
+(Fable-5-class sessions, Elite-tier detection, subagents inheriting the parent session model), so
+they no longer describe what the shipped prompts run on. Until the re-baseline is done, treat a
+`golden-score.py` run against the stored CSV as indicative, not as a release gate. Results are
+model/effort-specific and do not port — see `tests/golden/README.md`.

@@ -19,7 +19,11 @@ Run at session start. See `harness/references/session-protocol.md` §9.
 
 1. `CLAUDEX_TIER_OVERRIDE` → use that value.
 2. Else `CLAUDEX_ELITE_MODELS` contains current identifier → `Elite`.
-3. Else fallback: `sonnet|haiku` → `Standard`; `opus` → `Advanced`; unknown → `Standard`.
+3. Otherwise, apply name-based fallback:
+   - identifier contains `fable`, `mythos`, or `sol` (e.g. `claude-fable-5`, `gpt-5.6-sol`) → `Elite`
+   - identifier contains `opus` → `Advanced`
+   - identifier contains `sonnet` or `haiku` → `Standard`
+   - otherwise → `Advanced` (frontier-era default: an unlisted model is likelier new-and-strong than old-and-weak)
 
 Announce `tier: {Standard|Advanced|Elite}`. Persist to `.harness/session-state.md` under `tier:`.
 

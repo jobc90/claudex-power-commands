@@ -1,5 +1,5 @@
 ---
-description: "Lint the harness ecosystem — verify cross-references, Codex mirror sync, pipeline structure, and file reference timing across all 23 agents and 5 pipelines."
+description: "Lint the harness ecosystem — verify cross-references, Codex mirror sync (prompts + shared references), pipeline structure, and file reference timing across all 29 agents (+1 helper) and 7 commands."
 ---
 
 # Harness-Lint: Consistency Checker
@@ -47,56 +47,55 @@ Run these checks via Bash and collect results:
 
 ### 1a. Codex Mirror Sync
 
-Compare each original with its mirror. Use the mirror map from `harness/INDEX.md`:
+Compare each original with its mirror. Two classes are checked:
+
+1. **Agent prompts** — `harness/*-prompt.md` against the mirrors of each pipeline that uses them (mirror map: `harness/INDEX.md`).
+2. **Shared references** — every `harness/references/*.md` that has a same-named counterpart under `codex-skills/{harness,harness-docs,harness-qa,harness-review}/references/` is diffed too. The pair list is **derived dynamically**, so a newly added shared reference is covered without editing this command. (`codex-skills/harness-think/references/think-grounding.md` is checked separately below.)
+
+Mirrors must be **byte-identical** — ecosystem wording differences belong in `codex-skills/AGENTS.md`, never in a forked mirror.
 
 ```bash
 echo "## Codex Mirror Sync Check"
 echo ""
 
-# harness pipeline
-for f in scout-prompt.md planner-prompt.md builder-prompt.md refiner-prompt.md qa-prompt.md diagnostician-prompt.md trajectory-reporter-prompt.md curator-prompt.md; do
-  if diff -q "harness/$f" "codex-skills/harness/references/$f" > /dev/null 2>&1; then
-    echo "PASS: harness/$f"
-  else
-    echo "DRIFT: harness/$f vs codex-skills/harness/references/$f"
-  fi
+CODEX_SKILLS="harness harness-docs harness-qa harness-review"
+
+# Agent prompts — every harness/*-prompt.md, against whichever pipeline mirrors it.
+for src in harness/*-prompt.md; do
+  f="$(basename "$src")"
+  for skill in $CODEX_SKILLS; do
+    mirror="codex-skills/$skill/references/$f"
+    [ -f "$mirror" ] || continue
+    if diff -q "$src" "$mirror" > /dev/null 2>&1; then
+      echo "PASS: $src ($skill)"
+    else
+      echo "DRIFT: $src vs $mirror"
+    fi
+  done
 done
 
-# harness-review pipeline
-for f in scanner-prompt.md analyzer-prompt.md fixer-prompt.md verifier-prompt.md reporter-prompt.md; do
-  if diff -q "harness/$f" "codex-skills/harness-review/references/$f" > /dev/null 2>&1; then
-    echo "PASS: harness/$f (review)"
-  else
-    echo "DRIFT: harness/$f vs codex-skills/harness-review/references/$f"
-  fi
+# Shared references — same derivation, so new references are covered automatically.
+for src in harness/references/*.md; do
+  [ -f "$src" ] || continue
+  f="$(basename "$src")"
+  for skill in $CODEX_SKILLS; do
+    mirror="codex-skills/$skill/references/$f"
+    [ -f "$mirror" ] || continue
+    if diff -q "$src" "$mirror" > /dev/null 2>&1; then
+      echo "PASS: $src ($skill)"
+    else
+      echo "DRIFT: $src vs $mirror"
+    fi
+  done
 done
 
-# harness-docs pipeline
-for f in researcher-prompt.md outliner-prompt.md writer-prompt.md reviewer-prompt.md validator-prompt.md; do
-  if diff -q "harness/$f" "codex-skills/harness-docs/references/$f" > /dev/null 2>&1; then
-    echo "PASS: harness/$f (docs)"
-  else
-    echo "DRIFT: harness/$f vs codex-skills/harness-docs/references/$f"
-  fi
-done
-
-# harness TEAM mode (merged into the harness skill)
-for f in scout-prompt.md architect-prompt.md worker-prompt.md integrator-prompt.md qa-prompt.md diagnostician-prompt.md; do
-  if diff -q "harness/$f" "codex-skills/harness/references/$f" > /dev/null 2>&1; then
-    echo "PASS: harness/$f (team)"
-  else
-    echo "DRIFT: harness/$f vs codex-skills/harness/references/$f"
-  fi
-done
-
-# harness-qa pipeline
-for f in scout-prompt.md scenario-writer-prompt.md test-executor-prompt.md analyst-prompt.md qa-reporter-prompt.md; do
-  if diff -q "harness/$f" "codex-skills/harness-qa/references/$f" > /dev/null 2>&1; then
-    echo "PASS: harness/$f (qa)"
-  else
-    echo "DRIFT: harness/$f vs codex-skills/harness-qa/references/$f"
-  fi
-done
+# harness-think — reference-only skill, one dedicated mirror
+if diff -q "harness/references/think-grounding.md" \
+          "codex-skills/harness-think/references/think-grounding.md" > /dev/null 2>&1; then
+  echo "PASS: harness/references/think-grounding.md (think)"
+else
+  echo "DRIFT: harness/references/think-grounding.md vs codex-skills/harness-think/references/think-grounding.md"
+fi
 ```
 
 Collect the output. Count PASS vs DRIFT.
@@ -108,14 +107,16 @@ Verify all prompt files listed in INDEX.md exist:
 ```bash
 echo "## File Existence Check"
 
-# All 23 unique prompts must exist in harness/
-for f in scout-prompt.md planner-prompt.md builder-prompt.md refiner-prompt.md \
-         qa-prompt.md diagnostician-prompt.md scanner-prompt.md analyzer-prompt.md \
+# All 29 user-facing agent prompts must exist in harness/
+for f in scout-prompt.md planner-prompt.md builder-prompt.md sentinel-prompt.md \
+         refiner-prompt.md qa-prompt.md diagnostician-prompt.md auditor-prompt.md \
+         scanner-prompt.md analyzer-prompt.md \
          fixer-prompt.md verifier-prompt.md reporter-prompt.md researcher-prompt.md \
          outliner-prompt.md writer-prompt.md reviewer-prompt.md validator-prompt.md \
          architect-prompt.md worker-prompt.md integrator-prompt.md \
          scenario-writer-prompt.md test-executor-prompt.md analyst-prompt.md \
-         qa-reporter-prompt.md trajectory-reporter-prompt.md curator-prompt.md; do
+         qa-reporter-prompt.md trajectory-reporter-prompt.md curator-prompt.md \
+         phase-book-planner-prompt.md phase-verifier-prompt.md; do
   if [ -f "harness/$f" ]; then
     echo "PASS: harness/$f"
   else
@@ -123,8 +124,9 @@ for f in scout-prompt.md planner-prompt.md builder-prompt.md refiner-prompt.md \
   fi
 done
 
-# INDEX.md and linter-prompt.md must exist
-for f in INDEX.md linter-prompt.md; do
+# INDEX.md, the orchestrator helper, and the dev-only linter prompt must exist
+# (phase-orchestrator = helper, linter = /harness-lint tooling; neither counts as an agent)
+for f in INDEX.md phase-orchestrator-prompt.md linter-prompt.md; do
   if [ -f "harness/$f" ]; then
     echo "PASS: harness/$f"
   else

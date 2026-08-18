@@ -29,9 +29,10 @@ Run this step FIRST, before scale classification. See `harness/references/sessio
 1. If `CLAUDEX_TIER_OVERRIDE` is set to `standard`, `advanced`, or `elite` → use that value.
 2. Otherwise, if the runtime model identifier appears in the comma-separated `CLAUDEX_ELITE_MODELS` env var → tier = `Elite`.
 3. Otherwise, apply name-based fallback:
-   - identifier contains `sonnet` or `haiku` → `Standard`
+   - identifier contains `fable`, `mythos`, or `sol` (e.g. `claude-fable-5`, `gpt-5.6-sol`) → `Elite`
    - identifier contains `opus` → `Advanced`
-   - unknown → `Standard` (conservative default)
+   - identifier contains `sonnet` or `haiku` → `Standard`
+   - otherwise → `Advanced` (frontier-era default: an unlisted model is likelier new-and-strong than old-and-weak)
 
 **Announce the detected tier in a single line** (do NOT reveal the model identifier):
 

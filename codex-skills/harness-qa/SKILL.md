@@ -72,24 +72,24 @@ Modes can be combined: `--mode forms,a11y`.
 
 ## Required Artifacts
 
-Use `.harness_codex/qa-` in the target project directory.
+Use `.harness/qa-` in the target project directory.
 
-- `.harness_codex/qa-prompt.md`
-- `.harness_codex/qa-context.md`
-- `.harness_codex/qa-scenarios.md` (or `qa-test-plan.md` for pre-launch mode)
-- `.harness_codex/qa-results.md`
-- `.harness_codex/qa-analysis.md`
-- `.harness_codex/qa-report.md`
+- `.harness/qa-prompt.md`
+- `.harness/qa-context.md`
+- `.harness/qa-scenarios.md` (or `qa-test-plan.md` for pre-launch mode)
+- `.harness/qa-results.md`
+- `.harness/qa-analysis.md`
+- `.harness/qa-report.md`
 
 ## Phase 1. Setup
 
 Create the working directory:
 
 ```bash
-mkdir -p .harness_codex
+mkdir -p .harness
 ```
 
-Write the user's request, target URL, non-secret credential references, selected mode, and options to `.harness_codex/qa-prompt.md`.
+Write the user's request, target URL, non-secret credential references, selected mode, and options to `.harness/qa-prompt.md`.
 
 Include mode-specific context:
 - For `regression`: the `--change` description
@@ -104,7 +104,7 @@ Spawn a fresh scout subagent:
 
 - focus based on the selected test mode (see scout prompt for mode-specific focus)
 - pass the test mode explicitly
-- write `.harness_codex/qa-context.md`
+- write `.harness/qa-context.md`
 - ALWAYS append QA-specific supplementary instructions to the scout prompt:
   1. Route & Navigation Map (all routes with access requirements)
   2. User Type & Permission Matrix (every role, what they can/cannot do, how type is determined)
@@ -121,7 +121,7 @@ Load `references/scenario-writer-prompt.md`.
 
 Spawn a fresh scenario-writer subagent:
 
-- codebase context: `.harness_codex/qa-context.md`
+- codebase context: `.harness/qa-context.md`
 - target URL
 - credential references
 - **test mode** (determines scenario templates)
@@ -129,11 +129,11 @@ Spawn a fresh scenario-writer subagent:
 - quick mode if specified
 - viewports if responsive mode
 - change description if regression mode
-- output: `.harness_codex/qa-scenarios.md`
+- output: `.harness/qa-scenarios.md`
 
 ### Special: `pre-launch` mode
 
-For pre-launch mode, the scenario writer produces `.harness_codex/qa-test-plan.md` instead. **Pipeline stops here** — present the test plan to the user. No Phase 4/5.
+For pre-launch mode, the scenario writer produces `.harness/qa-test-plan.md` instead. **Pipeline stops here** — present the test plan to the user. No Phase 4/5.
 
 After it finishes, summarize:
 
@@ -164,11 +164,11 @@ Run one round by default. A second round is only for re-test after fixes.
 
 Spawn a fresh test-executor subagent:
 
-- test scenarios: `.harness_codex/qa-scenarios.md`
+- test scenarios: `.harness/qa-scenarios.md`
 - target URL
 - credential references
 - **test mode** (determines execution protocol)
-- output: `.harness_codex/qa-results.md`
+- output: `.harness/qa-results.md`
 - round 2: focus on previously failing scenarios
 - require Playwright MCP browser tools for UI testing
 
@@ -176,17 +176,17 @@ Spawn a fresh test-executor subagent:
 
 Spawn a fresh analyst subagent:
 
-- test results: `.harness_codex/qa-results.md`
-- test scenarios: `.harness_codex/qa-scenarios.md`
-- codebase context: `.harness_codex/qa-context.md`
+- test results: `.harness/qa-results.md`
+- test scenarios: `.harness/qa-scenarios.md`
+- codebase context: `.harness/qa-context.md`
 - **test mode** (determines analysis patterns)
-- output: `.harness_codex/qa-analysis.md`
+- output: `.harness/qa-analysis.md`
 
 ### 4c. Evaluate
 
 After the Analyst finishes:
 
-1. Read `.harness_codex/qa-analysis.md`.
+1. Read `.harness/qa-analysis.md`.
 2. Report:
    - overall pass rate
    - critical bug count
@@ -203,21 +203,21 @@ Load `references/qa-reporter-prompt.md`.
 
 Spawn a fresh reporter subagent:
 
-- analysis: `.harness_codex/qa-analysis.md`
-- test results: `.harness_codex/qa-results.md`
-- scenarios: `.harness_codex/qa-scenarios.md`
-- codebase context: `.harness_codex/qa-context.md`
+- analysis: `.harness/qa-analysis.md`
+- test results: `.harness/qa-results.md`
+- scenarios: `.harness/qa-scenarios.md`
+- codebase context: `.harness/qa-context.md`
 - **test mode** (determines report format additions)
-- output: `.harness_codex/qa-report.md`
+- output: `.harness/qa-report.md`
 
 After it finishes, present the user-facing summary and point to the full report.
 
 ## Execution Rules
 
 1. Each phase agent must be a separate `spawn_agent` call with fresh context.
-2. Never pass state between agents in chat. Use `.harness_codex/qa-` files only.
+2. Never pass state between agents in chat. Use `.harness/qa-` files only.
 3. Test Executor must use Playwright MCP tools for UI testing.
-4. Never store raw credentials in `.harness_codex/qa-` files.
+4. Never store raw credentials in `.harness/qa-` files.
 5. Always wait for explicit user approval after the scenario phase.
 6. The Test Executor does not fix bugs.
 7. The Analyst does not re-test.

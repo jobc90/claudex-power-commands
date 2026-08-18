@@ -210,7 +210,7 @@ This agent is spawned by `/handoff-verify` via **Task tool only**. Never invoke 
 | Item | Value |
 |------|-------|
 | subagent_type | general-purpose |
-| model | sonnet |
+| model | opus |
 | tools | Read, Write, Edit, Bash, Glob, Grep, Task |
 
 ## Input

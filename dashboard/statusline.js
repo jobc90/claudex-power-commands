@@ -435,8 +435,15 @@ function formatTimeRemaining(resetAt, t) {
   }
   return `${minutes}${t.time.minutes}`;
 }
+// hand-patched (no TS source in repo): Fable/Mythos display names — re-apply if the bundle is regenerated
+function shortenFrontierName(family, displayName) {
+  const version = displayName.match(/\d+(?:\.\d+)*/);
+  return version ? `${family} ${version[0]}` : family;
+}
 function shortenModelName(displayName) {
   const lower = displayName.toLowerCase();
+  if (lower.includes("fable")) return shortenFrontierName("Fable", displayName);
+  if (lower.includes("mythos")) return shortenFrontierName("Mythos", displayName);
   if (lower.includes("opus")) return "Opus";
   if (lower.includes("sonnet")) return "Sonnet";
   if (lower.includes("haiku")) return "Haiku";
